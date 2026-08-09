@@ -1,9 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Produces a portable Node.js server bundle for containers and managed hosts.
-  // Vercel detects and deploys the same Next.js application without a custom adapter.
-  output: "standalone",
+  // Keep a portable Node.js bundle for generic hosts and containers. Vercel
+  // provides its own Next.js packaging and must not receive standalone output.
+  output: process.env.VERCEL ? undefined : "standalone",
 };
 
 export default nextConfig;
