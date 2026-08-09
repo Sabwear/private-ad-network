@@ -55,6 +55,7 @@ Outcome: one approved file is delivered and played locally on a reference device
 - [x] Keep storage-specific reads behind a replaceable media storage adapter
 - [ ] Add FFmpeg worker for validation, normalization, checksum, thumbnail, and streaming renditions
 - [x] Add resumable, retryable uploads with progress for pilot media files
+- [x] Add authenticated, short-lived portal playback delivery without proxying video bytes through the application host
 - [ ] Add secure byte-range delivery for portal previews and compatible players
 - [ ] Generate adaptive HLS renditions and short-lived signed playback URLs
 - [ ] Implement a dedicated non-admin moderator role and queue

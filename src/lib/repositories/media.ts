@@ -3,7 +3,7 @@ import "server-only";
 import { mediaAssets as demoMediaAssets, type StatusTone } from "@/lib/platform-data";
 import { hasSupabaseEnv } from "@/lib/supabase/config";
 import { createClient } from "@/lib/supabase/server";
-import { createMediaReadUrl } from "@/lib/storage/media-storage";
+import { portalMediaPlaybackPath } from "@/lib/storage/media-playback";
 
 export type MediaLibraryItem = {
   id: string;
@@ -95,10 +95,8 @@ export async function getMediaLibrary(): Promise<MediaLibraryResult> {
   }
 
   const organizationNames = new Map((organizationsResult.data ?? []).map((organization) => [organization.id, organization.display_name]));
-  const assets = await Promise.all((assetsResult.data ?? []).map(async (asset): Promise<MediaLibraryItem> => {
-    const previewUrl = asset.original_storage_path
-      ? await createMediaReadUrl(supabase, asset.original_storage_path)
-      : null;
+  const assets = (assetsResult.data ?? []).map((asset): MediaLibraryItem => {
+    const previewUrl = asset.original_storage_path ? portalMediaPlaybackPath(asset.public_id) : null;
     const dimensions = asset.width && asset.height ? `${asset.width} x ${asset.height}` : "Pending inspection";
     return {
       id: asset.public_id,
@@ -115,7 +113,7 @@ export async function getMediaLibrary(): Promise<MediaLibraryResult> {
       rejectionReason: asset.rejection_reason ?? "",
       previewUrl,
     };
-  }));
+  });
 
   return { source: "supabase", assets, summary: summarize(assets) };
 }

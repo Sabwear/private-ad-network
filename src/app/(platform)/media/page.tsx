@@ -35,7 +35,7 @@ export default async function MediaPage() {
 
     {result.assets.length === 0 ? <section className="empty-state"><Film size={28} /><h2>{canModerate ? "No media waiting yet" : "No media uploaded yet"}</h2><p>{canModerate ? "Submitted business creatives will appear here for review." : canUpload ? "Upload the first MP4 creative above to begin moderation." : "Media will appear after a business submits its first creative."}</p></section> : <section className="media-grid">{result.assets.map((asset, index) => <article className="media-card" key={asset.id}>
       <div className={`media-preview preview-${["teal", "orange", "blue", "purple"][index % 4]}`}>
-        {asset.previewUrl ? <video className="media-video" controls preload="metadata" src={asset.previewUrl} aria-label={`Preview ${asset.name}`} /> : <><span className="preview-noise" /><span className="media-preview-placeholder"><Play size={22} fill="currentColor" /></span></>}
+        {asset.previewUrl ? <video className="media-video" controls controlsList="nodownload" preload="metadata" src={asset.previewUrl} aria-label={`Preview ${asset.name}`} /> : <><span className="preview-noise" /><span className="media-preview-placeholder"><Play size={22} fill="currentColor" /></span></>}
         <small>{asset.duration}</small>
       </div>
       <div className="media-body">

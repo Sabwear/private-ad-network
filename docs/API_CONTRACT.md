@@ -67,6 +67,7 @@ Required event fields:
 - The browser uploads the MP4 directly to private object storage, avoiding application-server request-size, memory, and timeout limits on every supported host.
 - Media submission is a second authenticated action that verifies the object exists, records browser preflight metadata and checksum, accepts the rights declaration, and moves the asset to `in_review`.
 - Platform moderation records `approved` or `rejected`, requires a reason, and writes an audit record. Direct client updates to moderation state are denied.
+- `GET /api/v1/media/{assetId}/playback` authenticates the portal user, relies on tenant RLS for asset authorization, and redirects to a five-minute signed private-storage URL. The application server never proxies video bytes, so storage/CDN range delivery remains available without tying playback to the web host.
 - `POST /v1/campaigns`
 - `POST /v1/campaigns/{id}/pause`
 - `POST /v1/campaigns/{id}/resume`
