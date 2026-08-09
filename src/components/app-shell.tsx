@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bell, ChevronDown, CircleHelp, Clapperboard, Gauge, LayoutDashboard, LogOut, Mail, Menu, MonitorPlay, Orbit, ReceiptText, Search, Settings, ShieldCheck, WalletCards, X } from "lucide-react";
+import { Bell, ChevronDown, CircleHelp, Clapperboard, Gauge, LayoutDashboard, LogOut, Mail, MapPinned, Menu, MonitorPlay, Orbit, ReceiptText, Search, Settings, ShieldCheck, WalletCards, X } from "lucide-react";
 import { useState } from "react";
 import { Brand } from "@/components/brand";
 import type { WorkspaceContext } from "@/lib/auth/workspace";
@@ -10,6 +10,7 @@ import type { WorkspaceContext } from "@/lib/auth/workspace";
 const nav = [
   { href: "/overview", label: "Overview", icon: LayoutDashboard },
   { href: "/campaigns", label: "Campaigns", icon: Gauge },
+  { href: "/locations", label: "Locations", icon: MapPinned },
   { href: "/screens", label: "Screens", icon: MonitorPlay },
   { href: "/media", label: "Media", icon: Clapperboard },
   { href: "/wallet", label: "Wallet", icon: WalletCards },

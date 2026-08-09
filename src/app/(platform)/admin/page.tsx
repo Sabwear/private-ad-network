@@ -1,14 +1,15 @@
-import { Activity, BadgeCheck, CircleAlert, FileCheck2, ListChecks, MonitorCog, Scale, Settings2, ShieldAlert, Users } from "lucide-react";
-import { PageHeading } from "@/components/page-heading";
+import { Activity, BadgeCheck, CircleAlert, FileCheck2, ListChecks, MonitorCog, Scale, Settings2, ShieldAlert } from "lucide-react";
 import { AccessDenied } from "@/components/access-denied";
+import { OrganizationManagement } from "@/components/organization-management";
+import { PageHeading } from "@/components/page-heading";
 import { getWorkspaceContext } from "@/lib/auth/workspace";
+import { getOrganizationAdminData } from "@/lib/repositories/organizations";
 
 export const metadata = { title: "Admin control" };
 
 const queues = [
   { title: "Media moderation", count: 3, detail: "2 new, 1 resubmitted", icon: FileCheck2, tone: "blue" },
   { title: "Playback review", count: 1, detail: "Oldest case: 21 minutes", icon: ShieldAlert, tone: "orange" },
-  { title: "Business approvals", count: 4, detail: "2 awaiting documents", icon: Users, tone: "violet" },
   { title: "Device incidents", count: 2, detail: "1 offline, 1 integrity warning", icon: MonitorCog, tone: "red" },
 ] as const;
 
@@ -16,5 +17,34 @@ export default async function AdminPage() {
   const workspace = await getWorkspaceContext();
   if (!workspace.permissions.canAccessAdmin) return <AccessDenied />;
 
-  return <><PageHeading eyebrow="Network operations" title="Admin control" description="Moderate content, protect settlement integrity, and keep the pilot network healthy." actions={<button className="button button-primary"><Settings2 size={17} /> Policy settings</button>} /><section className="admin-hero"><div><span className="admin-live"><i /> Network operational</span><h2>All core services are healthy</h2><p>Last evaluated 14 seconds ago · Policy version PILOT-1.0 active</p></div><div className="service-grid"><div><Activity size={17} /><span>API & evidence<strong>Healthy</strong></span></div><div><Scale size={17} /><span>Ledger reconciliation<strong>Balanced</strong></span></div><div><BadgeCheck size={17} /><span>Manifest signing<strong>Healthy</strong></span></div></div></section><section className="queue-grid">{queues.map(({ title, count, detail, icon: Icon, tone }) => <article className="queue-card" key={title}><span className={`queue-icon queue-${tone}`}><Icon size={21} /></span><div><p>{title}</p><strong>{count}</strong><small>{detail}</small></div><button className="text-button">Open queue</button></article>)}</section><section className="admin-grid"><article className="panel"><div className="panel-header"><div><h2>Operational checklist</h2><p>Actions required before the paid pilot</p></div></div><div className="check-list"><label><input type="checkbox" defaultChecked /><span><strong>Reference hardware selected</strong><small>Two identical Android TV boxes registered</small></span></label><label><input type="checkbox" defaultChecked /><span><strong>Credit policy versioned</strong><small>PILOT-1.0 active since Aug 7</small></span></label><label><input type="checkbox" /><span><strong>Database restore rehearsal</strong><small>Schedule before external pilot onboarding</small></span></label><label><input type="checkbox" /><span><strong>72-hour endurance test</strong><small>Player test currently at 41 hours</small></span></label></div></article><article className="panel"><div className="panel-header"><div><h2>Policy snapshot</h2><p>Rules applied to new manifests and settlements</p></div></div><dl className="policy-list"><div><dt>Credit unit</dt><dd>1 credit / verified minute</dd></div><div><dt>Completion threshold</dt><dd>≥ 97%</dd></div><div><dt>Heartbeat interval</dt><dd>45 seconds</dd></div><div><dt>Offline earning limit</dt><dd>6 hours</dd></div><div><dt>Host share</dt><dd>100% · membership model</dd></div></dl><button className="button button-secondary full-button"><ListChecks size={17} /> View policy history</button></article></section><div className="admin-warning"><CircleAlert size={19} /><div><strong>Separation of duties is required</strong><p>Support operators cannot create playback evidence or issue unrestricted wallet credits. Every adjustment needs a reason and audit record.</p></div></div></>;
+  const organizationData = workspace.permissions.canProvisionOrganizations
+    ? await getOrganizationAdminData()
+    : null;
+
+  return (
+    <>
+      <PageHeading
+        eyebrow="Network operations"
+        title="Admin control"
+        description="Provision organizations, moderate content, and protect the pilot network."
+        actions={<button className="button button-primary"><Settings2 size={17} /> Policy settings</button>}
+      />
+
+      {organizationData ? <OrganizationManagement data={organizationData} /> : null}
+
+      <section className="admin-hero">
+        <div><span className="admin-live"><i /> Network operational</span><h2>Core services are ready for integration</h2><p>Policy version PILOT-1.0 · Administrator actions are audited</p></div>
+        <div className="service-grid"><div><Activity size={17} /><span>Portal access<strong>Protected</strong></span></div><div><Scale size={17} /><span>Ledger controls<strong>Prepared</strong></span></div><div><BadgeCheck size={17} /><span>Tenant isolation<strong>Enforced</strong></span></div></div>
+      </section>
+
+      <section className="queue-grid">{queues.map(({ title, count, detail, icon: Icon, tone }) => <article className="queue-card" key={title}><span className={`queue-icon queue-${tone}`}><Icon size={21} /></span><div><p>{title}</p><strong>{count}</strong><small>{detail}</small></div><button className="text-button">Open queue</button></article>)}</section>
+
+      <section className="admin-grid">
+        <article className="panel"><div className="panel-header"><div><h2>Operational checklist</h2><p>Actions required before the paid pilot</p></div></div><div className="check-list"><label><input type="checkbox" defaultChecked /><span><strong>Administrator-managed onboarding</strong><small>Organizations can only be provisioned from this control center</small></span></label><label><input type="checkbox" defaultChecked /><span><strong>Credit policy versioned</strong><small>PILOT-1.0 is stored as an immutable policy record</small></span></label><label><input type="checkbox" /><span><strong>Database restore rehearsal</strong><small>Schedule before external pilot onboarding</small></span></label><label><input type="checkbox" /><span><strong>72-hour endurance test</strong><small>Required after the TV player is operational</small></span></label></div></article>
+        <article className="panel"><div className="panel-header"><div><h2>Policy snapshot</h2><p>Rules applied to new manifests and settlements</p></div></div><dl className="policy-list"><div><dt>Credit unit</dt><dd>1 credit / verified minute</dd></div><div><dt>Completion threshold</dt><dd>≥ 97%</dd></div><div><dt>Heartbeat interval</dt><dd>45 seconds</dd></div><div><dt>Offline earning limit</dt><dd>6 hours</dd></div><div><dt>Host share</dt><dd>100% · membership model</dd></div></dl><button className="button button-secondary full-button"><ListChecks size={17} /> View policy history</button></article>
+      </section>
+
+      <div className="admin-warning"><CircleAlert size={19} /><div><strong>Separation of duties is required</strong><p>Business owners cannot create organizations. Support operators cannot issue unrestricted wallet credits, and every privileged change is recorded.</p></div></div>
+    </>
+  );
 }

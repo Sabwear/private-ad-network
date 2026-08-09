@@ -10,8 +10,8 @@ import { hasSupabaseEnv } from "@/lib/supabase/config";
 export type AuthActionState = {
   status: "idle" | "error" | "success";
   message: string;
-  fieldErrors?: Partial<Record<"name" | "business" | "email" | "password" | "passwordConfirm" | "terms", string>>;
-  values?: { name?: string; business?: string; email?: string };
+  fieldErrors?: Partial<Record<"name" | "email" | "password" | "passwordConfirm" | "terms", string>>;
+  values?: { name?: string; email?: string };
 };
 
 const email = z.string().trim().max(254).email("Enter a valid email address.");
@@ -19,7 +19,6 @@ const password = z.string().min(12, "Use at least 12 characters.").max(128, "Use
 const signInSchema = z.object({ email, password: z.string().min(1, "Enter your password.").max(128), next: z.string().max(2048) });
 const signUpSchema = z.object({
   name: z.string().trim().min(2, "Enter your full name.").max(100),
-  business: z.string().trim().min(2, "Enter your business name.").max(120),
   email,
   password,
   passwordConfirm: z.string(),
@@ -41,7 +40,7 @@ function stringField(formData: FormData, key: string) {
 
 function errorsFrom(error: z.ZodError) {
   const result: NonNullable<AuthActionState["fieldErrors"]> = {};
-  const supportedFields = new Set(["name", "business", "email", "password", "passwordConfirm", "terms"]);
+  const supportedFields = new Set(["name", "email", "password", "passwordConfirm", "terms"]);
   for (const issue of error.issues) {
     const field = issue.path[0];
     if (typeof field === "string" && supportedFields.has(field) && !result[field as keyof typeof result]) {
@@ -86,7 +85,6 @@ export async function signIn(_previousState: AuthActionState, formData: FormData
 export async function signUp(_previousState: AuthActionState, formData: FormData): Promise<AuthActionState> {
   const values = {
     name: stringField(formData, "name").trim(),
-    business: stringField(formData, "business").trim(),
     email: stringField(formData, "email").trim(),
   };
   if (stringField(formData, "website")) {
@@ -115,7 +113,7 @@ export async function signUp(_previousState: AuthActionState, formData: FormData
     password: parsed.data.password,
     options: {
       emailRedirectTo: `${origin}/auth/callback?next=/overview`,
-      data: { full_name: parsed.data.name, organization_name: parsed.data.business },
+      data: { full_name: parsed.data.name },
     },
   });
 

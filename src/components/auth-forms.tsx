@@ -87,16 +87,13 @@ export function SignUpForm({ configured }: { configured: boolean }) {
   return (
     <form className="auth-form auth-form-wide" action={formAction} noValidate>
       <AuthServiceStatus configured={configured} />
-      <header><p className="eyebrow">Pilot access</p><h2>Create your account</h2><p>Start your secure business workspace application.</p></header>
+      <header><p className="eyebrow">Pilot access</p><h2>Create your account</h2><p>After email verification, an administrator will assign your approved business workspace.</p></header>
       <FormMessage state={state} />
       {state.status === "success" ? (
         <div className="auth-success-panel"><MailCheck size={34} /><h3>Confirmation email sent</h3><p>Open the link in your inbox, then return here to sign in.</p><Link className="button button-secondary" href="/login">Back to sign in</Link></div>
       ) : (
         <>
-          <div className="auth-field-grid">
-            <label htmlFor="name"><span>Full name</span><input id="name" name="name" autoComplete="name" maxLength={100} defaultValue={state.values?.name} required aria-invalid={Boolean(state.fieldErrors?.name)} /><FieldError message={state.fieldErrors?.name} /></label>
-            <label htmlFor="business"><span>Business name</span><input id="business" name="business" autoComplete="organization" maxLength={120} defaultValue={state.values?.business} required aria-invalid={Boolean(state.fieldErrors?.business)} /><FieldError message={state.fieldErrors?.business} /></label>
-          </div>
+          <label htmlFor="name"><span>Full name</span><input id="name" name="name" autoComplete="name" maxLength={100} defaultValue={state.values?.name} required aria-invalid={Boolean(state.fieldErrors?.name)} /><FieldError message={state.fieldErrors?.name} /></label>
           <label htmlFor="email"><span>Business email</span><input id="email" name="email" type="email" autoComplete="email" placeholder="you@business.com" maxLength={254} defaultValue={state.values?.email} required aria-invalid={Boolean(state.fieldErrors?.email)} /><FieldError message={state.fieldErrors?.email} /></label>
           <PasswordField name="password" label="Create password" autoComplete="new-password" error={state.fieldErrors?.password} hint="Use at least 12 characters. A password manager is recommended." />
           <PasswordField name="passwordConfirm" label="Confirm password" autoComplete="new-password" error={state.fieldErrors?.passwordConfirm} />

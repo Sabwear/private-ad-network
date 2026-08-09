@@ -10,6 +10,16 @@ type Table<Row, Insert = Partial<Row>, Update = Partial<Insert>> = {
 export type Database = {
   public: {
     Tables: {
+      profiles: Table<{
+        id: string;
+        email: string;
+        full_name: string | null;
+        email_verified_at: string | null;
+        account_status: string;
+        platform_role: string;
+        created_at: string;
+        updated_at: string;
+      }>;
       organizations: Table<{
         id: number;
         public_id: string;
@@ -117,9 +127,45 @@ export type Database = {
         superseded_at: string | null;
         created_at: string;
       }>;
+      audit_logs: Table<{
+        id: number;
+        organization_id: number | null;
+        actor_user_id: string | null;
+        action: string;
+        object_type: string;
+        object_id: string;
+        reason: string | null;
+        before_summary: Json | null;
+        after_summary: Json | null;
+        request_context: Json;
+        created_at: string;
+      }>;
     };
     Views: Record<string, never>;
-    Functions: Record<string, never>;
+    Functions: {
+      admin_create_organization: {
+        Args: {
+          p_display_name: string;
+          p_legal_name: string;
+          p_category: string;
+          p_owner_user_id: string;
+          p_reason: string;
+        };
+        Returns: number;
+      };
+      create_location: {
+        Args: {
+          p_organization_id: number;
+          p_name: string;
+          p_address: string;
+          p_zone: string;
+          p_category: string;
+          p_traffic_band: string;
+          p_operating_hours: Json;
+        };
+        Returns: number;
+      };
+    };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;
   };

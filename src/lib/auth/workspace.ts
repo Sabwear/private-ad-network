@@ -16,11 +16,13 @@ export type WorkspaceRole =
 export type WorkspaceContext = {
   mode: "active" | "setup";
   user: { email: string; initials: string };
-  organization: { name: string; publicId: string | null; status: string };
+  organization: { id: number | null; name: string; publicId: string | null; status: string };
   membership: { role: WorkspaceRole; label: string };
   permissions: {
     canAccessAdmin: boolean;
+    canProvisionOrganizations: boolean;
     canManageOrganization: boolean;
+    canManageLocations: boolean;
     canManageFinance: boolean;
   };
   notice: string | null;
@@ -44,7 +46,9 @@ function initials(value: string) {
 function permissionsFor(role: WorkspaceRole) {
   return {
     canAccessAdmin: ["moderator", "operations", "finance", "admin"].includes(role),
+    canProvisionOrganizations: role === "admin",
     canManageOrganization: ["owner", "admin"].includes(role),
+    canManageLocations: ["owner", "staff", "admin"].includes(role),
     canManageFinance: ["owner", "finance", "admin"].includes(role),
   };
 }
@@ -53,11 +57,13 @@ function setupWorkspace(email: string, notice: string): WorkspaceContext {
   return {
     mode: "setup",
     user: { email, initials: initials(email) },
-    organization: { name: "Workspace setup", publicId: null, status: "pending" },
+    organization: { id: null, name: "Workspace setup", publicId: null, status: "pending" },
     membership: { role: "staff", label: "Pending onboarding" },
     permissions: {
       canAccessAdmin: false,
+      canProvisionOrganizations: false,
       canManageOrganization: false,
+      canManageLocations: false,
       canManageFinance: false,
     },
     notice,
@@ -74,6 +80,23 @@ export const getWorkspaceContext = cache(async (): Promise<WorkspaceContext> => 
   if (claimsError || !claims?.sub) redirect("/login");
 
   const email = typeof claims.email === "string" ? claims.email : "Signed-in account";
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("platform_role,account_status")
+    .eq("id", claims.sub)
+    .maybeSingle();
+
+  if (profile?.platform_role === "admin" && profile.account_status === "active") {
+    return {
+      mode: "active",
+      user: { email, initials: initials(email) },
+      organization: { id: null, name: "Network administration", publicId: null, status: "active" },
+      membership: { role: "admin", label: roleLabels.admin },
+      permissions: permissionsFor("admin"),
+      notice: null,
+    };
+  }
+
   const { data: membership, error: membershipError } = await supabase
     .from("organization_memberships")
     .select("organization_id,role,status")
@@ -93,7 +116,7 @@ export const getWorkspaceContext = cache(async (): Promise<WorkspaceContext> => 
   if (!membership) {
     return setupWorkspace(
       email,
-      "Your account is authenticated but has not been assigned to an approved organization.",
+      "Your account is ready. A network administrator must create your business organization and assign you as its owner.",
     );
   }
 
@@ -112,6 +135,7 @@ export const getWorkspaceContext = cache(async (): Promise<WorkspaceContext> => 
     mode: "active",
     user: { email, initials: initials(email) },
     organization: {
+      id: membership.organization_id,
       name: organization.display_name,
       publicId: organization.public_id,
       status: organization.status,
