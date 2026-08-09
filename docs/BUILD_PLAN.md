@@ -13,6 +13,7 @@ Outcome: shared language, working defaults, architecture, and a navigable centra
 - [x] Create architecture, data, API, security, testing, and pilot documents
 - [x] Build responsive central portal shell
 - [x] Prototype business and admin workflows with typed domain data
+- [x] Add a dedicated administrator-only Business workspace and align navigation to the operating flow
 - [ ] Confirm working product name and pilot city
 - [ ] Purchase two identical Android TV reference boxes
 - [ ] Review credit and advertising terms with local counsel/accountant

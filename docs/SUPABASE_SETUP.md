@@ -46,7 +46,7 @@ Do not include the seed file when pushing to production. It intentionally contai
 
 ## Bootstrap the first platform administrator
 
-The first administrator is the only manual SQL bootstrap. After that, organizations and owners are provisioned from Admin control with audit records.
+The first administrator is the only manual SQL bootstrap. After that, organizations and owners are provisioned from the dedicated Business workspace with audit records.
 
 1. Create and verify the administrator account through the application.
 2. Apply all database migrations.
@@ -58,7 +58,7 @@ set platform_role = 'admin', account_status = 'active'
 where lower(email) = lower('ADMIN_EMAIL');
 ```
 
-Sign out and sign back in. The administrator can then select verified pending accounts in Admin control, create organizations, and assign their owners. Business users cannot perform this operation.
+Sign out and sign back in. The administrator can then select verified pending accounts in Business, create organizations, and assign their owners. Business users cannot perform this operation.
 
 ## Authentication configuration
 

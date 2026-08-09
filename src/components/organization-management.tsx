@@ -7,7 +7,7 @@ import {
   type OrganizationActionState,
   type OrganizationUpdateActionState,
   updateOrganization,
-} from "@/app/(platform)/admin/actions";
+} from "@/app/(platform)/business/actions";
 import { StatusPill } from "@/components/status-pill";
 import { businessCategories } from "@/lib/domain-options";
 import type { OrganizationAdminData, OrganizationAdminRow } from "@/lib/repositories/organizations";
@@ -53,7 +53,7 @@ export function OrganizationManagement({ data }: { data: OrganizationAdminData }
   const hasPendingAccounts = data.pendingAccounts.length > 0;
 
   return (
-    <section className="management-section" aria-labelledby="organization-management-title">
+    <section className="management-section" id="business-onboarding" aria-labelledby="organization-management-title">
       <div className="section-heading">
         <div><p className="eyebrow">Controlled onboarding</p><h2 id="organization-management-title">Business organizations</h2><p>Only platform administrators can create a tenant and activate its first owner.</p></div>
         <span className="management-count"><Building2 size={16} /> {data.organizations.length} organizations</span>

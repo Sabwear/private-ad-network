@@ -2,19 +2,18 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bell, ChevronDown, CircleHelp, Clapperboard, Gauge, LayoutDashboard, LogOut, Mail, MapPinned, Menu, MonitorPlay, Orbit, ReceiptText, Search, Settings, ShieldCheck, WalletCards, X } from "lucide-react";
+import { Bell, Building2, ChevronDown, CircleHelp, Clapperboard, Gauge, LayoutDashboard, LogOut, Mail, MapPinned, Menu, MonitorPlay, Orbit, ReceiptText, Search, Settings, ShieldCheck, WalletCards, X } from "lucide-react";
 import { useState } from "react";
 import { Brand } from "@/components/brand";
 import type { WorkspaceContext } from "@/lib/auth/workspace";
 
-const nav = [
-  { href: "/overview", label: "Overview", icon: LayoutDashboard },
-  { href: "/campaigns", label: "Campaigns", icon: Gauge },
+const flowNav = [
   { href: "/locations", label: "Locations", icon: MapPinned },
   { href: "/screens", label: "Screens", icon: MonitorPlay },
   { href: "/media", label: "Media", icon: Clapperboard },
-  { href: "/wallet", label: "Wallet", icon: WalletCards },
+  { href: "/campaigns", label: "Campaigns", icon: Gauge },
   { href: "/proof", label: "Proof of play", icon: ShieldCheck },
+  { href: "/wallet", label: "Wallet", icon: WalletCards },
 ] as const;
 
 export function AppShell({ children, workspace, signOutAction }: { children: React.ReactNode; workspace: WorkspaceContext; signOutAction: () => Promise<void> }) {
@@ -28,7 +27,9 @@ export function AppShell({ children, workspace, signOutAction }: { children: Rea
         <div className="sidebar-top"><Brand /><button className="icon-button sidebar-close" onClick={() => setOpen(false)} aria-label="Close navigation"><X size={20} /></button></div>
         <nav className="primary-nav" aria-label="Primary navigation">
           <span className="nav-label">Workspace</span>
-          {nav.map(({ href, label, icon: Icon }) => <Link key={href} href={href} className={pathname === href ? "nav-link active" : "nav-link"} onClick={() => setOpen(false)}><Icon size={19} strokeWidth={1.9} /><span>{label}</span></Link>)}
+          <Link href="/overview" className={pathname === "/overview" ? "nav-link active" : "nav-link"} onClick={() => setOpen(false)}><LayoutDashboard size={19} strokeWidth={1.9} /><span>Overview</span></Link>
+          {workspace.permissions.canProvisionOrganizations ? <Link href="/business" className={pathname === "/business" ? "nav-link active" : "nav-link"} onClick={() => setOpen(false)}><Building2 size={19} strokeWidth={1.9} /><span>Business</span></Link> : null}
+          {flowNav.map(({ href, label, icon: Icon }) => <Link key={href} href={href} className={pathname === href ? "nav-link active" : "nav-link"} onClick={() => setOpen(false)}><Icon size={19} strokeWidth={1.9} /><span>{label}</span></Link>)}
           <span className="nav-label nav-label-spaced">Operations</span>
           {workspace.permissions.canAccessAdmin ? <Link href="/admin" className={pathname === "/admin" ? "nav-link active" : "nav-link"} onClick={() => setOpen(false)}><Settings size={19} strokeWidth={1.9} /><span>Admin control</span></Link> : null}
           <Link href="#" className="nav-link"><ReceiptText size={19} strokeWidth={1.9} /><span>Reports</span><span className="nav-badge">Soon</span></Link>
@@ -43,7 +44,7 @@ export function AppShell({ children, workspace, signOutAction }: { children: Rea
       <div className="workspace">
         <header className="topbar">
           <button className="icon-button menu-button" onClick={() => setOpen(true)} aria-label="Open navigation"><Menu size={21} /></button>
-          <div className="search-box"><Search size={18} /><input aria-label="Search" placeholder="Search campaigns, screens, playbacks..." /></div>
+          <div className="search-box"><Search size={18} /><input aria-label="Search" placeholder="Search businesses, locations, screens..." /></div>
           <div className="topbar-actions"><button className="icon-button" aria-label="Help"><CircleHelp size={19} /></button><button className="icon-button notification-button" aria-label="Notifications"><Bell size={19} /><span /></button><span className={`environment-pill environment-${workspace.mode}`}><span /> {environmentLabel}</span></div>
         </header>
         <main className="main-content">{workspace.notice ? <div className={`workspace-notice notice-${workspace.mode}`}><ShieldCheck size={17} /><span>{workspace.notice}</span></div> : null}{children}</main>

@@ -93,7 +93,7 @@ export async function createOrganization(
     };
   }
 
-  revalidatePath("/admin");
+  revalidatePath("/business");
   revalidatePath("/locations");
   return { status: "success", message: "Organization created and owner access activated." };
 }
@@ -146,7 +146,7 @@ export async function updateOrganization(
     };
   }
 
-  revalidatePath("/admin");
+  revalidatePath("/business");
   revalidatePath("/locations");
   return { status: "success", message: "Organization details and access status updated." };
 }
