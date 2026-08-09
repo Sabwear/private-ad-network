@@ -26,7 +26,15 @@
 
 ### device_activation_codes
 
-Hashed code, expiry, claimed-by device, intended location, attempt count
+Private table containing the hashed short-lived code, hashed provisional credential, device public key, requester network context, expiry, claim state, and claimed device. Raw codes and credentials are never stored.
+
+### device_credentials
+
+Private table containing a per-device credential hash, issue/use/revocation timestamps, and credential state. Device suspension immediately revokes active credentials.
+
+### device_observations
+
+Tenant-scoped operational observations recorded at heartbeat time: server-derived IP address and network edge, user agent, detected device/browser/OS type, locale, timezone, display capabilities, connection hints, app version, and observation timestamp. This data is for security, support, and playback reliability; it does not contain audience identity, camera, or microphone data.
 
 ### device_commands
 

@@ -1,12 +1,20 @@
 # API Contract
 
-Base path: `/v1`. Device-facing mutations require an idempotency key and authenticated device identity. Portal actions require an authenticated user and organization role.
+Implemented web-player endpoints use base path `/api/v1`. Future native-player endpoints may move behind a dedicated `/v1` gateway. Portal actions require an authenticated user and organization role.
 
 ## Device activation and health
 
-### `POST /v1/devices/activate`
+### `POST /api/v1/devices/activation/request`
 
-Exchanges a short-lived pairing code, public key, app/device metadata, and capabilities for device identity and initial configuration.
+Creates a 10-minute pairing session from a device-generated public key and operational capabilities. Returns the pairing code and provisional credential once. The server stores only their SHA-256 hashes and derives the requester IP from trusted request headers.
+
+### `POST /api/v1/devices/activation/status`
+
+Polls the activation state using the activation ID and provisional credential. A successful claim returns the assigned public device ID and heartbeat interval.
+
+### Portal action: claim pairing code
+
+An authenticated platform administrator or authorized organization operator assigns the code to an active location. The operation creates the device, binds its public key, activates its credential, and writes an audit record atomically.
 
 ### `POST /v1/devices/token/refresh`
 
@@ -16,9 +24,9 @@ Rotates the device access token. Refresh credentials are revocable per device.
 
 Returns the latest signed manifest or `304 Not Modified`. Includes validity, policy, ordered assignments, hashes, nonces, fallback asset, and minimum app version.
 
-### `POST /v1/devices/{deviceId}/heartbeat`
+### `POST /api/v1/devices/heartbeat`
 
-Reports current asset, playback position, foreground/display state, app version, storage, network, and last event sequence.
+Authenticates with the per-device bearer credential and reports app, runtime, display, locale, timezone, and network capabilities. The server records the observed IP, country, and edge separately so a client cannot self-assert them.
 
 ## Playback
 

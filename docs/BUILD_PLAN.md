@@ -33,7 +33,8 @@ Outcome: real users, organizations, locations, and devices stored in PostgreSQL.
 - [x] Add administrator organization editing and suspension
 - [x] Add location editing, suspension, and category exclusions
 - [ ] Add staff invitations and membership management
-- [ ] Implement device activation codes, key registration, refresh tokens, and suspension
+- [x] Implement short-lived device activation codes, key registration, hashed credentials, heartbeat telemetry, and suspension
+- [ ] Add automatic device credential rotation and refresh credentials
 - [ ] Replace remaining demonstration portal data with server-side repository queries
 - [x] Record privileged organization and location actions in the database audit log
 - [ ] Add an administrator audit-log viewer

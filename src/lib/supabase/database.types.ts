@@ -73,6 +73,26 @@ export type Database = {
         created_at: string;
         updated_at: string;
       }>;
+      device_observations: Table<{
+        id: number;
+        device_id: number;
+        organization_id: number;
+        observed_ip: string | null;
+        user_agent: string | null;
+        device_type: string | null;
+        os_name: string | null;
+        browser_name: string | null;
+        locale: string | null;
+        timezone: string | null;
+        screen_width: number | null;
+        screen_height: number | null;
+        device_pixel_ratio: number | null;
+        connection_type: string | null;
+        country_code: string | null;
+        edge_colo: string | null;
+        client_info: Json;
+        observed_at: string;
+      }>;
       media_assets: Table<{
         id: number;
         public_id: string;
@@ -191,6 +211,44 @@ export type Database = {
           p_status: string;
           p_reason: string;
         };
+        Returns: undefined;
+      };
+      request_device_activation: {
+        Args: {
+          p_code: string;
+          p_credential_token: string;
+          p_public_key_jwk: Json;
+          p_key_fingerprint: string;
+          p_device_info: Json;
+          p_ip: string;
+          p_user_agent: string;
+          p_country_code: string;
+          p_edge_colo: string;
+        };
+        Returns: Array<{ activation_id: string; expires_at: string }>;
+      };
+      device_activation_status: {
+        Args: { p_activation_id: string; p_credential_token: string };
+        Returns: Array<{ status: string; device_public_id: string | null; heartbeat_interval_seconds: number }>;
+      };
+      claim_device_activation: {
+        Args: { p_code: string; p_location_id: number; p_name: string; p_reason: string };
+        Returns: string;
+      };
+      record_device_heartbeat: {
+        Args: {
+          p_device_public_id: string;
+          p_credential_token: string;
+          p_client_info: Json;
+          p_ip: string;
+          p_user_agent: string;
+          p_country_code: string;
+          p_edge_colo: string;
+        };
+        Returns: string;
+      };
+      suspend_device: {
+        Args: { p_device_public_id: string; p_reason: string };
         Returns: undefined;
       };
     };

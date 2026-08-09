@@ -15,6 +15,11 @@ The TV device and venue network are untrusted environments. A device event is ev
 
 ## Device controls
 
+- Ten-minute, single-use pairing codes are stored only as hashes
+- Device credentials are generated with cryptographic randomness, stored only as hashes, and revoked on suspension
+- The web-player simulator creates a P-256 key pair and stores the private key as a non-extractable browser credential
+- Pairing claims require an active location and an authorized administrator, owner, staff, or operations role
+- Heartbeats accept only active device credentials; the server derives IP/country/edge context from the request
 - Per-device asymmetric key in Android Keystore
 - Short-lived access token and independently revocable refresh credential
 - Signed manifest covering assignments, validity, policy, hashes, and nonces
@@ -63,11 +68,14 @@ No single weak hardware signal should automatically accuse a venue of fraud. Sto
 ## Privacy
 
 - Collect operational device telemetry, not audience identities
+- Operational telemetry currently includes server-observed IP, device/browser/OS type, locale, timezone, screen capabilities, connection hints, app version, and heartbeat time
+- Exact IP observations are visible only to authorized tenant users and platform administrators under RLS
 - No cameras, microphones, facial recognition, or demographic inference in MVP
 - Use registered venue/zone rather than continuous personal geolocation
 - Limit raw evidence retention to settlement, fraud, and dispute needs
 - Aggregate or delete expired detailed telemetry under a documented policy
 - Provide a clear device data notice to participating businesses
+- Define and automate a raw IP/device-observation retention window before the external pilot; the recommended starting point is 30 days unless legal or incident requirements demand less or more
 
 ## Minimum incident playbooks
 

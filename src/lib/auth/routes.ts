@@ -1,5 +1,6 @@
 const authEntryRoutes = new Set(["/login", "/signup", "/forgot-password"]);
 const publicRoutes = new Set([...authEntryRoutes, "/auth/callback"]);
+const publicRoutePrefixes = ["/api/v1/devices/activation/", "/api/v1/devices/heartbeat", "/device/setup"];
 
 function normalizedPathname(pathname: string) {
   return pathname.length > 1 && pathname.endsWith("/")
@@ -12,5 +13,8 @@ export function isAuthEntryRoute(pathname: string) {
 }
 
 export function isPublicRoute(pathname: string) {
-  return publicRoutes.has(normalizedPathname(pathname));
+  const normalized = normalizedPathname(pathname);
+  return publicRoutes.has(normalized) || publicRoutePrefixes.some((prefix) => (
+    prefix.endsWith("/") ? normalized.startsWith(prefix) : normalized === prefix || normalized.startsWith(`${prefix}/`)
+  ));
 }
