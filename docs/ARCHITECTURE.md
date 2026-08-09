@@ -4,6 +4,8 @@
 
 Use a modular monolith for the API and business logic, plus a separate media-processing worker. Keep modules isolated by explicit service/repository boundaries so they can be extracted later if scale or ownership warrants it.
 
+The pilot uses private managed object storage through `src/lib/storage/media-storage.ts`. Database records store provider-neutral object paths, and the portal requests short-lived read URLs through this adapter. Large files upload directly from the authenticated browser, so changing storage providers later is isolated from the media domain and does not require routing video bytes through the central Worker.
+
 ## Runtime components
 
 ```text

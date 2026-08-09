@@ -24,6 +24,8 @@ export type WorkspaceContext = {
     canManageOrganization: boolean;
     canManageLocations: boolean;
     canManageDevices: boolean;
+    canUploadMedia: boolean;
+    canModerateMedia: boolean;
     canManageFinance: boolean;
   };
   notice: string | null;
@@ -52,6 +54,8 @@ function permissionsFor(role: WorkspaceRole, organizationIsActive = true) {
       canManageOrganization: true,
       canManageLocations: true,
       canManageDevices: true,
+      canUploadMedia: false,
+      canModerateMedia: true,
       canManageFinance: true,
     };
   }
@@ -62,6 +66,8 @@ function permissionsFor(role: WorkspaceRole, organizationIsActive = true) {
     canManageOrganization: organizationIsActive && role === "owner",
     canManageLocations: organizationIsActive && ["owner", "staff"].includes(role),
     canManageDevices: organizationIsActive && ["owner", "staff", "operations"].includes(role),
+    canUploadMedia: organizationIsActive && ["owner", "staff"].includes(role),
+    canModerateMedia: false,
     canManageFinance: organizationIsActive && ["owner", "finance"].includes(role),
   };
 }
@@ -78,6 +84,8 @@ function setupWorkspace(email: string, notice: string): WorkspaceContext {
       canManageOrganization: false,
       canManageLocations: false,
       canManageDevices: false,
+      canUploadMedia: false,
+      canModerateMedia: false,
       canManageFinance: false,
     },
     notice,

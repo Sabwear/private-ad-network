@@ -106,9 +106,16 @@ export type Database = {
         height: number | null;
         codec: string | null;
         checksum_sha256: string | null;
+        original_filename: string | null;
+        mime_type: string | null;
+        file_size_bytes: number | null;
+        technical_metadata: Json;
         moderation_status: string;
         rights_declared_at: string | null;
         rejection_reason: string | null;
+        submitted_at: string | null;
+        moderated_at: string | null;
+        moderated_by: string | null;
         created_by: string | null;
         created_at: string;
         updated_at: string;
@@ -249,6 +256,32 @@ export type Database = {
       };
       suspend_device: {
         Args: { p_device_public_id: string; p_reason: string };
+        Returns: undefined;
+      };
+      create_media_upload: {
+        Args: {
+          p_organization_id: number;
+          p_name: string;
+          p_original_filename: string;
+          p_mime_type: string;
+          p_file_size_bytes: number;
+        };
+        Returns: Array<{ asset_public_id: string; storage_path: string }>;
+      };
+      submit_media_upload: {
+        Args: {
+          p_asset_public_id: string;
+          p_duration_ms: number;
+          p_width: number;
+          p_height: number;
+          p_codec: string;
+          p_checksum_sha256: string;
+          p_technical_metadata: Json;
+        };
+        Returns: undefined;
+      };
+      moderate_media_asset: {
+        Args: { p_asset_public_id: string; p_decision: string; p_reason: string };
         Returns: undefined;
       };
     };

@@ -46,9 +46,13 @@ Acceptance: an administrator can create an organization and assign its owner; th
 
 Outcome: one approved file is delivered and played locally on a reference device.
 
-- Create direct object-storage upload flow
+- [x] Create tenant-scoped direct upload flow to a private object-storage bucket
+- [x] Add browser playback preflight, duration/dimension rules, and SHA-256 integrity checksum
+- [x] Add rights declaration, submission, administrator moderation, rejection reasons, and audit records
+- [x] Keep storage-specific reads behind a replaceable media storage adapter
 - Add FFmpeg worker for validation, normalization, checksum, and thumbnail
-- Implement moderator queue and rights declaration
+- [x] Add resumable, retryable uploads with progress for pilot media files
+- Implement a dedicated non-admin moderator role and queue
 - Create Android TV project using Kotlin, Compose for TV, Media3, Room, and OkHttp
 - Implement activation, manifest fetch, asset download, checksum, cache, and fallback media
 - Implement boot recovery, foreground playback, and protected maintenance exit

@@ -63,8 +63,10 @@ Required event fields:
 
 ## Portal
 
-- `POST /v1/media/upload-url`
-- `POST /v1/media/{id}/submit`
+- Media preparation is currently an authenticated server action that creates a draft asset and returns its tenant-scoped storage path.
+- The browser uploads the MP4 directly to private object storage, avoiding Cloudflare Worker request-size and memory pressure.
+- Media submission is a second authenticated action that verifies the object exists, records browser preflight metadata and checksum, accepts the rights declaration, and moves the asset to `in_review`.
+- Platform moderation records `approved` or `rejected`, requires a reason, and writes an audit record. Direct client updates to moderation state are denied.
 - `POST /v1/campaigns`
 - `POST /v1/campaigns/{id}/pause`
 - `POST /v1/campaigns/{id}/resume`

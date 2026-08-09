@@ -247,3 +247,33 @@ td strong, td small { display: block; }td strong { color: var(--ink); font-size:
 
 @media (max-width: 900px) { .screen-pairing-grid { grid-template-columns: 1fr; } }
 @media (max-width: 600px) { .device-inspector-panel { inset: 72px 12px auto 12px; width: auto; max-height: calc(100vh - 88px); }.device-facts,.device-diagnostics { grid-template-columns: 1fr; }.device-fact-wide { grid-column: auto; }.device-setup-page { padding: 14px; }.device-setup-status { padding: 34px 18px 28px; }.pairing-code { letter-spacing: .15em; } }
+
+/* Private media upload and moderation workflow. */
+.media-upload-wrap { margin-bottom: 18px; scroll-margin-top: 90px; }
+.media-upload-form { overflow: hidden; }
+.media-upload-form .panel-header > svg { color: var(--teal); }
+.media-upload-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 0 14px; padding: 0 18px 18px; }
+.media-upload-fields > label:not(.media-rights) { display: grid; gap: 7px; margin-top: 14px; color: #526970; font-size: 9px; font-weight: 750; }
+.media-upload-fields input[type="text"],.media-upload-fields input:not([type]) { width: 100%; min-height: 42px; padding: 9px 11px; border: 1px solid var(--line); border-radius: 8px; outline: 0; color: var(--ink); font: inherit; font-size: 10px; }
+.media-upload-fields input:focus { border-color: #67bdb4; box-shadow: 0 0 0 3px rgba(11,137,124,.1); }
+.media-file-field input { padding: 8px; border: 1px dashed #accfc9; border-radius: 8px; background: #f5faf9; color: #627b80; font-size: 9px; }
+.media-file-field input::file-selector-button { margin-right: 10px; padding: 7px 9px; border: 0; border-radius: 6px; background: #dff2ee; color: var(--teal); font-size: 8px; font-weight: 800; cursor: pointer; }
+.media-file-field small { color: #839599; font-size: 8px; font-weight: 500; line-height: 1.45; }
+.media-rights { grid-column: 1 / -1; display: flex; align-items: flex-start; gap: 9px; margin-top: 15px; color: #5d7379; font-size: 9px; font-weight: 650; line-height: 1.55; }
+.media-rights input { flex: 0 0 auto; width: 15px; height: 15px; margin-top: 2px; accent-color: var(--teal); }
+.media-upload-fields > .auth-message { grid-column: 1 / -1; }
+.media-upload-progress { position: relative; grid-column: 1 / -1; height: 12px; margin-top: 13px; overflow: hidden; border-radius: 8px; background: #e5efed; }
+.media-upload-progress > span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg,var(--teal),#43c7b7); transition: width .2s ease; }
+.media-upload-progress > small { position: absolute; inset: 0; display: grid; place-items: center; color: #174b4b; font-size: 7px; font-weight: 900; }
+.media-upload-fields > .button { grid-column: 1 / -1; margin-top: 16px; }
+.preview-teal { background: linear-gradient(135deg,#164754,#2db7a8); }.preview-orange { background: linear-gradient(135deg,#43382c,#db8c4e); }
+.media-video { width: 100%; height: 100%; object-fit: contain; background: #071d25; }
+.media-preview-placeholder { z-index: 1; display: grid; place-items: center; width: 43px; height: 43px; border: 1px solid rgba(255,255,255,.3); border-radius: 50%; background: rgba(13,38,48,.56); color: #fff; }
+.media-body dl div { gap: 14px; }.media-body dd { max-width: 68%; overflow-wrap: anywhere; text-align: right; }
+.media-rejection { margin-top: 12px; padding: 10px; border: 1px solid #f0d2ce; border-radius: 8px; background: #fff2ef; color: #9d514a; font-size: 8px; line-height: 1.55; }
+.media-moderation-form { margin-top: 13px; padding-top: 13px; border-top: 1px solid var(--soft-line); }
+.media-moderation-form > label { display: grid; gap: 6px; color: #526970; font-size: 9px; font-weight: 750; }
+.media-moderation-form textarea { width: 100%; padding: 9px 10px; border: 1px solid var(--line); border-radius: 8px; outline: 0; color: var(--ink); font: inherit; font-size: 9px; resize: vertical; }
+.media-moderation-form > div:last-child { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }.media-moderation-form .button { width: 100%; }
+
+@media (max-width: 700px) { .media-upload-fields { grid-template-columns: 1fr; }.media-rights,.media-upload-fields > .auth-message,.media-upload-progress,.media-upload-fields > .button { grid-column: auto; } }

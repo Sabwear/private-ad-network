@@ -10,6 +10,7 @@
 - A second migration adds profiles, platform administrators, audited organization provisioning, and location creation
 - A third migration adds audited organization/location editing, suspension controls, and location category exclusions
 - A fourth migration adds private hashed device activation/credential storage, tenant-scoped operational observations, secure pairing, heartbeats, and revocation
+- A fifth migration hardens the private media bucket and adds controlled upload preparation, submission, integrity metadata, administrator moderation, and audit records
 - Every public application table has RLS enabled
 - Data API privileges are explicit; the anonymous role receives no table access
 - Private media storage has tenant-aware select/insert/update policies

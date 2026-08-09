@@ -54,6 +54,10 @@ No single weak hardware signal should automatically accuse a venue of fraud. Sto
 - CSRF-safe mutations, validation, encoding, secure cookies, and rate limits
 - Short-lived, type/size-restricted direct upload URLs
 - Malware and media validation before moderation
+- Private media objects are scoped to an existing tenant asset and served through short-lived authorized URLs
+- Pilot uploads accept MP4 only, enforce a 100 MB bucket limit, compute a browser SHA-256 checksum, and require 16:9 video at an approved duration
+- Business roles can prepare and submit media but cannot directly update approval status; only the protected moderation function can approve or reject
+- Browser preflight is not a substitute for the planned server-side FFmpeg and malware-validation worker
 
 ## Ledger controls
 
