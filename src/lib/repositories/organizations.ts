@@ -19,6 +19,7 @@ export type OrganizationAdminRow = {
   owner: string;
   locationCount: number;
   createdAt: string;
+  updatedAt: string;
 };
 
 export type OrganizationAdminData = {
@@ -33,7 +34,7 @@ export async function getOrganizationAdminData(): Promise<OrganizationAdminData>
   const supabase = await createClient();
   const [profilesResult, organizationsResult, membershipsResult, locationsResult] = await Promise.all([
     supabase.from("profiles").select("id,email,full_name,email_verified_at,account_status,platform_role,created_at").order("created_at", { ascending: true }),
-    supabase.from("organizations").select("id,public_id,display_name,legal_name,category,status,created_at").order("created_at", { ascending: false }),
+    supabase.from("organizations").select("id,public_id,display_name,legal_name,category,status,created_at,updated_at").order("created_at", { ascending: false }),
     supabase.from("organization_memberships").select("organization_id,user_id,role,status").eq("role", "owner").eq("status", "active"),
     supabase.from("locations").select("id,organization_id"),
   ]);
@@ -75,6 +76,7 @@ export async function getOrganizationAdminData(): Promise<OrganizationAdminData>
         owner: ownerProfile?.email ?? "Owner not assigned",
         locationCount: locationCounts.get(organization.id) ?? 0,
         createdAt: organization.created_at,
+        updatedAt: organization.updated_at,
       };
     }),
   };

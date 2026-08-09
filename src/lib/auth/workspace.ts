@@ -43,13 +43,23 @@ function initials(value: string) {
   return parts.slice(0, 2).map((part) => part[0]?.toUpperCase()).join("") || "AD";
 }
 
-function permissionsFor(role: WorkspaceRole) {
+function permissionsFor(role: WorkspaceRole, organizationIsActive = true) {
+  if (role === "admin") {
+    return {
+      canAccessAdmin: true,
+      canProvisionOrganizations: true,
+      canManageOrganization: true,
+      canManageLocations: true,
+      canManageFinance: true,
+    };
+  }
+
   return {
-    canAccessAdmin: ["moderator", "operations", "finance", "admin"].includes(role),
-    canProvisionOrganizations: role === "admin",
-    canManageOrganization: ["owner", "admin"].includes(role),
-    canManageLocations: ["owner", "staff", "admin"].includes(role),
-    canManageFinance: ["owner", "finance", "admin"].includes(role),
+    canAccessAdmin: organizationIsActive && ["moderator", "operations", "finance"].includes(role),
+    canProvisionOrganizations: false,
+    canManageOrganization: organizationIsActive && role === "owner",
+    canManageLocations: organizationIsActive && ["owner", "staff"].includes(role),
+    canManageFinance: organizationIsActive && ["owner", "finance"].includes(role),
   };
 }
 
@@ -141,7 +151,7 @@ export const getWorkspaceContext = cache(async (): Promise<WorkspaceContext> => 
       status: organization.status,
     },
     membership: { role, label: roleLabels[role] },
-    permissions: permissionsFor(role),
+    permissions: permissionsFor(role, organization.status === "active"),
     notice: organization.status === "active" ? null : `Organization status: ${organization.status}.`,
   };
 });

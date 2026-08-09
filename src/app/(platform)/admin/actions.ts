@@ -11,12 +11,27 @@ export type OrganizationActionState = {
   fieldErrors?: Partial<Record<"displayName" | "legalName" | "category" | "ownerUserId" | "reason", string>>;
 };
 
+export type OrganizationUpdateActionState = {
+  status: "idle" | "error" | "success";
+  message: string;
+  fieldErrors?: Partial<Record<"displayName" | "legalName" | "category" | "organizationStatus" | "reason", string>>;
+};
+
 const organizationSchema = z.object({
   displayName: z.string().trim().min(2, "Enter the business display name.").max(120),
   legalName: z.string().trim().max(160),
   category: z.string().trim().min(2, "Select a business category.").max(80),
   ownerUserId: z.string().uuid("Select a valid owner account."),
   reason: z.string().trim().min(5, "Record why this organization is being created.").max(300),
+});
+
+const organizationUpdateSchema = z.object({
+  organizationId: z.coerce.number().int().positive(),
+  displayName: z.string().trim().min(2, "Enter the business display name.").max(120),
+  legalName: z.string().trim().max(160),
+  category: z.enum(["cafe", "restaurant", "retail", "fitness", "healthcare", "hospitality", "professional-services", "other"]),
+  organizationStatus: z.enum(["active", "suspended"]),
+  reason: z.string().trim().min(5, "Record a reason for this change.").max(300),
 });
 
 function stringField(formData: FormData, key: string) {
@@ -81,4 +96,57 @@ export async function createOrganization(
   revalidatePath("/admin");
   revalidatePath("/locations");
   return { status: "success", message: "Organization created and owner access activated." };
+}
+
+export async function updateOrganization(
+  _previousState: OrganizationUpdateActionState,
+  formData: FormData,
+): Promise<OrganizationUpdateActionState> {
+  const workspace = await getWorkspaceContext();
+  if (!workspace.permissions.canProvisionOrganizations) {
+    return { status: "error", message: "Platform administrator access is required." };
+  }
+
+  const parsed = organizationUpdateSchema.safeParse({
+    organizationId: stringField(formData, "organizationId"),
+    displayName: stringField(formData, "displayName"),
+    legalName: stringField(formData, "legalName"),
+    category: stringField(formData, "category"),
+    organizationStatus: stringField(formData, "organizationStatus"),
+    reason: stringField(formData, "reason"),
+  });
+
+  if (!parsed.success) {
+    const errors: NonNullable<OrganizationUpdateActionState["fieldErrors"]> = {};
+    for (const issue of parsed.error.issues) {
+      const field = issue.path[0];
+      if (typeof field === "string" && !errors[field as keyof typeof errors]) {
+        errors[field as keyof typeof errors] = issue.message;
+      }
+    }
+    return { status: "error", message: "Check the highlighted fields and try again.", fieldErrors: errors };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("admin_update_organization", {
+    p_organization_id: parsed.data.organizationId,
+    p_display_name: parsed.data.displayName,
+    p_legal_name: parsed.data.legalName,
+    p_category: parsed.data.category,
+    p_status: parsed.data.organizationStatus,
+    p_reason: parsed.data.reason,
+  });
+
+  if (error) {
+    return {
+      status: "error",
+      message: error.code === "PGRST202"
+        ? "Organization editing is unavailable until the latest database migration is deployed."
+        : "The organization could not be updated. Refresh and try again.",
+    };
+  }
+
+  revalidatePath("/admin");
+  revalidatePath("/locations");
+  return { status: "success", message: "Organization details and access status updated." };
 }

@@ -22,18 +22,22 @@ Outcome: shared language, working defaults, architecture, and a navigable centra
 Outcome: real users, organizations, locations, and devices stored in PostgreSQL.
 
 - [x] Create versioned PostgreSQL schema and migrations
-- [ ] Link and deploy migrations to the hosted database
+- [x] Deploy versioned migrations to the hosted database
+- [ ] Link the local CLI and reconcile hosted migration history
 - [x] Add authentication and cookie-based session handling
 - [x] Load organization membership and enforce initial portal roles
 - [x] Define separate platform-administrator authority and pending-account isolation
 - [ ] Enforce admin MFA for privileged operations
 - [x] Implement admin-only organization creation and owner assignment
 - [x] Implement initial location creation, operating hours, categories, zones, and traffic bands
-- [ ] Add location editing, suspension, category exclusions, and staff invitations
-- Implement device activation codes, key registration, refresh tokens, and suspension
-- Replace demonstration portal data with server-side repository queries
-- Add audit log for privileged actions
-- Add Docker development environment for PostgreSQL, Redis, and object storage
+- [x] Add administrator organization editing and suspension
+- [x] Add location editing, suspension, and category exclusions
+- [ ] Add staff invitations and membership management
+- [ ] Implement device activation codes, key registration, refresh tokens, and suspension
+- [ ] Replace remaining demonstration portal data with server-side repository queries
+- [x] Record privileged organization and location actions in the database audit log
+- [ ] Add an administrator audit-log viewer
+- [ ] Add Docker development environment for PostgreSQL, Redis, and object storage
 
 Acceptance: an administrator can create an organization and assign its owner; that owner can sign in, create a location, pair a simulated device, and see its heartbeat.
 

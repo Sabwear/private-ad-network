@@ -16,6 +16,11 @@ export type LocationRow = {
   trafficBand: string;
   status: string;
   operatingHours: string;
+  operatingDays: string[];
+  opensAt: string;
+  closesAt: string;
+  categoryExclusions: string[];
+  updatedAt: string;
 };
 
 export type LocationManagementData = {
@@ -24,18 +29,33 @@ export type LocationManagementData = {
   locations: LocationRow[];
 };
 
-function operatingHoursLabel(value: unknown) {
-  if (!value || typeof value !== "object" || Array.isArray(value)) return "Not configured";
+function stringArray(value: unknown) {
+  return Array.isArray(value) ? value.filter((item): item is string => typeof item === "string") : [];
+}
+
+function operatingHoursDetails(value: unknown) {
+  const fallback = { label: "Not configured", days: [] as string[], opensAt: "09:00", closesAt: "18:00" };
+  if (!value || typeof value !== "object" || Array.isArray(value)) return fallback;
+
   const schedule = value as { days?: unknown; opens_at?: unknown; closes_at?: unknown };
-  const days = Array.isArray(schedule.days) ? schedule.days.length : 0;
-  if (typeof schedule.opens_at !== "string" || typeof schedule.closes_at !== "string") return "Not configured";
-  return `${days} days · ${schedule.opens_at}–${schedule.closes_at}`;
+  const days = stringArray(schedule.days);
+  if (typeof schedule.opens_at !== "string" || typeof schedule.closes_at !== "string") return fallback;
+
+  return {
+    label: `${days.length} days · ${schedule.opens_at}–${schedule.closes_at}`,
+    days,
+    opensAt: schedule.opens_at,
+    closesAt: schedule.closes_at,
+  };
 }
 
 export async function getLocationManagementData(workspace: WorkspaceContext): Promise<LocationManagementData> {
   const supabase = await createClient();
   let organizationsQuery = supabase.from("organizations").select("id,display_name").eq("status", "active").order("display_name");
-  let locationsQuery = supabase.from("locations").select("id,public_id,organization_id,name,address,zone,category,traffic_band,status,operating_hours").order("created_at", { ascending: false });
+  let locationsQuery = supabase
+    .from("locations")
+    .select("id,public_id,organization_id,name,address,zone,category,traffic_band,status,operating_hours,category_exclusions,updated_at")
+    .order("created_at", { ascending: false });
 
   if (workspace.organization.id !== null) {
     organizationsQuery = organizationsQuery.eq("id", workspace.organization.id);
@@ -55,18 +75,26 @@ export async function getLocationManagementData(workspace: WorkspaceContext): Pr
   return {
     source: "live",
     organizations,
-    locations: (locationsResult.data ?? []).map((location) => ({
-      id: location.id,
-      publicId: location.public_id,
-      organizationId: location.organization_id,
-      organization: organizationNames.get(location.organization_id) ?? "Unknown organization",
-      name: location.name,
-      address: location.address ?? "—",
-      zone: location.zone,
-      category: location.category,
-      trafficBand: location.traffic_band ?? "Not set",
-      status: location.status,
-      operatingHours: operatingHoursLabel(location.operating_hours),
-    })),
+    locations: (locationsResult.data ?? []).map((location) => {
+      const operatingHours = operatingHoursDetails(location.operating_hours);
+      return {
+        id: location.id,
+        publicId: location.public_id,
+        organizationId: location.organization_id,
+        organization: organizationNames.get(location.organization_id) ?? "Unknown organization",
+        name: location.name,
+        address: location.address ?? "—",
+        zone: location.zone,
+        category: location.category,
+        trafficBand: location.traffic_band ?? "medium",
+        status: location.status,
+        operatingHours: operatingHours.label,
+        operatingDays: operatingHours.days,
+        opensAt: operatingHours.opensAt,
+        closesAt: operatingHours.closesAt,
+        categoryExclusions: stringArray(location.category_exclusions),
+        updatedAt: location.updated_at,
+      };
+    }),
   };
 }

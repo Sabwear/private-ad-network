@@ -50,6 +50,7 @@ export type Database = {
         zone: string;
         category: string;
         operating_hours: Json;
+        category_exclusions: Json;
         traffic_band: string | null;
         quality_score: number;
         status: string;
@@ -164,6 +165,33 @@ export type Database = {
           p_operating_hours: Json;
         };
         Returns: number;
+      };
+      admin_update_organization: {
+        Args: {
+          p_organization_id: number;
+          p_display_name: string;
+          p_legal_name: string;
+          p_category: string;
+          p_status: string;
+          p_reason: string;
+        };
+        Returns: undefined;
+      };
+      update_location: {
+        Args: {
+          p_location_id: number;
+          p_organization_id: number;
+          p_name: string;
+          p_address: string;
+          p_zone: string;
+          p_category: string;
+          p_traffic_band: string;
+          p_operating_hours: Json;
+          p_category_exclusions: Json;
+          p_status: string;
+          p_reason: string;
+        };
+        Returns: undefined;
       };
     };
     Enums: Record<string, never>;

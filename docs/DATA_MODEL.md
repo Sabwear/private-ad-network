@@ -16,7 +16,7 @@
 
 ### locations
 
-`id`, `organization_id`, address/zone, category, operating hours, traffic band, quality score, compliance state
+`id`, `organization_id`, address/zone, category, operating hours, traffic band, blocked advertising categories, quality score, compliance state
 
 ## Devices
 

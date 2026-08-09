@@ -8,6 +8,7 @@
 - Password sign-in and auth callback routes are implemented
 - A PostgreSQL 17 migration defines the initial domain schema
 - A second migration adds profiles, platform administrators, audited organization provisioning, and location creation
+- A third migration adds audited organization/location editing, suspension controls, and location category exclusions
 - Every public application table has RLS enabled
 - Data API privileges are explicit; the anonymous role receives no table access
 - Private media storage has tenant-aware select/insert/update policies
@@ -46,7 +47,7 @@ Do not include the seed file when pushing to production. It intentionally contai
 The first administrator is the only manual SQL bootstrap. After that, organizations and owners are provisioned from Admin control with audit records.
 
 1. Create and verify the administrator account through the application.
-2. Apply both database migrations.
+2. Apply all database migrations.
 3. In the SQL Editor, run this once using the administrator's email:
 
 ```sql
@@ -97,5 +98,6 @@ Review the output and replace the starter hand-maintained `database.types.ts` im
 - Authorization uses memberships stored in the database, never user-editable metadata
 - Platform administrator authority is stored in protected profile data, never user-editable metadata
 - Organization creation and owner assignment run in one transaction and produce database audit records
+- Organization and location edits require explicit authorization and an audit reason
 - Media paths begin with the organization's public UUID
 - Storage replacement is covered by SELECT, INSERT, and UPDATE policies
