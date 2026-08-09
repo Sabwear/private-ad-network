@@ -11,7 +11,7 @@ RUN corepack enable
 COPY --from=dependencies /app/node_modules ./node_modules
 COPY --from=dependencies /app/workers/media-processor/node_modules ./workers/media-processor/node_modules
 COPY workers/media-processor ./workers/media-processor
-RUN pnpm --dir workers/media-processor build
+RUN ./workers/media-processor/node_modules/.bin/tsc -p workers/media-processor/tsconfig.json
 
 FROM node:22-alpine AS runner
 WORKDIR /app
