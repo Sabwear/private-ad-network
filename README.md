@@ -56,3 +56,5 @@ docker build -f workers/media-processor/Dockerfile -t loopline-media-processor .
 ```
 
 The worker requires `SUPABASE_URL` and the server-only `SUPABASE_SECRET_KEY`. FFmpeg and FFprobe are included in the container; the secret must be stored in the worker host's protected environment settings.
+
+New media jobs also generate adaptive 720p and 480p HLS renditions. Platform administrators manage continuous streams from `/channels`, assign businesses, add approved media, and copy the protected viewer URL. The first seeded stream is `Primary Network Channel`; the schema and interface support additional channels without changing the player contract.

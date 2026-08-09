@@ -30,6 +30,13 @@ Authenticates with the per-device bearer credential and reports app, runtime, di
 
 ## Playback
 
+### Channel streaming
+
+- `GET /stream/{channelId}/{accessKey}` opens the continuous channel viewer. The access key is a bearer credential and should only be shared with assigned business devices.
+- `GET /api/v1/channels/{channelId}/hls/{assetId}/{resource}?key=...` authorizes an HLS playlist or redirects an authorized segment to short-lived private storage.
+- `GET /api/v1/channels/{channelId}/media/{assetId}?key=...` provides the normalized MP4 fallback for previously processed media or browsers without HLS support.
+- Every asset request verifies that the channel is active and the approved asset is currently in that channel.
+
 ### `POST /v1/playback/sessions`
 
 Opens a playback using `device_id`, `manifest_id`, assignment ID, nonce, asset checksum, and unique playback ID.
@@ -76,6 +83,8 @@ Required event fields:
 - `POST /v1/disputes`
 
 ## Administration
+
+- The `/channels` workspace creates and deletes streams, assigns businesses, copies viewer links, and manages ordered approved media.
 
 - `POST /v1/admin/media/{id}/decision`
 - `POST /v1/admin/playbacks/{id}/review`

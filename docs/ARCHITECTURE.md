@@ -6,7 +6,7 @@ Use a modular monolith for the API and business logic, plus a separate media-pro
 
 The pilot uses private managed object storage through `src/lib/storage/media-storage.ts`. Database records store provider-neutral object paths, and the portal requests short-lived read URLs through this adapter. Large files upload directly from the authenticated browser, so changing storage providers later is isolated from the media domain and does not require routing video bytes through the central Worker.
 
-Media delivery uses a hybrid model. The portal and compatible players can stream private pre-recorded media through short-lived signed URLs, byte-range requests, and later adaptive HLS renditions. Venue players still download approved assets, verify their checksums, and keep an offline cache before scheduled playback. Streaming improves previews and first-play latency; local caching keeps the advertising loop reliable during unstable or lost connectivity. The central Worker authorizes delivery but never proxies the video bytes.
+Media delivery uses a hybrid model. The portal and compatible players stream private pre-recorded media through short-lived signed URLs and adaptive 720p/480p HLS renditions. Venue players will still download approved assets, verify their checksums, and keep an offline cache before scheduled playback. Streaming improves previews and first-play latency; local caching keeps the advertising loop reliable during unstable or lost connectivity. The central application authorizes playlists and redirects segments to private storage instead of proxying video bytes.
 
 ## Runtime components
 
@@ -58,6 +58,7 @@ Only `apps/web` exists today. Add the remaining projects when their phase begins
 - Identity owns users, organizations, memberships, roles, and invitations.
 - Devices owns activation, credentials, capabilities, health, commands, and suspension.
 - Media owns technical validation, storage metadata, derivatives, moderation, and rights declarations.
+- Channels owns named streams, ordered media, bearer viewing links, and business assignments.
 - Campaigns owns budget intent, targeting, eligibility, frequency, and status.
 - Playlist owns deterministic selection and signed manifest versions.
 - Evidence owns device sessions/events, validation decisions, confidence, and fraud reasons.
@@ -114,4 +115,6 @@ Extract a module only when at least one is true:
 
 Media processing is separated from day one because it is CPU-heavy and failure-prone compared with transactional API work. Hosting-specific deployment files remain adapters at the repository boundary and cannot be imported by product or domain modules.
 
-The media processor is a separately deployable Node.js/FFmpeg container under `workers/media-processor`. Submission commits a durable PostgreSQL job in the same transaction as the asset state change. Workers claim jobs atomically with `FOR UPDATE SKIP LOCKED`, verify the original SHA-256 and technical metadata, create an H.264/AAC fast-start MP4 plus JPEG thumbnail, upload versioned derivatives, and complete or retry the job through server-only database functions. A crashed worker lease becomes reclaimable after 30 minutes; exhausted jobs fail visibly instead of remaining stuck.
+The media processor is a separately deployable Node.js/FFmpeg container under `workers/media-processor`. Submission commits a durable PostgreSQL job in the same transaction as the asset state change. Workers claim jobs atomically with `FOR UPDATE SKIP LOCKED`, verify the original SHA-256 and technical metadata, create an H.264/AAC fast-start MP4, JPEG thumbnail, and adaptive 720p/480p HLS package, upload versioned derivatives, and complete or retry the job through server-only database functions. A crashed worker lease becomes reclaimable after 30 minutes; exhausted jobs fail visibly instead of remaining stuck.
+
+Streaming channels are independent network objects. An administrator can create or delete channels, assign any number of active businesses, and place approved media into an ordered loop. The viewer URL contains a channel ID and independent access key; invalid credentials fail closed. Database tables remain inaccessible to anonymous clients, while the server authorizes each asset before issuing short-lived storage access.

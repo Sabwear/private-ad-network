@@ -57,10 +57,11 @@ Outcome: one approved file is delivered and played locally on a reference device
 - [x] Add resumable, retryable uploads with progress for pilot media files
 - [x] Add authenticated, short-lived portal playback delivery without proxying video bytes through the application host
 - [ ] Add secure byte-range delivery for portal previews and compatible players
-- [ ] Generate adaptive HLS renditions and short-lived signed playback URLs
+- [x] Generate adaptive 720p/480p HLS renditions and authorize playlists and segments with short-lived storage URLs
+- [x] Add multi-business streaming channels with an initial channel, administrator controls, business assignments, and ordered approved media
 - [ ] Implement a dedicated non-admin moderator role and queue
 - [ ] Create Android TV project using Kotlin, Compose for TV, Media3, Room, and OkHttp
-- [ ] Implement activation, manifest fetch, streamed preview, asset download, checksum, cache, and fallback media
+- [ ] Implement activation, signed channel/manifest fetch, asset download, checksum, cache, and fallback media on Android TV
 - [ ] Keep approved advertising assets cached locally for uninterrupted venue playback when connectivity is degraded
 - [ ] Implement boot recovery, foreground playback, and protected maintenance exit
 

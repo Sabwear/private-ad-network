@@ -1,6 +1,8 @@
 import { spawn } from "node:child_process";
 import { createHash } from "node:crypto";
 import { createReadStream } from "node:fs";
+import { mkdir, writeFile } from "node:fs/promises";
+import { join } from "node:path";
 
 type CommandResult = { stdout: string; stderr: string };
 
@@ -111,6 +113,58 @@ export async function normalizeMedia(
     "-q:v", "3",
     thumbnailPath,
   ]);
+}
+
+export type HlsRendition = {
+  name: string;
+  width: number;
+  height: number;
+  bandwidth: number;
+  playlist: string;
+};
+
+export async function generateAdaptiveHls(
+  ffmpegPath: string,
+  inputPath: string,
+  outputDirectory: string,
+): Promise<HlsRendition[]> {
+  const renditions: HlsRendition[] = [
+    { name: "720p", width: 1280, height: 720, bandwidth: 3_200_000, playlist: "720p/index.m3u8" },
+    { name: "480p", width: 854, height: 480, bandwidth: 1_400_000, playlist: "480p/index.m3u8" },
+  ];
+
+  for (const rendition of renditions) {
+    const renditionDirectory = join(outputDirectory, rendition.name);
+    await mkdir(renditionDirectory, { recursive: true });
+    await runCommand(ffmpegPath, [
+      "-hide_banner", "-loglevel", "error", "-y",
+      "-i", inputPath,
+      "-map", "0:v:0", "-map", "0:a:0?",
+      "-vf", `scale=-2:${rendition.height},format=yuv420p`,
+      "-r", "30", "-c:v", "libx264", "-preset", "medium",
+      "-b:v", rendition.name === "720p" ? "2800k" : "1100k",
+      "-maxrate", rendition.name === "720p" ? "3200k" : "1400k",
+      "-bufsize", rendition.name === "720p" ? "5600k" : "2200k",
+      "-g", "120", "-keyint_min", "120", "-sc_threshold", "0",
+      "-c:a", "aac", "-b:a", "128k", "-ar", "48000",
+      "-f", "hls", "-hls_time", "4", "-hls_playlist_type", "vod",
+      "-hls_flags", "independent_segments",
+      "-hls_segment_filename", join(renditionDirectory, "segment_%05d.ts"),
+      join(renditionDirectory, "index.m3u8"),
+    ]);
+  }
+
+  const master = [
+    "#EXTM3U",
+    "#EXT-X-VERSION:3",
+    ...renditions.flatMap((rendition) => [
+      `#EXT-X-STREAM-INF:BANDWIDTH=${rendition.bandwidth},RESOLUTION=${rendition.width}x${rendition.height}`,
+      rendition.playlist,
+    ]),
+    "",
+  ].join("\n");
+  await writeFile(join(outputDirectory, "master.m3u8"), master, "utf8");
+  return renditions;
 }
 
 export async function verifyMediaTools(ffmpegPath: string, ffprobePath: string) {

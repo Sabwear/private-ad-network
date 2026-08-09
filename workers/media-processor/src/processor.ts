@@ -1,5 +1,5 @@
 import { createWriteStream } from "node:fs";
-import { mkdtemp, readFile, rm, stat } from "node:fs/promises";
+import { mkdtemp, readFile, readdir, rm, stat } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { basename, dirname, join } from "node:path";
 import { Readable } from "node:stream";
@@ -8,7 +8,7 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import type { WorkerConfig } from "./config.js";
 import { logger } from "./logger.js";
-import { normalizeMedia, probeMedia, sha256File, validateProbe } from "./media-tools.js";
+import { generateAdaptiveHls, normalizeMedia, probeMedia, sha256File, validateProbe } from "./media-tools.js";
 
 const mediaBucket = "media";
 
@@ -32,6 +32,8 @@ function storagePaths(job: ClaimedJob) {
   return {
     normalized: `${versionDirectory}/normalized.mp4`,
     thumbnail: `${versionDirectory}/thumbnail.jpg`,
+    hlsDirectory: `${versionDirectory}/hls`,
+    hlsMaster: `${versionDirectory}/hls/master.m3u8`,
   };
 }
 
@@ -59,6 +61,26 @@ async function uploadFile(
   if (error) throw new Error(`Processed media upload failed: ${error.message}`);
 }
 
+async function uploadDirectory(
+  client: SupabaseClient,
+  storageDirectory: string,
+  localDirectory: string,
+) {
+  const entries = await readdir(localDirectory, { withFileTypes: true });
+  for (const entry of entries) {
+    const localPath = join(localDirectory, entry.name);
+    const storagePath = `${storageDirectory}/${entry.name}`;
+    if (entry.isDirectory()) {
+      await uploadDirectory(client, storagePath, localPath);
+    } else {
+      const contentType = entry.name.endsWith(".m3u8")
+        ? "application/vnd.apple.mpegurl"
+        : entry.name.endsWith(".ts") ? "video/mp2t" : "application/octet-stream";
+      await uploadFile(client, storagePath, localPath, contentType);
+    }
+  }
+}
+
 export class MediaProcessor {
   private readonly client: SupabaseClient;
 
@@ -83,6 +105,7 @@ export class MediaProcessor {
     const inputPath = join(workDirectory, basename(job.original_storage_path));
     const normalizedPath = join(workDirectory, "normalized.mp4");
     const thumbnailPath = join(workDirectory, "thumbnail.jpg");
+    const hlsDirectory = join(workDirectory, "hls");
 
     try {
       logger.info("media_processing_started", { jobId: job.job_public_id, assetId: job.asset_public_id, attempt: job.attempt });
@@ -103,19 +126,23 @@ export class MediaProcessor {
       await normalizeMedia(this.config.ffmpegPath, inputPath, normalizedPath, thumbnailPath);
       const normalizedProbe = await probeMedia(this.config.ffprobePath, normalizedPath);
       validateProbe(normalizedProbe);
+      const renditions = await generateAdaptiveHls(this.config.ffmpegPath, normalizedPath, hlsDirectory);
 
       const paths = storagePaths(job);
       await Promise.all([
         uploadFile(this.client, paths.normalized, normalizedPath, "video/mp4"),
         uploadFile(this.client, paths.thumbnail, thumbnailPath, "image/jpeg"),
+        uploadDirectory(this.client, paths.hlsDirectory, hlsDirectory),
       ]);
       const normalizedStats = await stat(normalizedPath);
 
-      const { error } = await this.client.rpc("complete_media_processing_job", {
+      const { error } = await this.client.rpc("complete_media_processing_job_v2", {
         p_job_public_id: job.job_public_id,
         p_worker_id: this.config.workerId,
         p_normalized_storage_path: paths.normalized,
         p_thumbnail_storage_path: paths.thumbnail,
+        p_hls_master_storage_path: paths.hlsMaster,
+        p_hls_renditions: renditions,
         p_normalized_file_size_bytes: normalizedStats.size,
         p_duration_ms: normalizedProbe.durationMs,
         p_width: normalizedProbe.width,
@@ -124,8 +151,9 @@ export class MediaProcessor {
         p_processing_metadata: {
           sourceProbe,
           normalizedProbe,
-          pipelineVersion: "1",
+          pipelineVersion: "2",
           fastStart: true,
+          adaptiveHls: true,
           checksumVerified: true,
         },
       });

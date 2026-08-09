@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bell, Building2, ChevronDown, CircleHelp, Clapperboard, Gauge, LayoutDashboard, LogOut, Mail, MapPinned, Menu, MonitorPlay, Orbit, ReceiptText, Search, Settings, ShieldCheck, UsersRound, WalletCards, X } from "lucide-react";
+import { Bell, Building2, ChevronDown, CircleHelp, Clapperboard, Gauge, LayoutDashboard, LogOut, Mail, MapPinned, Menu, MonitorPlay, Orbit, RadioTower, ReceiptText, Search, Settings, ShieldCheck, UsersRound, WalletCards, X } from "lucide-react";
 import { useState } from "react";
 import { Brand } from "@/components/brand";
 import type { WorkspaceContext } from "@/lib/auth/workspace";
@@ -11,6 +11,7 @@ const flowNav = [
   { href: "/locations", label: "Locations", icon: MapPinned },
   { href: "/screens", label: "Screens", icon: MonitorPlay },
   { href: "/media", label: "Media", icon: Clapperboard },
+  { href: "/channels", label: "Channels", icon: RadioTower },
   { href: "/campaigns", label: "Campaigns", icon: Gauge },
   { href: "/proof", label: "Proof of play", icon: ShieldCheck },
   { href: "/wallet", label: "Wallet", icon: WalletCards },

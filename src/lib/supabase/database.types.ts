@@ -101,6 +101,8 @@ export type Database = {
         original_storage_path: string | null;
         normalized_storage_path: string | null;
         thumbnail_storage_path: string | null;
+        hls_master_storage_path: string | null;
+        hls_renditions: Json;
         duration_ms: number | null;
         width: number | null;
         height: number | null;
@@ -138,6 +140,34 @@ export type Database = {
         last_error: string | null;
         started_at: string | null;
         completed_at: string | null;
+        created_at: string;
+        updated_at: string;
+      }>;
+      streaming_channels: Table<{
+        id: number;
+        public_id: string;
+        access_key: string;
+        name: string;
+        slug: string;
+        description: string | null;
+        status: string;
+        created_by: string | null;
+        created_at: string;
+        updated_at: string;
+      }>;
+      streaming_channel_organizations: Table<{
+        channel_id: number;
+        organization_id: number;
+        assigned_by: string | null;
+        created_at: string;
+      }>;
+      streaming_channel_items: Table<{
+        id: number;
+        channel_id: number;
+        media_asset_id: number;
+        position: number;
+        status: string;
+        created_by: string | null;
         created_at: string;
         updated_at: string;
       }>;
@@ -362,6 +392,23 @@ export type Database = {
           p_worker_id: string;
           p_normalized_storage_path: string;
           p_thumbnail_storage_path: string;
+          p_normalized_file_size_bytes: number;
+          p_duration_ms: number;
+          p_width: number;
+          p_height: number;
+          p_codec: string;
+          p_processing_metadata: Json;
+        };
+        Returns: undefined;
+      };
+      complete_media_processing_job_v2: {
+        Args: {
+          p_job_public_id: string;
+          p_worker_id: string;
+          p_normalized_storage_path: string;
+          p_thumbnail_storage_path: string;
+          p_hls_master_storage_path: string;
+          p_hls_renditions: Json;
           p_normalized_file_size_bytes: number;
           p_duration_ms: number;
           p_width: number;
