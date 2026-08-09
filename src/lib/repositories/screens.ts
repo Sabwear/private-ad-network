@@ -1,0 +1,129 @@
+import { screens as demoScreens, type StatusTone } from "@/lib/platform-data";
+import { hasSupabaseEnv } from "@/lib/supabase/config";
+import { createClient } from "@/lib/supabase/server";
+
+export type ScreenInventoryItem = {
+  id: string;
+  name: string;
+  location: string;
+  status: string;
+  current: string;
+  heartbeat: string;
+  uptime: string;
+  risk: string;
+  tone: StatusTone;
+};
+
+type ScreenSummary = {
+  registered: number;
+  locations: number;
+  online: number;
+  onlinePercent: number;
+  needsAction: number;
+};
+
+export type ScreensResult = {
+  source: "demo" | "supabase" | "setup";
+  screens: ScreenInventoryItem[];
+  summary: ScreenSummary;
+};
+
+const setupErrorCodes = new Set(["PGRST205", "42501"]);
+
+function titleCase(value: string) {
+  return value.replaceAll("_", " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+function heartbeatLabel(value: string | null, now: number) {
+  if (!value) return "Never";
+  const elapsedSeconds = Math.max(0, Math.floor((now - new Date(value).getTime()) / 1000));
+  if (elapsedSeconds < 60) return `${elapsedSeconds} sec ago`;
+  const minutes = Math.floor(elapsedSeconds / 60);
+  if (minutes < 60) return `${minutes} min ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours} hr ago`;
+  return `${Math.floor(hours / 24)} days ago`;
+}
+
+function presentationForDevice(device: {
+  activation_status: string;
+  last_heartbeat_at: string | null;
+  risk_state: string;
+}, now: number) {
+  if (device.activation_status === "pending") {
+    return { status: "Pairing", current: "Waiting for activation", tone: "warning" as StatusTone };
+  }
+  if (device.activation_status === "suspended" || device.activation_status === "revoked") {
+    return { status: titleCase(device.activation_status), current: "Playback disabled", tone: "danger" as StatusTone };
+  }
+
+  const heartbeatAge = device.last_heartbeat_at ? now - new Date(device.last_heartbeat_at).getTime() : Number.POSITIVE_INFINITY;
+  if (heartbeatAge <= 120_000) {
+    return {
+      status: "Online",
+      current: "Ready for manifest",
+      tone: device.risk_state === "low" ? "success" as StatusTone : "warning" as StatusTone,
+    };
+  }
+  return { status: "Offline", current: "Last manifest cached", tone: "danger" as StatusTone };
+}
+
+function summarize(items: ScreenInventoryItem[]): ScreenSummary {
+  const online = items.filter((item) => item.status === "Online").length;
+  return {
+    registered: items.length,
+    locations: new Set(items.map((item) => item.location)).size,
+    online,
+    onlinePercent: items.length === 0 ? 0 : Math.round((online / items.length) * 1000) / 10,
+    needsAction: items.filter((item) => item.status !== "Online" || item.risk !== "Low").length,
+  };
+}
+
+function demoResult(): ScreensResult {
+  const items = demoScreens.map((screen, index) => ({ ...screen, id: `demo-${index}` }));
+  return {
+    source: "demo",
+    screens: items,
+    summary: { registered: 14, locations: 9, online: 12, onlinePercent: 85.7, needsAction: 2 },
+  };
+}
+
+export async function getScreens(): Promise<ScreensResult> {
+  if (!hasSupabaseEnv()) return demoResult();
+
+  const supabase = await createClient();
+  const [{ data: locations, error: locationsError }, { data: devices, error: devicesError }] = await Promise.all([
+    supabase.from("locations").select("id,name"),
+    supabase
+      .from("devices")
+      .select("public_id,location_id,name,activation_status,last_heartbeat_at,risk_state")
+      .order("created_at", { ascending: false }),
+  ]);
+
+  const error = locationsError ?? devicesError;
+  if (error) {
+    if (setupErrorCodes.has(error.code)) {
+      return { source: "setup", screens: [], summary: summarize([]) };
+    }
+    throw new Error(`Unable to load screens: ${error.message}`);
+  }
+
+  const locationNames = new Map((locations ?? []).map((location) => [location.id, location.name]));
+  const now = Date.now();
+  const items = (devices ?? []).map((device) => {
+    const presentation = presentationForDevice(device, now);
+    return {
+      id: device.public_id,
+      name: device.name,
+      location: locationNames.get(device.location_id) ?? "Unknown location",
+      status: presentation.status,
+      current: presentation.current,
+      heartbeat: heartbeatLabel(device.last_heartbeat_at, now),
+      uptime: "Not tracked yet",
+      risk: titleCase(device.risk_state),
+      tone: presentation.tone,
+    };
+  });
+
+  return { source: "supabase", screens: items, summary: summarize(items) };
+}
