@@ -7,7 +7,7 @@ export const metadata = { title: "Screens" };
 
 export default async function ScreensPage() {
   const result = await getScreens();
-  const sourceLabel = result.source === "supabase" ? "Supabase data" : result.source === "setup" ? "Setup required" : "Demo data";
+  const sourceLabel = result.source === "supabase" ? "Live data" : result.source === "setup" ? "Setup required" : "Preview data";
   const setupRequired = result.source === "setup";
   const { summary } = result;
 
@@ -27,8 +27,8 @@ export default async function ScreensPage() {
     {result.screens.length === 0 ? (
       <section className="empty-state">
         <MonitorUp size={27} />
-        <h2>{setupRequired ? "Database setup required" : "No screens paired yet"}</h2>
-        <p>{setupRequired ? "Apply the Supabase migration and assign this account to an organization before pairing screens." : "Create a location, then pair the first playback device to begin monitoring heartbeats."}</p>
+        <h2>{setupRequired ? "Workspace setup required" : "No screens paired yet"}</h2>
+        <p>{setupRequired ? "Ask a network administrator to finish workspace setup before pairing screens." : "Create a location, then pair the first playback device to begin monitoring heartbeats."}</p>
         <button className="button button-primary" disabled={setupRequired}><Plus size={17} /> Pair screen</button>
       </section>
     ) : (

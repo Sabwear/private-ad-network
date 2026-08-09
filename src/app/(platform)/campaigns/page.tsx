@@ -10,7 +10,7 @@ export default async function CampaignsPage() {
   const active = result.campaigns.filter((campaign) => campaign.status === "Active").length;
   const scheduled = result.campaigns.filter((campaign) => campaign.status === "Scheduled").length;
   const paused = result.campaigns.filter((campaign) => campaign.status === "Paused").length;
-  const sourceLabel = result.source === "supabase" ? "Supabase data" : result.source === "setup" ? "Setup required" : "Demo data";
+  const sourceLabel = result.source === "supabase" ? "Live data" : result.source === "setup" ? "Setup required" : "Preview data";
   const setupRequired = result.source === "setup";
 
   return (
@@ -30,8 +30,8 @@ export default async function CampaignsPage() {
       {result.campaigns.length === 0 ? (
         <section className="empty-state">
           <Target size={27} />
-          <h2>{setupRequired ? "Database setup required" : "No campaigns yet"}</h2>
-          <p>{setupRequired ? "Apply the Supabase migration and assign this account to an organization before creating campaigns." : "Create the first campaign after an approved media asset and wallet are available."}</p>
+          <h2>{setupRequired ? "Workspace setup required" : "No campaigns yet"}</h2>
+          <p>{setupRequired ? "Ask a network administrator to finish workspace setup before creating campaigns." : "Create the first campaign after an approved media asset and wallet are available."}</p>
           <button className="button button-primary" disabled={setupRequired}><Plus size={17} /> Create campaign</button>
         </section>
       ) : (

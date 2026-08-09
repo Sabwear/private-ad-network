@@ -14,7 +14,7 @@ export type WorkspaceRole =
   | "admin";
 
 export type WorkspaceContext = {
-  mode: "demo" | "active" | "setup";
+  mode: "active" | "setup";
   user: { email: string; initials: string };
   organization: { name: string; publicId: string | null; status: string };
   membership: { role: WorkspaceRole; label: string };
@@ -49,21 +49,6 @@ function permissionsFor(role: WorkspaceRole) {
   };
 }
 
-function demoWorkspace(): WorkspaceContext {
-  return {
-    mode: "demo",
-    user: { email: "owner@central-cafe.demo", initials: "CA" },
-    organization: { name: "Central Cafe", publicId: null, status: "active" },
-    membership: { role: "admin", label: "Business owner" },
-    permissions: {
-      canAccessAdmin: true,
-      canManageOrganization: true,
-      canManageFinance: true,
-    },
-    notice: "Demonstration workspace — connect Supabase to load tenant data.",
-  };
-}
-
 function setupWorkspace(email: string, notice: string): WorkspaceContext {
   return {
     mode: "setup",
@@ -80,7 +65,7 @@ function setupWorkspace(email: string, notice: string): WorkspaceContext {
 }
 
 export const getWorkspaceContext = cache(async (): Promise<WorkspaceContext> => {
-  if (!hasSupabaseEnv()) return demoWorkspace();
+  if (!hasSupabaseEnv()) redirect("/login?message=service-unavailable");
 
   const supabase = await createClient();
   const { data: claimsData, error: claimsError } = await supabase.auth.getClaims();
@@ -101,7 +86,7 @@ export const getWorkspaceContext = cache(async (): Promise<WorkspaceContext> => 
   if (membershipError) {
     return setupWorkspace(
       email,
-      "The database foundation has not been deployed yet. Apply the Supabase migration to activate organization data.",
+      "The workspace data service is not ready. Ask a network administrator to complete platform setup.",
     );
   }
 

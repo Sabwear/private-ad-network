@@ -10,6 +10,7 @@ const messages: Record<string, AuthActionState> = {
   "password-updated": { status: "success", message: "Your password was updated. Sign in with the new password." },
   "signed-out": { status: "success", message: "You have been signed out securely." },
   "auth-callback-failed": { status: "error", message: "That authentication link is invalid or has expired. Request a new link and try again." },
+  "service-unavailable": { status: "error", message: "Sign-in is temporarily unavailable. Please contact the network administrator." },
 };
 
 export default async function LoginPage({

@@ -1,10 +1,29 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { isAuthEntryRoute, isPublicRoute } from "@/lib/auth/routes";
 import { getSupabaseEnv, hasSupabaseEnv } from "@/lib/supabase/config";
 
+function redirectWithSessionCookies(url: URL, sessionResponse: NextResponse) {
+  const redirectResponse = NextResponse.redirect(url);
+  sessionResponse.cookies.getAll().forEach((cookie) =>
+    redirectResponse.cookies.set(cookie),
+  );
+  return redirectResponse;
+}
+
 export async function updateSession(request: NextRequest) {
+  const pathname = request.nextUrl.pathname;
+  const publicRoute = isPublicRoute(pathname);
+
   if (!hasSupabaseEnv()) {
-    return NextResponse.next({ request });
+    if (publicRoute) return NextResponse.next({ request });
+
+    const loginUrl = request.nextUrl.clone();
+    loginUrl.pathname = "/login";
+    loginUrl.search = "";
+    loginUrl.searchParams.set("message", "service-unavailable");
+    loginUrl.searchParams.set("next", `${pathname}${request.nextUrl.search}`);
+    return NextResponse.redirect(loginUrl);
   }
 
   let response = NextResponse.next({ request });
@@ -27,28 +46,19 @@ export async function updateSession(request: NextRequest) {
     },
   });
 
-  const { data } = await supabase.auth.getClaims();
-  const isPublicRoute =
-    request.nextUrl.pathname.startsWith("/login") ||
-    request.nextUrl.pathname.startsWith("/signup") ||
-    request.nextUrl.pathname.startsWith("/forgot-password") ||
-    request.nextUrl.pathname.startsWith("/auth");
+  const { data, error } = await supabase.auth.getClaims();
+  const authenticated = !error && Boolean(data?.claims?.sub);
 
-  const isAuthEntryRoute =
-    request.nextUrl.pathname.startsWith("/login") ||
-    request.nextUrl.pathname.startsWith("/signup") ||
-    request.nextUrl.pathname.startsWith("/forgot-password");
-
-  if (!data?.claims && !isPublicRoute) {
+  if (!authenticated && !publicRoute) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     url.search = "";
-    url.searchParams.set("next", `${request.nextUrl.pathname}${request.nextUrl.search}`);
-    return NextResponse.redirect(url);
+    url.searchParams.set("next", `${pathname}${request.nextUrl.search}`);
+    return redirectWithSessionCookies(url, response);
   }
 
-  if (data?.claims && isAuthEntryRoute) {
-    return NextResponse.redirect(new URL("/overview", request.url));
+  if (authenticated && isAuthEntryRoute(pathname)) {
+    return redirectWithSessionCookies(new URL("/overview", request.url), response);
   }
 
   return response;

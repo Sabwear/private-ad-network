@@ -20,7 +20,7 @@ export function AppShell({ children, workspace, signOutAction }: { children: Rea
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
-  const environmentLabel = workspace.mode === "active" ? "Pilot live" : workspace.mode === "setup" ? "Setup required" : "Demo mode";
+  const environmentLabel = workspace.mode === "active" ? "Pilot live" : "Setup required";
   return (
     <div className="app-shell">
       <aside className={`sidebar ${open ? "sidebar-open" : ""}`}>

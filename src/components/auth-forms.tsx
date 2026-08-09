@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowLeft, ArrowRight, CheckCircle2, Database, Eye, EyeOff, LoaderCircle, MailCheck, ShieldCheck } from "lucide-react";
+import { ArrowLeft, ArrowRight, CheckCircle2, Eye, EyeOff, LoaderCircle, MailCheck, ShieldCheck } from "lucide-react";
 import { useActionState, useState } from "react";
 import {
   requestPasswordReset,
@@ -13,11 +13,13 @@ import {
 
 const emptyState: AuthActionState = { status: "idle", message: "" };
 
-function AuthDatabaseStatus({ configured }: { configured: boolean }) {
+function AuthServiceStatus({ configured }: { configured: boolean }) {
+  if (configured) return null;
+
   return (
-    <div className={`auth-database ${configured ? "" : "auth-database-warning"}`}>
-      <Database size={19} />
-      <span><strong>{configured ? "Secure authentication" : "Setup required"}</strong><small>{configured ? "Protected by Supabase Auth" : "Add environment credentials first"}</small></span>
+    <div className="auth-message auth-message-error" role="alert">
+      <ShieldCheck size={17} />
+      <span>Sign-in is temporarily unavailable. Please contact the network administrator.</span>
     </div>
   );
 }
@@ -67,7 +69,7 @@ export function LoginForm({ configured, initialState = emptyState, nextPath = "/
   const [state, formAction, pending] = useActionState(signIn, initialState);
   return (
     <form className="auth-form" action={formAction} noValidate>
-      <AuthDatabaseStatus configured={configured} />
+      <AuthServiceStatus configured={configured} />
       <header><p className="eyebrow">Welcome back</p><h2>Sign in to your workspace</h2><p>Use your verified business email to continue.</p></header>
       <FormMessage state={state} />
       <input type="hidden" name="next" value={nextPath} />
@@ -84,7 +86,7 @@ export function SignUpForm({ configured }: { configured: boolean }) {
   const [state, formAction, pending] = useActionState(signUp, emptyState);
   return (
     <form className="auth-form auth-form-wide" action={formAction} noValidate>
-      <AuthDatabaseStatus configured={configured} />
+      <AuthServiceStatus configured={configured} />
       <header><p className="eyebrow">Pilot access</p><h2>Create your account</h2><p>Start your secure business workspace application.</p></header>
       <FormMessage state={state} />
       {state.status === "success" ? (
@@ -113,7 +115,7 @@ export function ForgotPasswordForm({ configured }: { configured: boolean }) {
   const [state, formAction, pending] = useActionState(requestPasswordReset, emptyState);
   return (
     <form className="auth-form" action={formAction} noValidate>
-      <AuthDatabaseStatus configured={configured} />
+      <AuthServiceStatus configured={configured} />
       <header><p className="eyebrow">Account recovery</p><h2>Reset your password</h2><p>We will send a secure, time-limited recovery link.</p></header>
       <FormMessage state={state} />
       <label htmlFor="email"><span>Email address</span><input id="email" name="email" type="email" autoComplete="email" maxLength={254} defaultValue={state.values?.email} required aria-invalid={Boolean(state.fieldErrors?.email)} /><FieldError message={state.fieldErrors?.email} /></label>
