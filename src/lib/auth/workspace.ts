@@ -1,0 +1,138 @@
+import "server-only";
+
+import { cache } from "react";
+import { redirect } from "next/navigation";
+import { hasSupabaseEnv } from "@/lib/supabase/config";
+import { createClient } from "@/lib/supabase/server";
+
+export type WorkspaceRole =
+  | "owner"
+  | "staff"
+  | "moderator"
+  | "operations"
+  | "finance"
+  | "admin";
+
+export type WorkspaceContext = {
+  mode: "demo" | "active" | "setup";
+  user: { email: string; initials: string };
+  organization: { name: string; publicId: string | null; status: string };
+  membership: { role: WorkspaceRole; label: string };
+  permissions: {
+    canAccessAdmin: boolean;
+    canManageOrganization: boolean;
+    canManageFinance: boolean;
+  };
+  notice: string | null;
+};
+
+const roleLabels: Record<WorkspaceRole, string> = {
+  owner: "Business owner",
+  staff: "Team member",
+  moderator: "Content moderator",
+  operations: "Network operations",
+  finance: "Finance operator",
+  admin: "Platform administrator",
+};
+
+function initials(value: string) {
+  const localPart = value.split("@")[0] ?? value;
+  const parts = localPart.split(/[._\-\s]+/).filter(Boolean);
+  return parts.slice(0, 2).map((part) => part[0]?.toUpperCase()).join("") || "AD";
+}
+
+function permissionsFor(role: WorkspaceRole) {
+  return {
+    canAccessAdmin: ["moderator", "operations", "finance", "admin"].includes(role),
+    canManageOrganization: ["owner", "admin"].includes(role),
+    canManageFinance: ["owner", "finance", "admin"].includes(role),
+  };
+}
+
+function demoWorkspace(): WorkspaceContext {
+  return {
+    mode: "demo",
+    user: { email: "owner@central-cafe.demo", initials: "CA" },
+    organization: { name: "Central Cafe", publicId: null, status: "active" },
+    membership: { role: "admin", label: "Business owner" },
+    permissions: {
+      canAccessAdmin: true,
+      canManageOrganization: true,
+      canManageFinance: true,
+    },
+    notice: "Demonstration workspace — connect Supabase to load tenant data.",
+  };
+}
+
+function setupWorkspace(email: string, notice: string): WorkspaceContext {
+  return {
+    mode: "setup",
+    user: { email, initials: initials(email) },
+    organization: { name: "Workspace setup", publicId: null, status: "pending" },
+    membership: { role: "staff", label: "Pending onboarding" },
+    permissions: {
+      canAccessAdmin: false,
+      canManageOrganization: false,
+      canManageFinance: false,
+    },
+    notice,
+  };
+}
+
+export const getWorkspaceContext = cache(async (): Promise<WorkspaceContext> => {
+  if (!hasSupabaseEnv()) return demoWorkspace();
+
+  const supabase = await createClient();
+  const { data: claimsData, error: claimsError } = await supabase.auth.getClaims();
+  const claims = claimsData?.claims;
+
+  if (claimsError || !claims?.sub) redirect("/login");
+
+  const email = typeof claims.email === "string" ? claims.email : "Signed-in account";
+  const { data: membership, error: membershipError } = await supabase
+    .from("organization_memberships")
+    .select("organization_id,role,status")
+    .eq("user_id", claims.sub)
+    .eq("status", "active")
+    .order("created_at", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+
+  if (membershipError) {
+    return setupWorkspace(
+      email,
+      "The database foundation has not been deployed yet. Apply the Supabase migration to activate organization data.",
+    );
+  }
+
+  if (!membership) {
+    return setupWorkspace(
+      email,
+      "Your account is authenticated but has not been assigned to an approved organization.",
+    );
+  }
+
+  const { data: organization, error: organizationError } = await supabase
+    .from("organizations")
+    .select("public_id,display_name,status")
+    .eq("id", membership.organization_id)
+    .single();
+
+  if (organizationError || !organization) {
+    return setupWorkspace(email, "Your organization could not be loaded. Ask a network administrator to review your membership.");
+  }
+
+  const role = membership.role as WorkspaceRole;
+  return {
+    mode: "active",
+    user: { email, initials: initials(email) },
+    organization: {
+      name: organization.display_name,
+      publicId: organization.public_id,
+      status: organization.status,
+    },
+    membership: { role, label: roleLabels[role] },
+    permissions: permissionsFor(role),
+    notice: organization.status === "active" ? null : `Organization status: ${organization.status}.`,
+  };
+});

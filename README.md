@@ -11,4 +11,4 @@ pnpm dev
 
 Open `http://localhost:3000`. Use `pnpm lint` and `pnpm build` before committing.
 
-The current views use typed demonstration data from `src/lib/platform-data.ts`. Replace those reads with server-side repositories during the platform-foundation phase. Product policy and implementation sequencing live in the repository-level `docs` directory.
+The portal loads the signed-in user's organization membership through a server-only workspace data layer and uses it for role-aware navigation. Campaigns read from Supabase when the schema is available; the remaining views still use typed demonstration data from `src/lib/platform-data.ts` while their Phase 1 repositories are implemented.

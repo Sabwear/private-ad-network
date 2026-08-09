@@ -27,7 +27,7 @@ function formatDateRange(startsAt: string, endsAt: string) {
   return `${format.format(new Date(startsAt))} - ${format.format(new Date(endsAt))}`;
 }
 
-export async function getCampaignCards(): Promise<{ source: "demo" | "supabase"; campaigns: CampaignCard[] }> {
+export async function getCampaignCards(): Promise<{ source: "demo" | "supabase" | "setup"; campaigns: CampaignCard[] }> {
   if (!hasSupabaseEnv()) {
     return {
       source: "demo",
@@ -41,7 +41,12 @@ export async function getCampaignCards(): Promise<{ source: "demo" | "supabase";
     .select("name,status,budget_credits,spent_credits,starts_at,ends_at")
     .order("created_at", { ascending: false });
 
-  if (error) throw new Error(`Unable to load campaigns: ${error.message}`);
+  if (error) {
+    if (error.code === "PGRST205" || error.code === "42501") {
+      return { source: "setup", campaigns: [] };
+    }
+    throw new Error(`Unable to load campaigns: ${error.message}`);
+  }
 
   return {
     source: "supabase",
