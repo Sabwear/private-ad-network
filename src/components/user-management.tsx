@@ -76,7 +76,7 @@ export function UserManagement({ data }: { data: UserAdminData }) {
         <div className="panel-header"><div><h2><UserRoundPlus size={18} /> Create owner account</h2><p>Send a secure invitation so the approved owner can choose a password.</p></div></div>
         <div className="management-form-body">
           <FormMessage state={inviteState} />
-          {!data.accountCreationReady ? <div className="management-setup"><KeyRound size={18} /><span><strong>Server administrator key required</strong><small>Add the server-only key in local and Cloudflare hosting settings before sending invitations.</small></span></div> : null}
+          {!data.accountCreationReady ? <div className="management-setup"><KeyRound size={18} /><span><strong>Server administrator key required</strong><small>Add the server-only key to this deployment&apos;s protected environment settings before sending invitations.</small></span></div> : null}
           <label><span>Owner full name</span><input name="name" maxLength={100} required placeholder="Business owner name" aria-invalid={Boolean(inviteState.fieldErrors?.name)} /><FieldError message={inviteState.fieldErrors?.name} /></label>
           <label><span>Business email</span><input name="email" type="email" maxLength={254} required placeholder="owner@business.com" aria-invalid={Boolean(inviteState.fieldErrors?.email)} /><FieldError message={inviteState.fieldErrors?.email} /></label>
           <label><span>Administrative reason</span><textarea name="reason" rows={3} maxLength={300} required placeholder="Approved business owner for the pilot." aria-invalid={Boolean(inviteState.fieldErrors?.reason)} /><FieldError message={inviteState.fieldErrors?.reason} /></label>

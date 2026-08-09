@@ -30,11 +30,7 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_your_key
 SUPABASE_SECRET_KEY=sb_secret_your_server_key
 ```
 
-The secret key is required only by the server-side owner invitation and authentication-access controls. Never place a secret or service-role key in a `NEXT_PUBLIC_` variable. Add it to Cloudflare as an encrypted Worker secret rather than a plain variable:
-
-```powershell
-pnpm exec wrangler secret put SUPABASE_SECRET_KEY
-```
+The secret key is required only by the server-side owner invitation and authentication-access controls. Never place a secret or service-role key in a `NEXT_PUBLIC_` variable. Add it through the deployment provider's protected environment-variable settings. For Vercel, configure it under Project Settings > Environment Variables for Production, Preview, and Development as appropriate.
 
 ## Link and apply the migration
 

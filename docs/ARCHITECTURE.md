@@ -93,7 +93,9 @@ Any failure rolls back every step.
 
 ## Deployment baseline
 
-- Docker containers on a managed cloud platform
+- Standard Next.js runtime with no required hosting-provider adapter
+- Direct Vercel deployment for the current environment
+- Portable standalone Node.js container for other managed platforms
 - Managed PostgreSQL with point-in-time recovery
 - Managed Redis for presence, rate limits, queues, and short locks
 - S3-compatible object storage with versioning and CDN
@@ -110,4 +112,4 @@ Extract a module only when at least one is true:
 - Database or deployment contention is measured
 - Security isolation requires a separate boundary
 
-Media processing is separated from day one because it is CPU-heavy and failure-prone compared with transactional API work.
+Media processing is separated from day one because it is CPU-heavy and failure-prone compared with transactional API work. Hosting-specific deployment files remain adapters at the repository boundary and cannot be imported by product or domain modules.

@@ -1,4 +1,4 @@
-name: Cloudflare Worker build
+name: Application validation
 
 on:
   push:
@@ -30,8 +30,5 @@ jobs:
       - name: Lint
         run: pnpm lint
 
-      - name: Build Next.js
+      - name: Build portable Next.js application
         run: pnpm build
-
-      - name: Build Cloudflare Worker
-        run: pnpm build:worker

@@ -90,7 +90,7 @@ Run from `apps/web`:
 ```bash
 pnpm lint
 pnpm build
-pnpm build:worker
+pnpm build
 ```
 
 Database migrations must parse successfully and be dry-run against the linked hosted project before deployment. Authorization coverage must verify that ordinary accounts cannot create organizations, pending accounts cannot enter a workspace, owners are limited to their own organization, and platform administrators can provision audited tenants.

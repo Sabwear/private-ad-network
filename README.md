@@ -9,11 +9,22 @@ pnpm install
 pnpm dev
 ```
 
-Open `http://localhost:3000`. Use `pnpm lint`, `pnpm build`, and `pnpm build:worker` before committing.
+Open `http://localhost:3000`. Use `pnpm lint` and `pnpm build` before committing.
 
-## Cloudflare Workers
+## Deployment
 
-The app uses the Cloudflare OpenNext adapter. `pnpm preview` runs the production bundle in the local Workers runtime, while `pnpm deploy` builds and deploys it. Add `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, and the deployed origin as `NEXT_PUBLIC_SITE_URL` in Cloudflare build variables before deploying from GitHub.
+The application is a standard Next.js deployment with no required hosting-provider adapter. Vercel can import this repository and deploy it directly. The standalone output can also run on any Node.js container host using the included `Dockerfile`.
+
+Configure these environment variables in every deployment environment:
+
+```dotenv
+NEXT_PUBLIC_SUPABASE_URL=https://your-project-ref.supabase.co
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_your_key
+NEXT_PUBLIC_SITE_URL=https://your-app.example.com
+SUPABASE_SECRET_KEY=sb_secret_your_server_key
+```
+
+`SUPABASE_SECRET_KEY` is server-only and must be stored in the host's encrypted environment settings. Never expose it through a `NEXT_PUBLIC_` variable.
 
 ## Authentication setup
 
