@@ -14,6 +14,7 @@ export async function GET(request: NextRequest) {
   const type = request.nextUrl.searchParams.get("type") as EmailOtpType | null;
   const safeNext = safeNextPath(request.nextUrl.searchParams.get("next"));
   const recoveryFlow = request.nextUrl.searchParams.get("flow") === "recovery" || type === "recovery";
+  const invitationFlow = request.nextUrl.searchParams.get("flow") === "invite" || type === "invite";
   const supabase = await createClient();
   let error: Error | null = null;
 
@@ -29,7 +30,7 @@ export async function GET(request: NextRequest) {
 
   if (!error) {
     const response = NextResponse.redirect(new URL(safeNext, request.url));
-    if (recoveryFlow && safeNext === "/reset-password") {
+    if ((recoveryFlow || invitationFlow) && safeNext === "/reset-password") {
       response.cookies.set("ll-password-recovery", "1", {
         httpOnly: true,
         sameSite: "lax",

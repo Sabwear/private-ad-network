@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bell, Building2, ChevronDown, CircleHelp, Clapperboard, Gauge, LayoutDashboard, LogOut, Mail, MapPinned, Menu, MonitorPlay, Orbit, ReceiptText, Search, Settings, ShieldCheck, WalletCards, X } from "lucide-react";
+import { Bell, Building2, ChevronDown, CircleHelp, Clapperboard, Gauge, LayoutDashboard, LogOut, Mail, MapPinned, Menu, MonitorPlay, Orbit, ReceiptText, Search, Settings, ShieldCheck, UsersRound, WalletCards, X } from "lucide-react";
 import { useState } from "react";
 import { Brand } from "@/components/brand";
 import type { WorkspaceContext } from "@/lib/auth/workspace";
@@ -31,6 +31,7 @@ export function AppShell({ children, workspace, signOutAction }: { children: Rea
           {workspace.permissions.canProvisionOrganizations ? <Link href="/business" className={pathname === "/business" ? "nav-link active" : "nav-link"} onClick={() => setOpen(false)}><Building2 size={19} strokeWidth={1.9} /><span>Business</span></Link> : null}
           {flowNav.map(({ href, label, icon: Icon }) => <Link key={href} href={href} className={pathname === href ? "nav-link active" : "nav-link"} onClick={() => setOpen(false)}><Icon size={19} strokeWidth={1.9} /><span>{label}</span></Link>)}
           <span className="nav-label nav-label-spaced">Operations</span>
+          {workspace.permissions.canProvisionOrganizations ? <Link href="/users" className={pathname === "/users" ? "nav-link active" : "nav-link"} onClick={() => setOpen(false)}><UsersRound size={19} strokeWidth={1.9} /><span>Users</span></Link> : null}
           {workspace.permissions.canAccessAdmin ? <Link href="/admin" className={pathname === "/admin" ? "nav-link active" : "nav-link"} onClick={() => setOpen(false)}><Settings size={19} strokeWidth={1.9} /><span>Admin control</span></Link> : null}
           <Link href="#" className="nav-link"><ReceiptText size={19} strokeWidth={1.9} /><span>Reports</span><span className="nav-badge">Soon</span></Link>
         </nav>

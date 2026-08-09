@@ -17,3 +17,18 @@ export function getSupabaseEnv() {
 
   return { url, publishableKey };
 }
+
+export function hasSupabaseAdminEnv() {
+  return hasSupabaseEnv() && Boolean(process.env.SUPABASE_SECRET_KEY);
+}
+
+export function getSupabaseAdminEnv() {
+  const { url } = getSupabaseEnv();
+  const secretKey = process.env.SUPABASE_SECRET_KEY;
+
+  if (!secretKey) {
+    throw new Error("Supabase administrator access is not configured.");
+  }
+
+  return { url, secretKey };
+}

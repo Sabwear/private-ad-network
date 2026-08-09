@@ -1,12 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowLeft, ArrowRight, CheckCircle2, Eye, EyeOff, LoaderCircle, MailCheck, ShieldCheck } from "lucide-react";
+import { ArrowLeft, ArrowRight, CheckCircle2, Eye, EyeOff, LoaderCircle, ShieldCheck } from "lucide-react";
 import { useActionState, useState } from "react";
 import {
   requestPasswordReset,
   signIn,
-  signUp,
   updatePassword,
   type AuthActionState,
 } from "@/app/login/actions";
@@ -77,33 +76,7 @@ export function LoginForm({ configured, initialState = emptyState, nextPath = "/
       <PasswordField name="password" label="Password" autoComplete="current-password" error={state.fieldErrors?.password} />
       <div className="auth-form-row"><span>Secure cookie-based session</span><Link href="/forgot-password">Forgot password?</Link></div>
       <SubmitButton pending={pending} configured={configured}>Sign in</SubmitButton>
-      <p className="auth-switch">New to Loopline? <Link href="/signup">Create a pilot account</Link></p>
-    </form>
-  );
-}
-
-export function SignUpForm({ configured }: { configured: boolean }) {
-  const [state, formAction, pending] = useActionState(signUp, emptyState);
-  return (
-    <form className="auth-form auth-form-wide" action={formAction} noValidate>
-      <AuthServiceStatus configured={configured} />
-      <header><p className="eyebrow">Pilot access</p><h2>Create your account</h2><p>After email verification, an administrator will assign your approved business workspace.</p></header>
-      <FormMessage state={state} />
-      {state.status === "success" ? (
-        <div className="auth-success-panel"><MailCheck size={34} /><h3>Confirmation email sent</h3><p>Open the link in your inbox, then return here to sign in.</p><Link className="button button-secondary" href="/login">Back to sign in</Link></div>
-      ) : (
-        <>
-          <label htmlFor="name"><span>Full name</span><input id="name" name="name" autoComplete="name" maxLength={100} defaultValue={state.values?.name} required aria-invalid={Boolean(state.fieldErrors?.name)} /><FieldError message={state.fieldErrors?.name} /></label>
-          <label htmlFor="email"><span>Business email</span><input id="email" name="email" type="email" autoComplete="email" placeholder="you@business.com" maxLength={254} defaultValue={state.values?.email} required aria-invalid={Boolean(state.fieldErrors?.email)} /><FieldError message={state.fieldErrors?.email} /></label>
-          <PasswordField name="password" label="Create password" autoComplete="new-password" error={state.fieldErrors?.password} hint="Use at least 12 characters. A password manager is recommended." />
-          <PasswordField name="passwordConfirm" label="Confirm password" autoComplete="new-password" error={state.fieldErrors?.passwordConfirm} />
-          <label className="auth-honeypot" aria-hidden="true">Website<input name="website" tabIndex={-1} autoComplete="off" /></label>
-          <label className="auth-terms"><input type="checkbox" name="terms" required /><span>I am authorized to represent this business and agree to the pilot participation terms.</span></label>
-          <FieldError message={state.fieldErrors?.terms} />
-          <SubmitButton pending={pending} configured={configured}>Create account</SubmitButton>
-        </>
-      )}
-      <p className="auth-switch">Already have an account? <Link href="/login">Sign in</Link></p>
+      <p className="auth-switch">Access is invitation-only. Contact your network administrator.</p>
     </form>
   );
 }

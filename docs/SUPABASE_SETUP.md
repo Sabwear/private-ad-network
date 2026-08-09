@@ -11,6 +11,7 @@
 - A third migration adds audited organization/location editing, suspension controls, and location category exclusions
 - A fourth migration adds private hashed device activation/credential storage, tenant-scoped operational observations, secure pairing, heartbeats, and revocation
 - A fifth migration hardens the private media bucket and adds controlled upload preparation, submission, integrity metadata, administrator moderation, and audit records
+- A sixth migration adds administrator-controlled user access, tenant-aware suspension enforcement, and portal session observations
 - Every public application table has RLS enabled
 - Data API privileges are explicit; the anonymous role receives no table access
 - Private media storage has tenant-aware select/insert/update policies
@@ -26,9 +27,14 @@
 ```dotenv
 NEXT_PUBLIC_SUPABASE_URL=https://your-project-ref.supabase.co
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_your_key
+SUPABASE_SECRET_KEY=sb_secret_your_server_key
 ```
 
-Never place a secret or service-role key in a `NEXT_PUBLIC_` variable.
+The secret key is required only by the server-side owner invitation and authentication-access controls. Never place a secret or service-role key in a `NEXT_PUBLIC_` variable. Add it to Cloudflare as an encrypted Worker secret rather than a plain variable:
+
+```powershell
+pnpm exec wrangler secret put SUPABASE_SECRET_KEY
+```
 
 ## Link and apply the migration
 
@@ -58,7 +64,7 @@ set platform_role = 'admin', account_status = 'active'
 where lower(email) = lower('ADMIN_EMAIL');
 ```
 
-Sign out and sign back in. The administrator can then select verified pending accounts in Business, create organizations, and assign their owners. Business users cannot perform this operation.
+Sign out and sign back in. The administrator can create an owner invitation in Users, then select the verified pending account in Business, create its organization, and assign the owner. Business users cannot perform this operation.
 
 ## Authentication configuration
 
@@ -68,6 +74,8 @@ Add these redirect URLs in Authentication > URL Configuration:
 - The production origin followed by `/auth/callback`
 
 Use email/password for the initial pilot. Enable email confirmation and a production SMTP provider before external onboarding.
+
+Disable **Allow new users to sign up** under Authentication > Sign In / Providers. Administrator invitations continue to create approved accounts while public registration remains blocked.
 
 ## Local development
 

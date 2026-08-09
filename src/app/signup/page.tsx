@@ -1,9 +1,7 @@
-import { SignUpForm } from "@/components/auth-forms";
-import { AuthShell } from "@/components/auth-shell";
-import { hasSupabaseEnv } from "@/lib/supabase/config";
+import { redirect } from "next/navigation";
 
 export const metadata = { title: "Create account" };
 
 export default function SignUpPage() {
-  return <AuthShell><SignUpForm configured={hasSupabaseEnv()} /></AuthShell>;
+  redirect("/login?message=invitation-required");
 }

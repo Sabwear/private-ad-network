@@ -48,7 +48,11 @@ No single weak hardware signal should automatically accuse a venue of fraud. Sto
 - Role-based access with organization tenancy enforcement
 - Separate platform-administrator authority that is not stored in user-editable authentication metadata
 - Administrator-only organization creation with atomic owner assignment and wallet initialization
+- Invitation-only account creation controlled by the platform administrator
 - Verified but unassigned accounts remain outside the workspace
+- Administrator-controlled account suspension and organization roles, with a last-active-owner safeguard
+- Portal sessions record server-observed IP, device/browser/OS, edge location, route, and recent activity
+- Suspended accounts and revoked observed sessions are rejected at the portal boundary; tenant RLS also requires an active profile
 - Separation of content, operations, and finance duties
 - Reauthentication for sensitive policy, adjustment, or credential actions
 - CSRF-safe mutations, validation, encoding, secure cookies, and rate limits
@@ -73,6 +77,7 @@ No single weak hardware signal should automatically accuse a venue of fraud. Sto
 
 - Collect operational device telemetry, not audience identities
 - Operational telemetry currently includes server-observed IP, device/browser/OS type, locale, timezone, screen capabilities, connection hints, app version, and heartbeat time
+- Portal security telemetry includes user session ID, server-observed IP, user agent, coarse edge location, last route, and activity timestamps
 - Exact IP observations are visible only to authorized tenant users and platform administrators under RLS
 - No cameras, microphones, facial recognition, or demographic inference in MVP
 - Use registered venue/zone rather than continuous personal geolocation

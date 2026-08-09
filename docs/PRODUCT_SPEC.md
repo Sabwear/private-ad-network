@@ -36,13 +36,13 @@ Has full access with MFA and complete audit logging.
 
 ### Business onboarding
 
-1. A prospective owner creates and verifies an individual account.
-2. The account remains outside every business workspace until reviewed.
-3. A platform administrator verifies the business offline, creates its organization, and assigns the verified account as owner.
+1. A platform administrator verifies the prospective business owner offline and sends an account invitation.
+2. The invited owner uses the one-time link to verify the email and choose a password.
+3. The account remains outside every business workspace until the administrator creates its organization and assigns the verified account as owner.
 4. The owner registers locations, operating hours, and staff after assignment.
 5. A pilot credit allocation prevents an empty campaign loop.
 
-Business users cannot create organizations or grant themselves tenant access.
+Public signup is disabled. Business users cannot create accounts, organizations, or grant themselves tenant access.
 
 ### Screen activation
 

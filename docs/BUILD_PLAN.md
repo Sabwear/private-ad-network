@@ -26,6 +26,8 @@ Outcome: real users, organizations, locations, and devices stored in PostgreSQL.
 - [x] Deploy versioned migrations to the hosted database
 - [ ] Link the local CLI and reconcile hosted migration history
 - [x] Add authentication and cookie-based session handling
+- [x] Disable public signup and add administrator-created owner invitations
+- [x] Add user permission controls, account suspension, and observed live-session activity
 - [x] Load organization membership and enforce initial portal roles
 - [x] Define separate platform-administrator authority and pending-account isolation
 - [ ] Enforce admin MFA for privileged operations
@@ -33,7 +35,7 @@ Outcome: real users, organizations, locations, and devices stored in PostgreSQL.
 - [x] Implement initial location creation, operating hours, categories, zones, and traffic bands
 - [x] Add administrator organization editing and suspension
 - [x] Add location editing, suspension, and category exclusions
-- [ ] Add staff invitations and membership management
+- [ ] Extend administrator invitations from owners to business staff
 - [x] Implement short-lived device activation codes, key registration, hashed credentials, heartbeat telemetry, and suspension
 - [ ] Add automatic device credential rotation and refresh credentials
 - [ ] Replace remaining demonstration portal data with server-side repository queries

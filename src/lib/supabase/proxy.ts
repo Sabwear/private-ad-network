@@ -1,7 +1,11 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { isAuthEntryRoute, isPublicRoute } from "@/lib/auth/routes";
+import { getDeviceNetworkContext } from "@/lib/device/network-context";
 import { getSupabaseEnv, hasSupabaseEnv } from "@/lib/supabase/config";
+
+const activityCookie = "ll-activity-at";
+const activityIntervalSeconds = 45;
 
 function redirectWithSessionCookies(url: URL, sessionResponse: NextResponse) {
   const redirectResponse = NextResponse.redirect(url);
@@ -48,6 +52,39 @@ export async function updateSession(request: NextRequest) {
 
   const { data, error } = await supabase.auth.getClaims();
   const authenticated = !error && Boolean(data?.claims?.sub);
+
+  if (authenticated && !publicRoute) {
+    const lastRecordedAt = Number(request.cookies.get(activityCookie)?.value ?? 0);
+    const activityIsFresh = Number.isFinite(lastRecordedAt)
+      && Date.now() - lastRecordedAt < activityIntervalSeconds * 1000;
+
+    if (!activityIsFresh) {
+      const network = getDeviceNetworkContext(request);
+      const { data: activityAllowed, error: activityError } = await supabase.rpc("record_user_activity", {
+        p_path: `${pathname}${request.nextUrl.search}`,
+        p_ip: network.ipAddress,
+        p_user_agent: network.userAgent,
+        p_country_code: network.countryCode,
+        p_edge_colo: network.edgeColo,
+      });
+
+      if (!activityError && activityAllowed === false) {
+        await supabase.auth.signOut({ scope: "local" });
+        const loginUrl = new URL("/login?message=access-revoked", request.url);
+        return redirectWithSessionCookies(loginUrl, response);
+      }
+
+      if (!activityError && activityAllowed) {
+        response.cookies.set(activityCookie, String(Date.now()), {
+          httpOnly: true,
+          sameSite: "lax",
+          secure: request.nextUrl.protocol === "https:",
+          path: "/",
+          maxAge: activityIntervalSeconds,
+        });
+      }
+    }
+  }
 
   if (!authenticated && !publicRoute) {
     const url = request.nextUrl.clone();

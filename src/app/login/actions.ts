@@ -17,16 +17,6 @@ export type AuthActionState = {
 const email = z.string().trim().max(254).email("Enter a valid email address.");
 const password = z.string().min(12, "Use at least 12 characters.").max(128, "Use no more than 128 characters.");
 const signInSchema = z.object({ email, password: z.string().min(1, "Enter your password.").max(128), next: z.string().max(2048) });
-const signUpSchema = z.object({
-  name: z.string().trim().min(2, "Enter your full name.").max(100),
-  email,
-  password,
-  passwordConfirm: z.string(),
-  terms: z.literal("on", { error: "Confirm that you agree to the pilot terms." }),
-}).refine((value) => value.password === value.passwordConfirm, {
-  path: ["passwordConfirm"],
-  message: "Passwords do not match.",
-});
 const recoverySchema = z.object({ email });
 const updatePasswordSchema = z.object({ password, passwordConfirm: z.string() }).refine(
   (value) => value.password === value.passwordConfirm,
@@ -80,57 +70,6 @@ export async function signIn(_previousState: AuthActionState, formData: FormData
   }
 
   redirect(safeNextPath(parsed.data.next));
-}
-
-export async function signUp(_previousState: AuthActionState, formData: FormData): Promise<AuthActionState> {
-  const values = {
-    name: stringField(formData, "name").trim(),
-    email: stringField(formData, "email").trim(),
-  };
-  if (stringField(formData, "website")) {
-    return { status: "success", message: "Check your email for the confirmation link.", values: { email: values.email } };
-  }
-  const parsed = signUpSchema.safeParse({
-    ...values,
-    password: stringField(formData, "password"),
-    passwordConfirm: stringField(formData, "passwordConfirm"),
-    terms: stringField(formData, "terms"),
-  });
-  if (!parsed.success) {
-    return { status: "error", message: "Check the highlighted fields and try again.", fieldErrors: errorsFrom(parsed.error), values };
-  }
-  if (!hasSupabaseEnv()) return configurationError();
-
-  let origin: string;
-  try {
-    origin = await getSiteOrigin();
-  } catch {
-    return configurationError();
-  }
-  const supabase = await createClient();
-  const { data, error } = await supabase.auth.signUp({
-    email: parsed.data.email,
-    password: parsed.data.password,
-    options: {
-      emailRedirectTo: `${origin}/auth/callback?next=/overview`,
-      data: { full_name: parsed.data.name },
-    },
-  });
-
-  if (error) {
-    return {
-      status: "error",
-      message: error.status === 429 ? "Too many requests. Wait a few minutes and try again." : "We could not create the account. Please try again.",
-      values,
-    };
-  }
-
-  if (data.session) redirect("/overview");
-  return {
-    status: "success",
-    message: "Check your email for a confirmation link. The link must be opened before you can sign in.",
-    values: { email: values.email },
-  };
 }
 
 export async function requestPasswordReset(_previousState: AuthActionState, formData: FormData): Promise<AuthActionState> {

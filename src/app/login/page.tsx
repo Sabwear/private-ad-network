@@ -11,6 +11,8 @@ const messages: Record<string, AuthActionState> = {
   "signed-out": { status: "success", message: "You have been signed out securely." },
   "auth-callback-failed": { status: "error", message: "That authentication link is invalid or has expired. Request a new link and try again." },
   "service-unavailable": { status: "error", message: "Sign-in is temporarily unavailable. Please contact the network administrator." },
+  "access-revoked": { status: "error", message: "Your account or session no longer has access. Contact the network administrator." },
+  "invitation-required": { status: "error", message: "Access is invitation-only. Contact the network administrator for an account." },
 };
 
 export default async function LoginPage({

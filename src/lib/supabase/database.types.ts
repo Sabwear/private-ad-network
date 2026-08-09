@@ -168,6 +168,20 @@ export type Database = {
         request_context: Json;
         created_at: string;
       }>;
+      user_activity_sessions: Table<{
+        session_id: string;
+        user_id: string;
+        first_seen_at: string;
+        last_seen_at: string;
+        last_path: string | null;
+        ip_address: string | null;
+        user_agent: string | null;
+        country_code: string | null;
+        edge_colo: string | null;
+        revoked_at: string | null;
+        created_at: string;
+        updated_at: string;
+      }>;
     };
     Views: Record<string, never>;
     Functions: {
@@ -180,6 +194,29 @@ export type Database = {
           p_reason: string;
         };
         Returns: number;
+      };
+      admin_finalize_user_invite: {
+        Args: { p_user_id: string; p_full_name: string; p_reason: string };
+        Returns: undefined;
+      };
+      admin_update_user_access: {
+        Args: {
+          p_user_id: string;
+          p_account_status: string;
+          p_membership_role: string | null;
+          p_reason: string;
+        };
+        Returns: undefined;
+      };
+      record_user_activity: {
+        Args: {
+          p_path: string;
+          p_ip: string;
+          p_user_agent: string;
+          p_country_code: string;
+          p_edge_colo: string;
+        };
+        Returns: boolean;
       };
       create_location: {
         Args: {
