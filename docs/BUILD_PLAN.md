@@ -53,12 +53,15 @@ Outcome: one approved file is delivered and played locally on a reference device
 - [x] Add browser playback preflight, duration/dimension rules, and SHA-256 integrity checksum
 - [x] Add rights declaration, submission, administrator moderation, rejection reasons, and audit records
 - [x] Keep storage-specific reads behind a replaceable media storage adapter
-- Add FFmpeg worker for validation, normalization, checksum, and thumbnail
+- [ ] Add FFmpeg worker for validation, normalization, checksum, thumbnail, and streaming renditions
 - [x] Add resumable, retryable uploads with progress for pilot media files
-- Implement a dedicated non-admin moderator role and queue
-- Create Android TV project using Kotlin, Compose for TV, Media3, Room, and OkHttp
-- Implement activation, manifest fetch, asset download, checksum, cache, and fallback media
-- Implement boot recovery, foreground playback, and protected maintenance exit
+- [ ] Add secure byte-range delivery for portal previews and compatible players
+- [ ] Generate adaptive HLS renditions and short-lived signed playback URLs
+- [ ] Implement a dedicated non-admin moderator role and queue
+- [ ] Create Android TV project using Kotlin, Compose for TV, Media3, Room, and OkHttp
+- [ ] Implement activation, manifest fetch, streamed preview, asset download, checksum, cache, and fallback media
+- [ ] Keep approved advertising assets cached locally for uninterrupted venue playback when connectivity is degraded
+- [ ] Implement boot recovery, foreground playback, and protected maintenance exit
 
 Acceptance: an approved asset is uploaded in the portal, moderated, downloaded by one TV, and loops locally without buffering.
 
@@ -125,5 +128,5 @@ Outcome: validate trust, reliability, and commercial intent with 5-10 businesses
 - Tizen or webOS players
 - Cash redemption
 - Microservices per domain
-- Live streaming for pre-recorded ads
+- Live-event broadcasting; pre-recorded ads use secure adaptive streaming plus local device caching
 - Complex multipliers or AI scheduling

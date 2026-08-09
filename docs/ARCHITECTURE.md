@@ -6,6 +6,8 @@ Use a modular monolith for the API and business logic, plus a separate media-pro
 
 The pilot uses private managed object storage through `src/lib/storage/media-storage.ts`. Database records store provider-neutral object paths, and the portal requests short-lived read URLs through this adapter. Large files upload directly from the authenticated browser, so changing storage providers later is isolated from the media domain and does not require routing video bytes through the central Worker.
 
+Media delivery uses a hybrid model. The portal and compatible players can stream private pre-recorded media through short-lived signed URLs, byte-range requests, and later adaptive HLS renditions. Venue players still download approved assets, verify their checksums, and keep an offline cache before scheduled playback. Streaming improves previews and first-play latency; local caching keeps the advertising loop reliable during unstable or lost connectivity. The central Worker authorizes delivery but never proxies the video bytes.
+
 ## Runtime components
 
 ```text
@@ -95,6 +97,7 @@ Any failure rolls back every step.
 - Managed PostgreSQL with point-in-time recovery
 - Managed Redis for presence, rate limits, queues, and short locks
 - S3-compatible object storage with versioning and CDN
+- Signed private CDN delivery with byte ranges and adaptive HLS renditions
 - Separate worker process with bounded CPU/memory and a job queue
 - Structured logs, metrics, traces, error tracking, uptime checks, and alert routing
 

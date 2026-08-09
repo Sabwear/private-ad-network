@@ -19,5 +19,10 @@
   ],
   "observability": {
     "enabled": true
+  },
+  "secrets": {
+    "required": [
+      "SUPABASE_SECRET_KEY"
+    ]
   }
 }
