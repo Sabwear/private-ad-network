@@ -61,7 +61,7 @@ No single weak hardware signal should automatically accuse a venue of fraud. Sto
 - Private media objects are scoped to an existing tenant asset and served through short-lived authorized URLs
 - Pilot uploads accept MP4 only, enforce a 100 MB bucket limit, compute a browser SHA-256 checksum, and require 16:9 video at an approved duration
 - Business roles can prepare and submit media but cannot directly update approval status; only the protected moderation function can approve or reject
-- Browser preflight is not a substitute for the planned server-side FFmpeg and malware-validation worker
+- Browser preflight is backed by the server-side FFmpeg media processor; malware scanning remains required before the scope expands beyond controlled beta media
 
 ## Ledger controls
 
@@ -99,7 +99,7 @@ No single weak hardware signal should automatically accuse a venue of fraud. Sto
 ## Pre-pilot security gate
 
 - Threat model reviewed
-- Admin MFA enforced
+- Admin MFA enforced before external beta invitations
 - Authorization integration tests pass
 - Secrets externalized and rotated
 - Dependency and container scans pass

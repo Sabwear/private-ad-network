@@ -19,7 +19,7 @@ export default async function CampaignsPage() {
         eyebrow="Advertising"
         title="Campaigns"
         description="Allocate credits, control delivery, and track every verified play."
-        actions={<><span className={`data-source data-source-${result.source}`}>{sourceLabel}</span><button className="button button-primary" disabled={setupRequired}><Plus size={17} /> Create campaign</button></>}
+        actions={<><span className={`data-source data-source-${result.source}`}>{sourceLabel}</span><button className="button button-primary" disabled title="Campaign creation opens after the beta scheduling service is enabled"><Plus size={17} /> Create campaign</button></>}
       />
       <div className="segmented">
         <button className="selected">All campaigns <span>{result.campaigns.length}</span></button>
@@ -32,7 +32,7 @@ export default async function CampaignsPage() {
           <Target size={27} />
           <h2>{setupRequired ? "Workspace setup required" : "No campaigns yet"}</h2>
           <p>{setupRequired ? "Ask a network administrator to finish workspace setup before creating campaigns." : "Create the first campaign after an approved media asset and wallet are available."}</p>
-          <button className="button button-primary" disabled={setupRequired}><Plus size={17} /> Create campaign</button>
+          <button className="button button-primary" disabled><Plus size={17} /> Campaign scheduling coming next</button>
         </section>
       ) : (
         <section className="campaign-grid">

@@ -1,38 +1,66 @@
 import Link from "next/link";
-import { ArrowRight, CalendarDays, ChevronRight, CircleAlert, Download, Play, Plus, TrendingUp } from "lucide-react";
+import { ArrowRight, CheckCircle2, CircleAlert, Clapperboard, MonitorPlay, Plus, RadioTower, Rocket } from "lucide-react";
 import { PageHeading } from "@/components/page-heading";
 import { StatusPill } from "@/components/status-pill";
-import { alerts, campaigns, deliverySeries, evidence, metrics, screens } from "@/lib/platform-data";
+import { getWorkspaceContext } from "@/lib/auth/workspace";
+import { getCampaignCards } from "@/lib/repositories/campaigns";
+import { getChannelManagementData } from "@/lib/repositories/channels";
+import { getMediaLibrary } from "@/lib/repositories/media";
+import { getScreens } from "@/lib/repositories/screens";
 
 export const metadata = { title: "Overview" };
 
-export default function OverviewPage() {
-  return (
-    <>
-      <PageHeading eyebrow="Sunday, 9 August" title="Good morning, Central Cafe" description="Here is how your advertising network is performing today." actions={<><button className="button button-secondary"><CalendarDays size={17} /> Last 14 days</button><Link href="/campaigns" className="button button-primary"><Plus size={17} /> New campaign</Link></>} />
-      <section className="metric-grid" aria-label="Network summary">
-        {metrics.map((metric) => <article className={`metric-card metric-${metric.tone}`} key={metric.label}><div className="metric-accent" /><span className="metric-label">{metric.label}</span><strong>{metric.value}</strong><small>{metric.detail}</small></article>)}
-      </section>
-      <section className="dashboard-grid">
-        <article className="panel chart-panel">
-          <div className="panel-header"><div><h2>Verified delivery</h2><p>Accepted plays across your campaigns</p></div><span className="trend-badge"><TrendingUp size={15} /> 12.6%</span></div>
-          <div className="chart-summary"><strong>7,842</strong><span>completed plays</span></div>
-          <div className="bar-chart" aria-label="Completed plays over 14 days">{deliverySeries.map((value, index) => <span key={index} style={{ height: `${Math.round((value / 118) * 100)}%` }}><i>{value}</i></span>)}</div>
-          <div className="chart-labels"><span>Jul 27</span><span>Aug 2</span><span>Aug 9</span></div>
-        </article>
-        <article className="panel alerts-panel">
-          <div className="panel-header"><div><h2>Needs attention</h2><p>Operational alerts from the network</p></div><span className="count-badge">3</span></div>
-          <div className="alert-list">{alerts.map((alert) => <div className="alert-item" key={alert.title}><span className={`alert-icon alert-${alert.tone}`}><CircleAlert size={17} /></span><div><strong>{alert.title}</strong><p>{alert.detail}</p><small>{alert.time}</small></div><ChevronRight size={17} /></div>)}</div>
-        </article>
-      </section>
-      <section className="panel table-panel">
-        <div className="panel-header"><div><h2>Active campaigns</h2><p>Delivery pace and credit usage</p></div><Link href="/campaigns" className="text-link">View all <ArrowRight size={16} /></Link></div>
-        <div className="table-scroll"><table><thead><tr><th>Campaign</th><th>Status</th><th>Delivery</th><th>Completed plays</th><th>Budget</th><th>Pace</th></tr></thead><tbody>{campaigns.slice(0, 3).map((campaign) => <tr key={campaign.name}><td><strong>{campaign.name}</strong><small>{campaign.asset} creative</small></td><td><StatusPill tone={campaign.tone}>{campaign.status}</StatusPill></td><td><div className="progress-cell"><span><i style={{ width: `${campaign.spent / campaign.budget * 100}%` }} /></span><small>{Math.round(campaign.spent / campaign.budget * 100)}%</small></div></td><td>{campaign.plays.toLocaleString()}</td><td>{campaign.spent} / {campaign.budget} cr</td><td>{campaign.pace}</td></tr>)}</tbody></table></div>
-      </section>
-      <section className="bottom-grid">
-        <article className="panel screen-panel"><div className="panel-header"><div><h2>Screen health</h2><p>Live status from your locations</p></div><Link href="/screens" className="text-link">Manage screens <ArrowRight size={16} /></Link></div>{screens.slice(0,3).map((screen) => <div className="compact-row" key={screen.name}><span className={`screen-orb orb-${screen.tone}`}><Play size={15} fill="currentColor" /></span><div><strong>{screen.name}</strong><small>{screen.location}</small></div><div className="compact-status"><StatusPill tone={screen.tone}>{screen.status}</StatusPill><small>{screen.heartbeat}</small></div></div>)}</article>
-        <article className="panel evidence-panel"><div className="panel-header"><div><h2>Latest settlements</h2><p>Validated playback and credit movement</p></div><button className="icon-button" aria-label="Download"><Download size={18} /></button></div>{evidence.slice(0,3).map((item) => <div className="settlement-row" key={item.id}><div><strong>{item.asset}</strong><small>{item.host} · {item.received}</small></div><div><span className={item.result === "Accepted" ? "amount-positive" : "amount-muted"}>{item.result === "Accepted" ? `+${item.credits} cr` : item.result}</span><small>{item.id}</small></div></div>)}</article>
-      </section>
-    </>
-  );
+export default async function OverviewPage() {
+  const workspace = await getWorkspaceContext();
+  const [screensResult, mediaResult, campaignResult, channelResult] = await Promise.all([
+    getScreens(),
+    getMediaLibrary(),
+    getCampaignCards(),
+    getChannelManagementData(),
+  ]);
+  const activeCampaigns = campaignResult.campaigns.filter((campaign) => campaign.status === "Active").length;
+  const activeChannels = channelResult.channels.filter((channel) => channel.status === "active").length;
+  const issues = [
+    ...screensResult.screens.filter((screen) => screen.status !== "Online").slice(0, 3).map((screen) => ({ title: `${screen.name} is ${screen.status.toLowerCase()}`, detail: `${screen.location} · last heartbeat ${screen.heartbeat}`, tone: "danger" as const, href: "/screens" })),
+    ...mediaResult.assets.filter((asset) => asset.processingStatus === "failed").slice(0, 2).map((asset) => ({ title: `${asset.name} failed processing`, detail: asset.processingError || "Open the media library for details.", tone: "warning" as const, href: "/media" })),
+  ];
+
+  return <>
+    <PageHeading
+      eyebrow="Limited beta"
+      title={`Welcome, ${workspace.organization.name}`}
+      description="Live operational data for the controlled beta. Prototype balances and playback claims have been removed."
+      actions={<Link href={workspace.permissions.canAccessAdmin ? "/channels" : "/media"} className="button button-primary"><Plus size={17} /> {workspace.permissions.canAccessAdmin ? "Manage channel" : "Add media"}</Link>}
+    />
+
+    <section className="metric-grid" aria-label="Live network summary">
+      <article className="metric-card metric-teal"><div className="metric-accent" /><span className="metric-label">Registered screens</span><strong>{screensResult.summary.registered}</strong><small>{screensResult.summary.online} online now</small></article>
+      <article className="metric-card metric-blue"><div className="metric-accent" /><span className="metric-label">Approved media</span><strong>{mediaResult.summary.approved}</strong><small>{mediaResult.summary.inReview} waiting for review</small></article>
+      <article className="metric-card metric-orange"><div className="metric-accent" /><span className="metric-label">Active channels</span><strong>{activeChannels}</strong><small>{channelResult.channels.reduce((count, channel) => count + channel.organizations.length, 0)} business assignments</small></article>
+      <article className="metric-card metric-violet"><div className="metric-accent" /><span className="metric-label">Active campaigns</span><strong>{activeCampaigns}</strong><small>Scheduling enters beta next</small></article>
+    </section>
+
+    <section className="dashboard-grid">
+      <article className="panel beta-readiness-panel">
+        <div className="panel-header"><div><h2>Beta operating flow</h2><p>The real workflows available to controlled testers today.</p></div><Rocket size={19} /></div>
+        <div className="beta-flow-list">
+          <Link href="/business"><CheckCircle2 size={17} /><span><strong>1. Add the business</strong><small>Administrator-created organization and owner access</small></span><ArrowRight size={15} /></Link>
+          <Link href="/screens"><CheckCircle2 size={17} /><span><strong>2. Pair a screen</strong><small>Location assignment, device credentials, and heartbeat</small></span><ArrowRight size={15} /></Link>
+          <Link href="/media"><CheckCircle2 size={17} /><span><strong>3. Upload and approve media</strong><small>Private upload, processing, and moderation</small></span><ArrowRight size={15} /></Link>
+          {workspace.permissions.canAccessAdmin ? <Link href="/channels"><CheckCircle2 size={17} /><span><strong>4. Build the channel</strong><small>Assign businesses and order approved media</small></span><ArrowRight size={15} /></Link> : null}
+        </div>
+      </article>
+      <article className="panel alerts-panel">
+        <div className="panel-header"><div><h2>Needs attention</h2><p>Current operational signals, not sample alerts.</p></div><span className="count-badge">{issues.length}</span></div>
+        {issues.length ? <div className="alert-list">{issues.map((issue) => <Link href={issue.href} className="alert-item" key={issue.title}><span className={`alert-icon alert-${issue.tone}`}><CircleAlert size={17} /></span><div><strong>{issue.title}</strong><p>{issue.detail}</p></div><ArrowRight size={15} /></Link>)}</div> : <div className="beta-clear-state"><CheckCircle2 size={25} /><strong>No current alerts</strong><p>Paired-screen and processing issues will appear here.</p></div>}
+      </article>
+    </section>
+
+    <section className="panel table-panel">
+      <div className="panel-header"><div><h2>Screen health</h2><p>Latest live state from registered devices.</p></div><Link href="/screens" className="text-link">Manage screens <ArrowRight size={16} /></Link></div>
+      {screensResult.screens.length ? screensResult.screens.slice(0, 4).map((screen) => <div className="compact-row" key={screen.id}><span className={`screen-orb orb-${screen.tone}`}><MonitorPlay size={15} /></span><div><strong>{screen.name}</strong><small>{screen.location}</small></div><div className="compact-status"><StatusPill tone={screen.tone}>{screen.status}</StatusPill><small>{screen.heartbeat}</small></div></div>) : <div className="management-empty"><MonitorPlay size={23} /><strong>No screens paired</strong><p>Add a location and pair the first beta device.</p></div>}
+    </section>
+
+    <section className="beta-scope-note"><RadioTower size={19} /><div><strong>Limited beta scope</strong><p>Organization onboarding, locations, screen pairing, media moderation, and channel streaming are enabled. Campaign scheduling, proof-of-play settlement, and real wallet transactions remain disabled until their server workflows are complete.</p></div><Clapperboard size={19} /></section>
+  </>;
 }

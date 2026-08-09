@@ -48,7 +48,18 @@ export async function deleteChannel(formData: FormData) {
   const publicId = z.string().uuid().safeParse(value(formData, "channelPublicId"));
   if (!publicId.success) return;
   const supabase = await createClient();
-  await supabase.from("streaming_channels").delete().eq("public_id", publicId.data);
+  const { error } = await supabase.from("streaming_channels").delete().eq("public_id", publicId.data);
+  if (error) throw new Error("The channel could not be deleted.");
+  revalidatePath("/channels");
+}
+
+export async function rotateChannelAccessKey(formData: FormData) {
+  if (!await requireAdmin()) return;
+  const publicId = z.string().uuid().safeParse(value(formData, "channelPublicId"));
+  if (!publicId.success) return;
+  const supabase = await createClient();
+  const { error } = await supabase.from("streaming_channels").update({ access_key: crypto.randomUUID() }).eq("public_id", publicId.data);
+  if (error) throw new Error("The stream link could not be rotated.");
   revalidatePath("/channels");
 }
 
@@ -61,13 +72,15 @@ export async function setBusinessAssignment(formData: FormData) {
   const supabase = await createClient();
   if (parsed.data.intent === "assign") {
     const { data: claims } = await supabase.auth.getClaims();
-    await supabase.from("streaming_channel_organizations").upsert({
+    const { error } = await supabase.from("streaming_channel_organizations").upsert({
       channel_id: parsed.data.channelId,
       organization_id: parsed.data.organizationId,
       assigned_by: typeof claims?.claims?.sub === "string" ? claims.claims.sub : null,
     });
+    if (error) throw new Error("The business could not be assigned.");
   } else {
-    await supabase.from("streaming_channel_organizations").delete().eq("channel_id", parsed.data.channelId).eq("organization_id", parsed.data.organizationId);
+    const { error } = await supabase.from("streaming_channel_organizations").delete().eq("channel_id", parsed.data.channelId).eq("organization_id", parsed.data.organizationId);
+    if (error) throw new Error("The business assignment could not be removed.");
   }
   revalidatePath("/channels");
 }
@@ -81,13 +94,14 @@ export async function addChannelMedia(formData: FormData) {
     supabase.auth.getClaims(),
     supabase.from("streaming_channel_items").select("position").eq("channel_id", parsed.data.channelId).order("position", { ascending: false }).limit(1).maybeSingle(),
   ]);
-  await supabase.from("streaming_channel_items").insert({
+  const { error } = await supabase.from("streaming_channel_items").insert({
     channel_id: parsed.data.channelId,
     media_asset_id: parsed.data.assetId,
     position: (lastItem?.position ?? 0) + 1,
     status: "active",
     created_by: typeof claims?.claims?.sub === "string" ? claims.claims.sub : null,
   });
+  if (error) throw new Error("The media could not be added to this channel.");
   revalidatePath("/channels");
 }
 
@@ -96,6 +110,7 @@ export async function removeChannelMedia(formData: FormData) {
   const itemId = z.coerce.number().int().positive().safeParse(value(formData, "itemId"));
   if (!itemId.success) return;
   const supabase = await createClient();
-  await supabase.from("streaming_channel_items").delete().eq("id", itemId.data);
+  const { error } = await supabase.from("streaming_channel_items").delete().eq("id", itemId.data);
+  if (error) throw new Error("The media could not be removed from this channel.");
   revalidatePath("/channels");
 }

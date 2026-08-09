@@ -1,5 +1,6 @@
 import "server-only";
 
+import { cache } from "react";
 import { authorizeChannel } from "@/lib/streaming/channel-access";
 
 export type PublicChannelStream = {
@@ -8,7 +9,7 @@ export type PublicChannelStream = {
   items: Array<{ id: string; name: string; hlsUrl: string | null; fallbackUrl: string }>;
 };
 
-export async function getPublicChannelStream(channelPublicId: string, accessKey: string): Promise<PublicChannelStream | null> {
+export const getPublicChannelStream = cache(async (channelPublicId: string, accessKey: string): Promise<PublicChannelStream | null> => {
   const access = await authorizeChannel(channelPublicId, accessKey);
   if (!access) return null;
   const { data: items } = await access.admin.from("streaming_channel_items").select("media_asset_id,position").eq("channel_id", access.channel.id).eq("status", "active").order("position");
@@ -30,4 +31,4 @@ export async function getPublicChannelStream(channelPublicId: string, accessKey:
       }];
     }),
   };
-}
+});
