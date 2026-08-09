@@ -109,14 +109,35 @@ export type Database = {
         original_filename: string | null;
         mime_type: string | null;
         file_size_bytes: number | null;
+        normalized_file_size_bytes: number | null;
         technical_metadata: Json;
         moderation_status: string;
+        processing_status: string;
+        processing_error: string | null;
+        processing_completed_at: string | null;
         rights_declared_at: string | null;
         rejection_reason: string | null;
         submitted_at: string | null;
         moderated_at: string | null;
         moderated_by: string | null;
         created_by: string | null;
+        created_at: string;
+        updated_at: string;
+      }>;
+      media_processing_jobs: Table<{
+        id: number;
+        public_id: string;
+        media_asset_id: number;
+        source_checksum_sha256: string;
+        status: string;
+        attempts: number;
+        max_attempts: number;
+        available_at: string;
+        locked_at: string | null;
+        locked_by: string | null;
+        last_error: string | null;
+        started_at: string | null;
+        completed_at: string | null;
         created_at: string;
         updated_at: string;
       }>;
@@ -320,6 +341,39 @@ export type Database = {
       moderate_media_asset: {
         Args: { p_asset_public_id: string; p_decision: string; p_reason: string };
         Returns: undefined;
+      };
+      claim_media_processing_job: {
+        Args: { p_worker_id: string };
+        Returns: Array<{
+          job_public_id: string;
+          asset_public_id: string;
+          organization_public_id: string;
+          original_storage_path: string;
+          source_checksum_sha256: string;
+          expected_duration_ms: number | null;
+          expected_width: number | null;
+          expected_height: number | null;
+          attempt: number;
+        }>;
+      };
+      complete_media_processing_job: {
+        Args: {
+          p_job_public_id: string;
+          p_worker_id: string;
+          p_normalized_storage_path: string;
+          p_thumbnail_storage_path: string;
+          p_normalized_file_size_bytes: number;
+          p_duration_ms: number;
+          p_width: number;
+          p_height: number;
+          p_codec: string;
+          p_processing_metadata: Json;
+        };
+        Returns: undefined;
+      };
+      fail_media_processing_job: {
+        Args: { p_job_public_id: string; p_worker_id: string; p_error: string };
+        Returns: boolean;
       };
     };
     Enums: Record<string, never>;

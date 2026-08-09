@@ -30,7 +30,7 @@ export async function GET(
 
   const { data: asset, error: assetError } = await supabase
     .from("media_assets")
-    .select("original_storage_path")
+    .select("original_storage_path,normalized_storage_path,processing_status")
     .eq("public_id", assetId)
     .maybeSingle();
 
@@ -38,9 +38,12 @@ export async function GET(
     return errorResponse("The requested media is unavailable.", 404);
   }
 
+  const playbackPath = asset.processing_status === "ready" && asset.normalized_storage_path
+    ? asset.normalized_storage_path
+    : asset.original_storage_path;
   const signedUrl = await createMediaReadUrl(
     supabase,
-    asset.original_storage_path,
+    playbackPath,
     PORTAL_MEDIA_URL_TTL_SECONDS,
   );
   if (!signedUrl) {

@@ -3,6 +3,8 @@
 .next
 .open-next
 node_modules
+workers/*/node_modules
+workers/*/dist
 .env*
 !.env.example
 npm-debug.log*

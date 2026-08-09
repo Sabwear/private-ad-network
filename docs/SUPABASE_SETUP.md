@@ -12,6 +12,7 @@
 - A fourth migration adds private hashed device activation/credential storage, tenant-scoped operational observations, secure pairing, heartbeats, and revocation
 - A fifth migration hardens the private media bucket and adds controlled upload preparation, submission, integrity metadata, administrator moderation, and audit records
 - A sixth migration adds administrator-controlled user access, tenant-aware suspension enforcement, and portal session observations
+- A seventh migration adds durable media-processing jobs, worker-only claim/complete/fail functions, derivative storage access, retries, and approval gating
 - Every public application table has RLS enabled
 - Data API privileges are explicit; the anonymous role receives no table access
 - Private media storage has tenant-aware select/insert/update policies

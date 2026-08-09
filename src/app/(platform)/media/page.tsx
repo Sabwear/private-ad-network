@@ -40,7 +40,8 @@ export default async function MediaPage() {
       </div>
       <div className="media-body">
         <div className="media-title-row"><div><h2>{asset.name}</h2><p>{asset.owner}</p></div><StatusPill tone={asset.tone}>{asset.status}</StatusPill></div>
-        <dl><div><dt>Technical format</dt><dd>{asset.format}</dd></div><div><dt>File</dt><dd>{asset.fileName} / {asset.fileSize}</dd></div><div><dt>Last updated</dt><dd>{asset.updated}</dd></div></dl>
+        <dl><div><dt>Technical format</dt><dd>{asset.format}</dd></div><div><dt>Processing</dt><dd>{asset.processingStatus.replaceAll("_", " ")}</dd></div><div><dt>File</dt><dd>{asset.fileName} / {asset.fileSize}</dd></div><div><dt>Last updated</dt><dd>{asset.updated}</dd></div></dl>
+        {asset.processingError ? <p className="media-rejection"><strong>Processing issue:</strong> {asset.processingError}</p> : null}
         {asset.rejectionReason ? <p className="media-rejection"><strong>Rejection reason:</strong> {asset.rejectionReason}</p> : null}
         {canModerate ? <MediaModerationPanel asset={asset} /> : null}
       </div>

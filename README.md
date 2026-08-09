@@ -46,3 +46,13 @@ pnpm exec supabase --workdir . db push
 ```
 
 After deploying, bootstrap the first platform administrator using the controlled procedure in `docs/SUPABASE_SETUP.md`.
+
+## Media processor
+
+Video validation and normalization run outside the web application in `workers/media-processor`. Build it with `pnpm worker:media:build` or deploy its container with:
+
+```bash
+docker build -f workers/media-processor/Dockerfile -t loopline-media-processor .
+```
+
+The worker requires `SUPABASE_URL` and the server-only `SUPABASE_SECRET_KEY`. FFmpeg and FFprobe are included in the container; the secret must be stored in the worker host's protected environment settings.

@@ -30,5 +30,16 @@ jobs:
       - name: Lint
         run: pnpm lint
 
+      - name: Check media processor
+        run: pnpm worker:media:check
+
+      - name: Build media processor
+        run: pnpm worker:media:build
+
+      - name: Build and inspect media processor container
+        run: |
+          docker build --file workers/media-processor/Dockerfile --tag loopline-media-processor:test .
+          docker run --rm --entrypoint sh loopline-media-processor:test -c "ffmpeg -hide_banner -encoders 2>/dev/null | grep -q libx264 && ffprobe -version"
+
       - name: Build portable Next.js application
         run: pnpm build

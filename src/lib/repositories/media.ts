@@ -18,6 +18,8 @@ export type MediaLibraryItem = {
   fileName: string;
   fileSize: string;
   rejectionReason: string;
+  processingStatus: string;
+  processingError: string;
   previewUrl: string | null;
 };
 
@@ -75,6 +77,8 @@ function demoResult(): MediaLibraryResult {
     fileName: "Preview data",
     fileSize: "--",
     rejectionReason: "",
+    processingStatus: "ready",
+    processingError: "",
     previewUrl: null,
   }));
   return { source: "demo", assets, summary: summarize(assets) };
@@ -84,7 +88,7 @@ export async function getMediaLibrary(): Promise<MediaLibraryResult> {
   if (!hasSupabaseEnv()) return demoResult();
   const supabase = await createClient();
   const [assetsResult, organizationsResult] = await Promise.all([
-    supabase.from("media_assets").select("public_id,organization_id,name,original_storage_path,original_filename,mime_type,file_size_bytes,duration_ms,width,height,codec,moderation_status,rejection_reason,updated_at").order("created_at", { ascending: false }),
+    supabase.from("media_assets").select("public_id,organization_id,name,original_storage_path,original_filename,mime_type,file_size_bytes,duration_ms,width,height,codec,moderation_status,rejection_reason,processing_status,processing_error,updated_at").order("created_at", { ascending: false }),
     supabase.from("organizations").select("id,display_name"),
   ]);
 
@@ -111,6 +115,8 @@ export async function getMediaLibrary(): Promise<MediaLibraryResult> {
       fileName: asset.original_filename ?? "Not reported",
       fileSize: fileSizeLabel(asset.file_size_bytes),
       rejectionReason: asset.rejection_reason ?? "",
+      processingStatus: asset.processing_status,
+      processingError: asset.processing_error ?? "",
       previewUrl,
     };
   });

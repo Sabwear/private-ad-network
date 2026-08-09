@@ -113,3 +113,5 @@ Extract a module only when at least one is true:
 - Security isolation requires a separate boundary
 
 Media processing is separated from day one because it is CPU-heavy and failure-prone compared with transactional API work. Hosting-specific deployment files remain adapters at the repository boundary and cannot be imported by product or domain modules.
+
+The media processor is a separately deployable Node.js/FFmpeg container under `workers/media-processor`. Submission commits a durable PostgreSQL job in the same transaction as the asset state change. Workers claim jobs atomically with `FOR UPDATE SKIP LOCKED`, verify the original SHA-256 and technical metadata, create an H.264/AAC fast-start MP4 plus JPEG thumbnail, upload versioned derivatives, and complete or retry the job through server-only database functions. A crashed worker lease becomes reclaimable after 30 minutes; exhausted jobs fail visibly instead of remaining stuck.

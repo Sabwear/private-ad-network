@@ -146,12 +146,14 @@ export function MediaUploadPanel() {
 export function MediaModerationPanel({ asset }: { asset: MediaLibraryItem }) {
   const [state, formAction, pending] = useActionState(moderateMedia, initialActionState);
   if (asset.rawStatus !== "in_review") return null;
+  const processingReady = asset.processingStatus === "ready";
   return (
     <form className="media-moderation-form" action={formAction}>
       <input type="hidden" name="assetPublicId" value={asset.id} />
       {state.message ? <div className={`auth-message auth-message-${state.status}`}>{state.status === "success" ? <CheckCircle2 size={15} /> : <ShieldCheck size={15} />}<span>{state.message}</span></div> : null}
       <label><span>Moderation reason</span><textarea name="reason" minLength={5} maxLength={500} rows={2} required placeholder="Technical and policy review notes." /></label>
-      <div><button className="button button-secondary" name="decision" value="rejected" type="submit" disabled={pending}><XCircle size={16} /> Reject</button><button className="button button-primary" name="decision" value="approved" type="submit" disabled={pending}><CheckCircle2 size={16} /> Approve</button></div>
+      {!processingReady ? <small>Approval becomes available after secure media processing finishes.</small> : null}
+      <div><button className="button button-secondary" name="decision" value="rejected" type="submit" disabled={pending}><XCircle size={16} /> Reject</button><button className="button button-primary" name="decision" value="approved" type="submit" disabled={pending || !processingReady}><CheckCircle2 size={16} /> Approve</button></div>
     </form>
   );
 }

@@ -11,7 +11,10 @@
     "db:stop": "supabase --workdir . stop",
     "db:reset": "supabase --workdir . db reset",
     "db:push:check": "supabase --workdir . db push --dry-run",
-    "db:types": "supabase --workdir . gen types typescript --linked"
+    "db:types": "supabase --workdir . gen types typescript --linked",
+    "worker:media:build": "pnpm --filter @loopline/media-processor build",
+    "worker:media:dev": "pnpm --filter @loopline/media-processor dev",
+    "worker:media:check": "pnpm --filter @loopline/media-processor check"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.4",
