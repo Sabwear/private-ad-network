@@ -197,6 +197,26 @@ export type Database = {
         created_by: string | null;
         created_at: string;
       }>;
+      playback_sessions: Table<{
+        id: number;
+        playback_id: string;
+        device_id: number;
+        campaign_id: number;
+        media_asset_id: number;
+        advertiser_organization_id: number;
+        host_organization_id: number;
+        policy_version_id: number;
+        manifest_id: string;
+        assignment_nonce: string;
+        started_at: string | null;
+        completed_at: string | null;
+        verified_seconds: number;
+        validation_result: string;
+        confidence_score: number | null;
+        reason_codes: string[];
+        settled_ledger_transaction_id: number | null;
+        created_at: string;
+      }>;
       wallets: Table<{
         id: number;
         organization_id: number | null;
