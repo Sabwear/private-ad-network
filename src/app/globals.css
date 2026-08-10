@@ -29,14 +29,18 @@ h1, h2, p { margin: 0; }
 button { cursor: pointer; }
 
 .app-shell { min-height: 100vh; }
-.sidebar { position: fixed; inset: 0 auto 0 0; width: 246px; z-index: 40; display: flex; flex-direction: column; padding: 25px 16px 18px; background: linear-gradient(180deg, #103441 0%, #0e2c37 100%); color: #fff; }
-.sidebar-top { display: flex; align-items: center; justify-content: space-between; padding: 0 8px 28px; }
+.sidebar { position: fixed; inset: 0 auto 0 0; width: 246px; min-height: 0; z-index: 40; display: flex; flex-direction: column; padding: 25px 16px 18px; background: linear-gradient(180deg, #103441 0%, #0e2c37 100%); color: #fff; overflow: hidden; }
+.sidebar-top { flex: 0 0 auto; display: flex; align-items: center; justify-content: space-between; padding: 0 8px 28px; }
 .brand { display: inline-flex; align-items: center; gap: 11px; }
 .brand-mark { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 12px; background: linear-gradient(145deg, #39aaa0, #0b897c); color: #fff; box-shadow: inset 0 0 0 1px rgba(255,255,255,.15); }
 .brand-copy { display: flex; flex-direction: column; line-height: 1.1; }
 .brand-copy strong { font-size: 17px; letter-spacing: -.02em; }
 .brand-copy small { margin-top: 4px; color: #9fbdc4; font-size: 10px; text-transform: uppercase; letter-spacing: .14em; }
-.primary-nav { display: flex; flex-direction: column; gap: 4px; }
+.primary-nav { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; gap: 4px; padding-right: 5px; overflow-x: hidden; overflow-y: auto; overscroll-behavior-y: contain; scrollbar-color: rgba(107,190,182,.48) transparent; scrollbar-width: thin; }
+.primary-nav::-webkit-scrollbar { width: 5px; }
+.primary-nav::-webkit-scrollbar-track { background: transparent; }
+.primary-nav::-webkit-scrollbar-thumb { border-radius: 999px; background: rgba(107,190,182,.42); }
+.primary-nav::-webkit-scrollbar-thumb:hover { background: rgba(107,190,182,.66); }
 .nav-label { padding: 3px 13px 7px; color: #76959d; font-size: 10px; font-weight: 700; letter-spacing: .13em; text-transform: uppercase; }
 .nav-label-spaced { margin-top: 15px; }
 .nav-link { position: relative; display: flex; align-items: center; gap: 12px; min-height: 43px; padding: 0 13px; border-radius: 10px; color: #b9cdd2; font-weight: 600; font-size: 13px; transition: .18s ease; }
@@ -44,13 +48,13 @@ button { cursor: pointer; }
 .nav-link.active { background: rgba(37, 168, 154, .18); color: #e9fffb; }
 .nav-link.active::before { content: ""; position: absolute; left: -16px; width: 3px; height: 23px; border-radius: 0 3px 3px 0; background: #47c1b2; }
 .nav-badge { margin-left: auto; padding: 3px 7px; border-radius: 10px; background: rgba(255,255,255,.09); color: #8eabb2; font-size: 9px; text-transform: uppercase; letter-spacing: .08em; }
-.pilot-card { position: relative; margin-top: auto; padding: 14px; border: 1px solid rgba(133,190,198,.16); border-radius: 13px; background: rgba(255,255,255,.045); display: grid; grid-template-columns: 32px 1fr; gap: 9px; overflow: hidden; }
+.pilot-card { position: relative; flex: 0 0 auto; margin-top: 12px; padding: 14px; border: 1px solid rgba(133,190,198,.16); border-radius: 13px; background: rgba(255,255,255,.045); display: grid; grid-template-columns: 32px 1fr; gap: 9px; overflow: hidden; }
 .pilot-card-icon { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 9px; background: rgba(71,193,178,.16); color: #52cabc; }
 .pilot-card strong { display: block; font-size: 12px; }
 .pilot-card p { margin-top: 3px; color: #88a6ad; font-size: 10px; }
 .pilot-progress { grid-column: 1 / -1; height: 3px; border-radius: 3px; background: rgba(255,255,255,.09); }
 .pilot-progress span { display: block; width: 86%; height: 100%; border-radius: inherit; background: #3db5a7; }
-.account-wrap { position: relative; margin-top: 14px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,.08); }
+.account-wrap { position: relative; flex: 0 0 auto; margin-top: 14px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,.08); }
 .sidebar-user { width: 100%; display: grid; grid-template-columns: 34px 1fr auto; gap: 9px; align-items: center; padding: 4px 6px; border: 0; border-radius: 9px; background: transparent; color: inherit; text-align: left; }
 .sidebar-user:hover,.sidebar-user[aria-expanded="true"] { background: rgba(255,255,255,.055); }
 .avatar { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; background: #f4a155; color: #fff; font-size: 11px; font-weight: 800; }
