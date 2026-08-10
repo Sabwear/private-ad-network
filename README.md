@@ -30,7 +30,7 @@ SUPABASE_SECRET_KEY=sb_secret_your_server_key
 
 Email/password sign-up, confirmation, sign-in, password recovery, and secure sign-out use Supabase Auth with cookie-based SSR sessions. In Supabase Authentication URL Configuration, set the Site URL to the deployed app and allow `<site-url>/auth/callback` as a redirect URL. Configure custom SMTP before a production pilot; Supabase's default mailer is intended only for initial testing and is heavily rate-limited.
 
-The portal loads the signed-in user's organization membership through a server-only workspace data layer and uses it for role-aware navigation. The limited-beta operational pages read tenant-scoped data from the database. Campaign creation, finance, proof, and reporting remain explicitly disabled until their backend services and acceptance tests are implemented.
+The portal loads the signed-in user's organization membership through a server-only workspace data layer and uses it for role-aware navigation. The limited-beta operational pages read tenant-scoped data from the database. Business users can save campaign drafts with approved media, business targets, dates, and delivery limits; activation remains locked until atomic credit holds are implemented. Finance, proof, and reporting remain explicitly disabled until their backend services and acceptance tests are implemented.
 
 Verified accounts do not automatically receive business access. A platform administrator creates each organization manually and assigns one pending account as owner. Until assignment, the account sees a dedicated waiting screen and cannot enter the workspace.
 
@@ -64,3 +64,9 @@ New media jobs also generate adaptive 720p and 480p HLS renditions. Platform adm
 `/api/health` confirms that the web service is running. `/api/ready` additionally checks the server-side database connection and returns `503` when the application is not ready to serve production work. Both endpoints are public, disclose no credentials, and disable caching.
 
 The media processor is a separate long-running service and is not started by a normal Vercel web deployment. Run its container on a worker-capable host before uploading beta media.
+
+## Controlled demo data
+
+`supabase/demo_seed.sql` creates a repeatable, clearly marked beta dataset with three businesses, locations, screens, one campaign draft, and one playable approved media item. The current hosted project has this dataset installed for testing.
+
+Platform administrators can remove it from **Admin control → Demo content controls**. Cleanup requires acknowledging the warning, typing `DELETE DEMO DATA`, and accepting a final confirmation dialog. The server removes only organizations carrying the protected demo marker; related demo records and private demo files are removed with them.

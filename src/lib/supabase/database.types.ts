@@ -190,6 +190,13 @@ export type Database = {
         created_at: string;
         updated_at: string;
       }>;
+      campaign_target_organizations: Table<{
+        id: number;
+        campaign_id: number;
+        organization_id: number;
+        created_by: string | null;
+        created_at: string;
+      }>;
       wallets: Table<{
         id: number;
         organization_id: number | null;
@@ -236,6 +243,23 @@ export type Database = {
     };
     Views: Record<string, never>;
     Functions: {
+      admin_clear_demo_data: {
+        Args: { p_confirmation: string };
+        Returns: number;
+      };
+      create_campaign_draft: {
+        Args: {
+          p_name: string;
+          p_media_asset_id: number;
+          p_starts_at: string;
+          p_ends_at: string;
+          p_budget_credits: number;
+          p_daily_cap_credits: number | null;
+          p_frequency_cap_per_day: number | null;
+          p_target_organization_ids: number[];
+        };
+        Returns: string;
+      };
       admin_create_organization: {
         Args: {
           p_display_name: string;

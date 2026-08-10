@@ -19,6 +19,8 @@ The browser suite currently verifies:
 - Browser security headers
 - Login usability on a phone-sized viewport
 
+The hosted beta also contains a removable demo dataset for authenticated workflow testing. Verify the Overview, Business, Locations, Screens, Media, Campaigns, Channels, and public stream pages before clearing it. Demo cleanup must require the acknowledgement, exact phrase, final confirmation dialog, administrator session, and server-side demo marker.
+
 Database migrations must be reviewed against the linked hosted project before deployment. Authorization coverage must continue to verify that ordinary accounts cannot create organizations, pending accounts cannot enter a workspace, owners are limited to their organization, and platform administrators alone can provision audited tenants.
 
 ## Required next test layers

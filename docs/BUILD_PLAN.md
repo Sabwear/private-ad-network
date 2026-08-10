@@ -71,7 +71,8 @@ Acceptance: an approved asset is uploaded in the portal, moderated, downloaded b
 
 Outcome: campaign rules produce a deterministic signed device playlist.
 
-- Persist campaigns, targeting, dates, total/daily budgets, and frequency caps
+- [x] Persist secure campaign drafts, selected business targets, dates, total/daily budgets, and frequency caps
+- [ ] Add controlled campaign editing and activation transitions
 - Implement credit holds before campaign activation
 - Implement eligibility filters and self-display exclusion
 - Implement weighted round-robin and under-delivery weighting
