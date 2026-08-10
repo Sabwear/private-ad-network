@@ -280,6 +280,38 @@ export type Database = {
         };
         Returns: string;
       };
+      create_campaign_draft_for_organization: {
+        Args: {
+          p_organization_id: number;
+          p_name: string;
+          p_media_asset_id: number;
+          p_starts_at: string;
+          p_ends_at: string;
+          p_budget_credits: number;
+          p_daily_cap_credits: number | null;
+          p_frequency_cap_per_day: number | null;
+          p_target_organization_ids: number[];
+        };
+        Returns: string;
+      };
+      update_campaign_draft: {
+        Args: {
+          p_campaign_public_id: string;
+          p_name: string;
+          p_media_asset_id: number;
+          p_starts_at: string;
+          p_ends_at: string;
+          p_budget_credits: number;
+          p_daily_cap_credits: number | null;
+          p_frequency_cap_per_day: number | null;
+          p_target_organization_ids: number[];
+        };
+        Returns: undefined;
+      };
+      delete_campaign_draft: {
+        Args: { p_campaign_public_id: string };
+        Returns: undefined;
+      };
       admin_create_organization: {
         Args: {
           p_display_name: string;

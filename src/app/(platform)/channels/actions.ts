@@ -43,6 +43,20 @@ export async function createChannel(_state: ChannelActionState, formData: FormDa
   return { status: "success", message: "Channel created." };
 }
 
+export async function updateChannel(_state: ChannelActionState, formData: FormData): Promise<ChannelActionState> {
+  if (!await requireAdmin()) return { status: "error", message: "Platform administrator access is required." };
+  const publicId = z.string().uuid().safeParse(value(formData, "channelPublicId"));
+  const status = z.enum(["active", "paused"]).safeParse(value(formData, "status"));
+  const parsed = channelSchema.safeParse({ name: value(formData, "name"), description: value(formData, "description") });
+  if (!publicId.success || !status.success || !parsed.success) return { status: "error", message: "Review the channel name, description, and status." };
+
+  const supabase = await createClient();
+  const { error } = await supabase.from("streaming_channels").update({ name: parsed.data.name, description: parsed.data.description || null, status: status.data }).eq("public_id", publicId.data);
+  if (error) return { status: "error", message: "The channel could not be updated." };
+  revalidatePath("/channels");
+  return { status: "success", message: "Channel updated." };
+}
+
 export async function deleteChannel(formData: FormData) {
   if (!await requireAdmin()) return;
   const publicId = z.string().uuid().safeParse(value(formData, "channelPublicId"));
