@@ -51,7 +51,23 @@ docs/                   Product and engineering documentation
 infra/                  Local Docker and deployment definitions
 ```
 
-Only `apps/web` exists today. Add the remaining projects when their phase begins rather than generating unused scaffolds.
+The Git repository currently contains the Next.js application at its root plus a separately deployable media worker under `workers/media-processor`. The Android TV client and shared packages remain future targets. Add them when their phase begins rather than generating unused scaffolds.
+
+## Current implemented structure
+
+```text
+src/app/(platform)   Protected portal pages and server actions
+src/app/api          Health, readiness, device, and protected-media routes
+src/app/stream       Browser channel player
+src/components       Management forms, shell, and player UI
+src/lib/repositories Server-only data reads for portal pages
+src/lib/storage      Provider-isolated media and logo storage
+src/lib/streaming    Channel authorization and viewer composition
+src/lib/supabase     Session-aware clients and generated database types
+supabase/migrations  Schema, RLS, storage policies, and privileged functions
+workers/media-processor  Durable FFmpeg/HLS processor
+tests                Playwright beta boundary tests
+```
 
 ## Module boundaries
 
@@ -118,3 +134,7 @@ Media processing is separated from day one because it is CPU-heavy and failure-p
 The media processor is a separately deployable Node.js/FFmpeg container under `workers/media-processor`. Submission commits a durable PostgreSQL job in the same transaction as the asset state change. Workers claim jobs atomically with `FOR UPDATE SKIP LOCKED`, verify the original SHA-256 and technical metadata, create an H.264/AAC fast-start MP4, JPEG thumbnail, and adaptive 720p/480p HLS package, upload versioned derivatives, and complete or retry the job through server-only database functions. A crashed worker lease becomes reclaimable after 30 minutes; exhausted jobs fail visibly instead of remaining stuck.
 
 Streaming channels are independent network objects. An administrator can create or delete channels, assign any number of active businesses, and place approved media into an ordered loop. The viewer URL contains a channel ID and independent access key; invalid credentials fail closed. Database tables remain inaccessible to anonymous clients, while the server authorizes each asset before issuing short-lived storage access.
+
+Business branding is stored separately from advertising media. Logos live in a public presentation-assets bucket because the public player must render them without exposing private advertising objects. Upload, replacement, deletion, and database association remain administrator-only. Each organization controls logo position and relative size; each channel controls whether advertiser logos and other information layers are rendered.
+
+The dashboard header resolves the first channel visible to the signed-in user through a server-only repository. Search and guide navigation stay client-side, while the Live Beta URL is never hard-coded into the shell. The public stream permits anonymous playback with its bearer access key, but optional administrator authentication is checked separately before rendering the in-player settings control.

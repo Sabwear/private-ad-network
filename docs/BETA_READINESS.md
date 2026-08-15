@@ -10,6 +10,8 @@ The limited beta validates the central platform's operational path:
 4. Media is uploaded privately, reviewed, processed, and converted to adaptive HLS.
 5. An administrator creates a channel, assigns businesses, adds approved media, and opens the protected viewer link.
 6. A business owner or team member can create a campaign draft with approved media, target businesses, dates, budget, and frequency limits.
+7. An administrator edits business details, uploads its logo, assigns its approved ads to channels, and controls stream overlays from either Channels or the in-player menu.
+8. Dashboard search, Guide, notifications, and Live Beta shortcut provide working navigation rather than decorative controls.
 
 The Overview page reports live repository data. Empty states are genuine and no finance or proof values are simulated in a deployed environment.
 
@@ -26,6 +28,8 @@ The Overview page reports live repository data. Empty states are genuine and no 
 - [ ] A tester privacy notice explains IP, device, browser, operating-system, and activity telemetry.
 - [ ] `pnpm test:beta` passes and the GitHub Application validation workflow is green.
 - [ ] Complete the supported flow with the marked demo dataset, then clear it from Admin control and confirm real client records remain untouched.
+- [ ] Upload at least one real transparent business logo and verify all four positions and representative sizes on desktop and display hardware.
+- [ ] Verify every channel overlay toggle and confirm the settings menu is absent for a logged-out viewer.
 
 ## Explicitly outside this beta
 
@@ -38,6 +42,10 @@ These screens are visible only as roadmap boundaries and do not claim production
 - Reports and exports
 
 Do not use the beta for money movement, paid advertising commitments, or unattended public-display rollouts.
+
+## Next-phase entry gate
+
+The next phase is reference-device playback and signed manifests. Begin only after the web beta checklist above is green, a media worker is continuously deployed, one reference Android TV device is selected, and the privacy/backup requirements have named owners.
 
 ## Beta exit criteria
 

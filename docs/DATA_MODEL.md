@@ -4,7 +4,7 @@
 
 ### organizations
 
-`id`, `display_name`, `legal_name`, `category`, `status`, `billing_profile`, `accepted_policy_version`, timestamps
+`id`, `public_id`, `display_name`, `legal_name`, `category`, `status`, website/contact details, logo storage path, logo position, logo size percentage, billing profile, accepted policy version, timestamps
 
 ### users
 
@@ -51,6 +51,20 @@ Original objects use `<organization-public-id>/<asset-public-id>/original.mp4`. 
 ### campaigns
 
 Owner, asset, status, dates, total/daily credit budget, targeting JSON, frequency cap, policy version
+
+### streaming_channels
+
+Public ID, independent bearer access key, name, description, status, and presentation settings for the live badge, channel title, now-playing text, audio control, advertiser logos, stripe banner/text/position, video time, and contain/cover scaling.
+
+### streaming_channel_organizations
+
+Channel-to-business assignment. Assigned organizations can discover and consume only their permitted channel through tenant-aware policies.
+
+### streaming_channel_items
+
+Channel, approved/processed media asset, deterministic position, status, and creator. The database rejects media that is not approved, ready, and backed by a normalized object.
+
+Business ad assignment reuses this ordered channel-item model; ownership is validated before an administrator can add or remove the asset.
 
 ### campaign_holds
 

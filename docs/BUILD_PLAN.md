@@ -34,11 +34,12 @@ Outcome: real users, organizations, locations, and devices stored in PostgreSQL.
 - [x] Implement admin-only organization creation and owner assignment
 - [x] Implement initial location creation, operating hours, categories, zones, and traffic bands
 - [x] Add administrator organization editing and suspension
+- [x] Add business contact/profile editing and advertiser-logo management
 - [x] Add location editing, suspension, and category exclusions
 - [ ] Extend administrator invitations from owners to business staff
 - [x] Implement short-lived device activation codes, key registration, hashed credentials, heartbeat telemetry, and suspension
 - [ ] Add automatic device credential rotation and refresh credentials
-- [ ] Replace remaining demonstration portal data with server-side repository queries
+- [x] Replace operational dashboard data with server-side repository queries and explicit empty states
 - [x] Record privileged organization and location actions in the database audit log
 - [ ] Add an administrator audit-log viewer
 - [ ] Add Docker development environment for PostgreSQL, Redis, and object storage
@@ -59,6 +60,10 @@ Outcome: one approved file is delivered and played locally on a reference device
 - [ ] Add secure byte-range delivery for portal previews and compatible players
 - [x] Generate adaptive 720p/480p HLS renditions and authorize playlists and segments with short-lived storage URLs
 - [x] Add multi-business streaming channels with an initial channel, administrator controls, business assignments, and ordered approved media
+- [x] Add per-business approved-ad assignment to channels
+- [x] Add advertiser-logo overlays with configurable position and size
+- [x] Add channel display controls for live state, channel/now-playing text, audio, banner, time, logos, and video scaling
+- [x] Add an administrator-only in-player settings menu
 - [ ] Implement a dedicated non-admin moderator role and queue
 - [ ] Create Android TV project using Kotlin, Compose for TV, Media3, Room, and OkHttp
 - [ ] Implement activation, signed channel/manifest fetch, asset download, checksum, cache, and fallback media on Android TV
@@ -72,13 +77,14 @@ Acceptance: an approved asset is uploaded in the portal, moderated, downloaded b
 Outcome: campaign rules produce a deterministic signed device playlist.
 
 - [x] Persist secure campaign drafts, selected business targets, dates, total/daily budgets, and frequency caps
-- [ ] Add controlled campaign editing and activation transitions
-- Implement credit holds before campaign activation
-- Implement eligibility filters and self-display exclusion
-- Implement weighted round-robin and under-delivery weighting
-- Create signed, versioned manifests with validity, hashes, nonces, and fallback
-- Add emergency asset removal and manifest invalidation
-- Show campaign delivery forecast and fill indicators
+- [x] Add controlled campaign draft editing and deletion
+- [ ] Add reviewed activation, pause, resume, completion, and cancellation transitions
+- [ ] Implement credit holds before campaign activation
+- [ ] Implement eligibility filters and self-display exclusion
+- [ ] Implement weighted round-robin and under-delivery weighting
+- [ ] Create signed, versioned manifests with validity, hashes, nonces, and fallback
+- [ ] Add emergency asset removal and manifest invalidation
+- [ ] Show campaign delivery forecast and fill indicators
 
 Acceptance: two advertisers share a loop fairly, excluded screens receive no assignment, and campaign pause propagates within five minutes.
 
@@ -122,6 +128,21 @@ Outcome: validate trust, reliability, and commercial intent with 5-10 businesses
 - Interview partners weekly and track support cost
 - Freeze risky features during the pilot; prioritize reliability and explainability
 - Decide membership and credit-pack pricing from observed supply/demand
+
+## Immediate next milestone - Phase 2B reference-device playback
+
+This is the next recommended build phase. Complete it before campaign activation or financial features.
+
+- [ ] Select and document one Android TV/Google TV reference hardware model
+- [ ] Create the Kotlin/Compose TV application with Media3, Room, and OkHttp
+- [ ] Connect the existing device activation flow to renewable device credentials
+- [ ] Publish a signed, versioned channel manifest contract
+- [ ] Download, checksum, cache, and locally loop approved channel assets
+- [ ] Add offline startup, reconnect, boot recovery, and protected maintenance exit
+- [ ] Rotate device credentials and support revocation
+- [ ] Complete corrupt-file, power-cycle, network-loss, and 72-hour endurance tests
+
+Acceptance: one physical reference screen activates, receives only its authorized channel, plays cached media through an outage and restart, and reports diagnosable health.
 
 ## Explicitly deferred
 

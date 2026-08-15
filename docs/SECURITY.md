@@ -59,6 +59,8 @@ No single weak hardware signal should automatically accuse a venue of fraud. Sto
 - Short-lived, type/size-restricted direct upload URLs
 - Malware and media validation before moderation
 - Private media objects are scoped to an existing tenant asset and served through short-lived authorized URLs
+- Business logos are intentionally public presentation assets, but upload, replacement, deletion, and organization association require platform-administrator authorization
+- Public stream viewers receive only the resolved logo URL and display settings; the in-player settings mutation control is rendered only after a separate administrator session check
 - Pilot uploads accept MP4 only, enforce a 100 MB bucket limit, compute a browser SHA-256 checksum, and require 16:9 video at an approved duration
 - Business roles can prepare and submit media but cannot directly update approval status; only the protected moderation function can approve or reject
 - Browser preflight is backed by the server-side FFmpeg media processor; malware scanning remains required before the scope expands beyond controlled beta media

@@ -11,6 +11,8 @@ pnpm dev
 
 Open `http://localhost:3000`. Use `pnpm test:beta` before shipping a beta build. The supported and deferred beta scope is recorded in `docs/BETA_READINESS.md`.
 
+For the current implementation inventory, repository map, active risks, and prioritized next phase, start with [`docs/PROJECT_STATUS.md`](docs/PROJECT_STATUS.md). [`docs/BUILD_PLAN.md`](docs/BUILD_PLAN.md) remains the phase-by-phase delivery backlog.
+
 ## Deployment
 
 The application is a standard Next.js deployment with no required hosting-provider adapter. Vercel can import this repository and deploy it directly. The standalone output can also run on any Node.js container host using the included `Dockerfile`.
@@ -30,7 +32,7 @@ SUPABASE_SECRET_KEY=sb_secret_your_server_key
 
 Email/password sign-up, confirmation, sign-in, password recovery, and secure sign-out use Supabase Auth with cookie-based SSR sessions. In Supabase Authentication URL Configuration, set the Site URL to the deployed app and allow `<site-url>/auth/callback` as a redirect URL. Configure custom SMTP before a production pilot; Supabase's default mailer is intended only for initial testing and is heavily rate-limited.
 
-The portal loads the signed-in user's organization membership through a server-only workspace data layer and uses it for role-aware navigation. The limited-beta operational pages read tenant-scoped data from the database. Business users can save campaign drafts with approved media, business targets, dates, and delivery limits; activation remains locked until atomic credit holds are implemented. Finance, proof, and reporting remain explicitly disabled until their backend services and acceptance tests are implemented.
+The portal loads the signed-in user's organization membership through a server-only workspace data layer and uses it for role-aware navigation. The limited-beta operational pages read tenant-scoped data from the database. Administrators can edit business profiles, upload advertiser logos, assign approved ads to channels, and configure the information layers rendered over each stream. Business users can save campaign drafts with approved media, business targets, dates, and delivery limits; activation remains locked until atomic credit holds are implemented. Finance, proof, and reporting remain explicitly disabled until their backend services and acceptance tests are implemented.
 
 Verified accounts do not automatically receive business access. A platform administrator creates each organization manually and assigns one pending account as owner. Until assignment, the account sees a dedicated waiting screen and cannot enter the workspace.
 

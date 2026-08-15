@@ -54,6 +54,24 @@ No cameras, microphones, facial recognition, or demographic inference. The platf
 
 Accounts and business organizations have separate lifecycles. A user may create and verify an account, but only a protected platform administrator can create an organization and assign its first owner. Unassigned accounts cannot enter the business workspace. Organization provisioning, membership assignment, wallet initialization, and account activation execute atomically and are audited at the database boundary.
 
+## ADR-010 - Portable web runtime
+
+**Status:** Accepted
+
+The central application targets the standard Next.js Node.js runtime. Vercel is the current host, but product code cannot depend on a single hosting provider. A standalone container remains a supported deployment path, while CPU-heavy FFmpeg work runs in a separate worker process.
+
+## ADR-011 - Browser stream and offline device playback are separate delivery modes
+
+**Status:** Accepted
+
+The protected browser channel is a continuous pre-recorded stream for previews and beta displays. The production venue player will consume signed, versioned manifests and cache approved assets locally. Browser streaming does not replace the offline-first Android TV playback requirement.
+
+## ADR-012 - Business branding is an independently controlled presentation layer
+
+**Status:** Accepted
+
+Business logos are public presentation assets with administrator-only mutation. Logo placement and size belong to the business profile, while each channel controls whether logos and other information overlays are displayed. The public player may read the resulting logo URL but cannot change branding or channel settings.
+
 ## Open decisions
 
 - Final product/brand name

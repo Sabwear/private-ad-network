@@ -19,6 +19,17 @@ The browser suite currently verifies:
 - Browser security headers
 - Login usability on a phone-sized viewport
 
+The following authenticated smoke checks were completed manually for the current beta build and should be automated next:
+
+- Business information persists through the audited administrator action
+- Reassigning the same business ad to the same channel is idempotent
+- Channel display settings persist from Channels and the in-player settings drawer
+- Public stream viewers do not receive the administrator settings control
+- Dashboard search filters routes and supports Enter navigation
+- Guide and notification panels open exclusively and their links navigate correctly
+- Live Beta resolves the active channel dynamically and opens its player
+- The stream player reports no browser console errors during the smoke path
+
 The hosted beta also contains a removable demo dataset for authenticated workflow testing. Verify the Overview, Business, Locations, Screens, Media, Campaigns, Channels, and public stream pages before clearing it. Demo cleanup must require the acknowledgement, exact phrase, final confirmation dialog, administrator session, and server-side demo marker.
 
 Database migrations must be reviewed against the linked hosted project before deployment. Authorization coverage must continue to verify that ordinary accounts cannot create organizations, pending accounts cannot enter a workspace, owners are limited to their organization, and platform administrators alone can provision audited tenants.
@@ -32,6 +43,9 @@ Database migrations must be reviewed against the linked hosted project before de
 - Pairing-code single use, expiry, credential suspension, and heartbeat idempotency
 - Private upload lifecycle, moderation boundaries, and worker retry/recovery
 - Channel assignment isolation and access-key rotation
+- Business-logo upload/delete authorization, file limits, and overlay placement
+- Channel-overlay persistence and administrator-only in-player controls
+- Header live-channel resolution for administrators, assigned businesses, and users with no visible channel
 
 ### Device endurance
 
