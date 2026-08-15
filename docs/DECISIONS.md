@@ -72,6 +72,12 @@ The protected browser channel is a continuous pre-recorded stream for previews a
 
 Business logos are public presentation assets with administrator-only mutation. Logo placement and size belong to the business profile, while each channel controls whether logos and other information overlays are displayed. The public player may read the resulting logo URL but cannot change branding or channel settings.
 
+## ADR-013 - Browser channels use a server-clock virtual broadcast timeline
+
+**Status:** Accepted
+
+A browser viewer joins a shared, continuously advancing pre-recorded loop derived from a database epoch and authoritative media durations. Reloading or opening another viewer does not restart the channel. The player periodically corrects drift and recovers after background suspension. The administrator may place the broadcast on standby; re-enabling it starts a new epoch. No media bytes are emitted when there are no viewers because continuity is represented by time, not by a wasteful always-connected server encoder.
+
 ## Open decisions
 
 - Final product/brand name

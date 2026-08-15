@@ -1,4 +1,5 @@
 export type ChannelDisplaySettings = {
+  broadcastEnabled: boolean;
   showLiveBadge: boolean;
   showChannelName: boolean;
   showNowPlaying: boolean;
@@ -12,6 +13,7 @@ export type ChannelDisplaySettings = {
 };
 
 const toggles: Array<[keyof ChannelDisplaySettings, string, string]> = [
+  ["broadcastEnabled", "Continuous broadcast", "Keep one server-clock timeline running so every viewer joins the live point in the ad loop."],
   ["showLiveBadge", "Live channel badge", "Show the live status label."],
   ["showChannelName", "Channel name", "Show the channel title."],
   ["showNowPlaying", "Now playing", "Show the current ad name."],

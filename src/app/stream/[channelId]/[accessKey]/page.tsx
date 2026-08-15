@@ -16,5 +16,5 @@ export default async function StreamPage({ params }: Props) {
   const { channelId, accessKey } = await params;
   const [channel, canAdminister] = await Promise.all([getPublicChannelStream(channelId, accessKey), isCurrentUserPlatformAdmin()]);
   if (!channel) notFound();
-  return <ChannelPlayer channel={channel} canAdminister={canAdminister} />;
+  return <ChannelPlayer key={`${channel.broadcastStartedAt}:${JSON.stringify(channel.settings)}`} channel={channel} canAdminister={canAdminister} />;
 }

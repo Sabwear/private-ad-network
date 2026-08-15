@@ -157,6 +157,8 @@ export type Database = {
         slug: string;
         description: string | null;
         status: string;
+        broadcast_enabled: boolean;
+        broadcast_started_at: string;
         show_live_badge: boolean;
         show_channel_name: boolean;
         show_now_playing: boolean;

@@ -36,6 +36,7 @@ The central portal is suitable for controlled administrator testing. It is not y
 - Business-owned ad-to-channel assignment controls
 - Configurable stream overlays: live badge, channel title, now playing, audio, advertiser logos, stripe banner, video time, and contain/cover scaling
 - Administrator-only in-player settings drawer; public viewers cannot access it
+- Persistent server-clock channel timelines: late viewers and page reloads join the current point in the ad loop, with periodic drift correction and an administrator standby/resume control
 
 ### Campaigns and administration
 
@@ -78,7 +79,7 @@ The future Android TV application and shared contract packages have not been cre
 
 ## Environment and deployment state
 
-- Hosted database migrations are applied through `20260815124507_business_branding_and_channel_display_controls.sql`.
+- Hosted database migrations are applied through `20260815135535_synchronized_continuous_channel_broadcast.sql`.
 - Supabase is the current database, authentication, and temporary object-storage provider.
 - Vercel is the current web host; the application also supports standalone Node.js container deployment.
 - The media worker must run on a separate worker-capable host. A normal Vercel web deployment does not run FFmpeg jobs continuously.

@@ -12,6 +12,7 @@ const channelSchema = z.object({
   description: z.string().trim().max(300),
 });
 const channelDisplaySchema = z.object({
+  broadcastEnabled: z.boolean(),
   showLiveBadge: z.boolean(),
   showChannelName: z.boolean(),
   showNowPlaying: z.boolean(),
@@ -36,6 +37,7 @@ function value(formData: FormData, key: string) {
 
 function displayValues(formData: FormData) {
   return channelDisplaySchema.safeParse({
+    broadcastEnabled: formData.has("broadcast-enabled"),
     showLiveBadge: formData.has("show-live-badge"),
     showChannelName: formData.has("show-channel-name"),
     showNowPlaying: formData.has("show-now-playing"),
@@ -51,6 +53,7 @@ function displayValues(formData: FormData) {
 
 function displayUpdate(settings: z.infer<typeof channelDisplaySchema>) {
   return {
+    broadcast_enabled: settings.broadcastEnabled,
     show_live_badge: settings.showLiveBadge,
     show_channel_name: settings.showChannelName,
     show_now_playing: settings.showNowPlaying,
@@ -109,6 +112,7 @@ export async function updateChannelDisplaySettings(_state: ChannelActionState, f
   const { error } = await supabase.from("streaming_channels").update(displayUpdate(display.data)).eq("public_id", publicId.data);
   if (error) return { status: "error", message: "The stream display settings could not be saved." };
   revalidatePath("/channels");
+  revalidatePath("/stream/[channelId]/[accessKey]", "page");
   return { status: "success", message: "Stream display settings updated." };
 }
 

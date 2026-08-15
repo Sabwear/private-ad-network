@@ -24,6 +24,8 @@ The following authenticated smoke checks were completed manually for the current
 - Business information persists through the audited administrator action
 - Reassigning the same business ad to the same channel is idempotent
 - Channel display settings persist from Channels and the in-player settings drawer
+- A refreshed or newly opened viewer seeks to the shared channel position instead of restarting at the first frame
+- Continuous broadcast can enter standby and resume from the administrator-only player controls; resume creates a new broadcast epoch
 - Public stream viewers do not receive the administrator settings control
 - Dashboard search filters routes and supports Enter navigation
 - Guide and notification panels open exclusively and their links navigate correctly
@@ -45,6 +47,7 @@ Database migrations must be reviewed against the linked hosted project before de
 - Channel assignment isolation and access-key rotation
 - Business-logo upload/delete authorization, file limits, and overlay placement
 - Channel-overlay persistence and administrator-only in-player controls
+- Shared-timeline late join across independent viewers, authorized clock synchronization, repeated-loop rollover, background-tab recovery, drift correction, standby/resume, and unavailable-source retry
 - Header live-channel resolution for administrators, assigned businesses, and users with no visible channel
 
 ### Device endurance
