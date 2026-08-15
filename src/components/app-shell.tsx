@@ -1,29 +1,68 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Bell, Building2, ChevronDown, CircleHelp, Clapperboard, Gauge, LayoutDashboard, LogOut, Mail, MapPinned, Menu, MonitorPlay, Orbit, RadioTower, ReceiptText, Search, Settings, ShieldCheck, UsersRound, WalletCards, X } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Brand } from "@/components/brand";
 import type { WorkspaceContext } from "@/lib/auth/workspace";
+import type { HeaderData } from "@/lib/repositories/header";
 
 const flowNav = [
-  { href: "/locations", label: "Locations", icon: MapPinned },
-  { href: "/screens", label: "Screens", icon: MonitorPlay },
-  { href: "/media", label: "Media", icon: Clapperboard },
-  { href: "/channels", label: "Channels", icon: RadioTower },
-  { href: "/campaigns", label: "Campaigns", icon: Gauge },
-  { href: "/proof", label: "Proof of play", icon: ShieldCheck },
-  { href: "/wallet", label: "Wallet", icon: WalletCards },
+  { href: "/locations", label: "Locations", description: "Manage approved business venues", icon: MapPinned },
+  { href: "/screens", label: "Screens", description: "Pair and monitor playback devices", icon: MonitorPlay },
+  { href: "/media", label: "Media", description: "Upload and approve advertising media", icon: Clapperboard },
+  { href: "/channels", label: "Channels", description: "Configure live streams and playlists", icon: RadioTower },
+  { href: "/campaigns", label: "Campaigns", description: "Create and manage ad campaigns", icon: Gauge },
+  { href: "/proof", label: "Proof of play", description: "Review verified playback evidence", icon: ShieldCheck },
+  { href: "/wallet", label: "Wallet", description: "Review credits and transactions", icon: WalletCards },
 ] as const;
 
-export function AppShell({ children, workspace, signOutAction }: { children: React.ReactNode; workspace: WorkspaceContext; signOutAction: () => Promise<void> }) {
+type HeaderPanel = "guide" | "notifications" | null;
+
+export function AppShell({ children, workspace, header, signOutAction }: { children: React.ReactNode; workspace: WorkspaceContext; header: HeaderData; signOutAction: () => Promise<void> }) {
   const pathname = usePathname();
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
-  const environmentLabel = workspace.mode === "active" ? "Limited beta" : "Setup required";
+  const [panel, setPanel] = useState<HeaderPanel>(null);
+  const [search, setSearch] = useState("");
+  const [searchOpen, setSearchOpen] = useState(false);
+
+  const searchItems = useMemo(() => {
+    const items = [
+      { href: "/overview", label: "Overview", description: "Network performance and status", icon: LayoutDashboard },
+      ...(workspace.permissions.canProvisionOrganizations ? [{ href: "/business", label: "Business", description: "Business profiles, logos, and channel ads", icon: Building2 }] : []),
+      ...flowNav,
+      ...(workspace.permissions.canProvisionOrganizations ? [{ href: "/users", label: "Users", description: "Accounts, permissions, and sessions", icon: UsersRound }] : []),
+      ...(workspace.permissions.canAccessAdmin ? [{ href: "/admin", label: "Admin control", description: "Platform operations and audit controls", icon: Settings }] : []),
+    ];
+    const term = search.trim().toLowerCase();
+    return term ? items.filter((item) => `${item.label} ${item.description}`.toLowerCase().includes(term)).slice(0, 7) : items.slice(0, 7);
+  }, [search, workspace.permissions.canAccessAdmin, workspace.permissions.canProvisionOrganizations]);
+
+  function togglePanel(next: Exclude<HeaderPanel, null>) {
+    setSearchOpen(false);
+    setPanel((current) => current === next ? null : next);
+  }
+
+  function openFirstSearchResult() {
+    const first = searchItems[0];
+    if (!first) return;
+    setSearchOpen(false);
+    setSearch("");
+    router.push(first.href);
+  }
+
+  function submitSearch(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    openFirstSearchResult();
+  }
+
+  const liveHref = header.liveStream?.href ?? "/channels";
+
   return (
-    <div className="app-shell">
+    <div className="app-shell" onKeyDown={(event) => { if (event.key === "Escape") { setPanel(null); setSearchOpen(false); } }}>
       <aside className={`sidebar ${open ? "sidebar-open" : ""}`}>
         <div className="sidebar-top"><Brand /><button className="icon-button sidebar-close" onClick={() => setOpen(false)} aria-label="Close navigation"><X size={20} /></button></div>
         <nav className="primary-nav" aria-label="Primary navigation">
@@ -46,8 +85,37 @@ export function AppShell({ children, workspace, signOutAction }: { children: Rea
       <div className="workspace">
         <header className="topbar">
           <button className="icon-button menu-button" onClick={() => setOpen(true)} aria-label="Open navigation"><Menu size={21} /></button>
-          <div className="search-box"><Search size={18} /><input aria-label="Search" placeholder="Search businesses, locations, screens..." /></div>
-          <div className="topbar-actions"><button className="icon-button" aria-label="Help"><CircleHelp size={19} /></button><button className="icon-button notification-button" aria-label="Notifications"><Bell size={19} /><span /></button><span className={`environment-pill environment-${workspace.mode}`}><span /> {environmentLabel}</span></div>
+          <div className="header-search-wrap">
+            <form className="search-box" role="search" onSubmit={submitSearch}>
+              <Search size={18} />
+              <input aria-label="Search platform" placeholder="Search businesses, locations, screens..." value={search} onChange={(event) => { setSearch(event.target.value); setSearchOpen(true); setPanel(null); }} onFocus={() => { setSearchOpen(true); setPanel(null); }} onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); openFirstSearchResult(); } }} />
+            </form>
+            {searchOpen ? <div className="header-popover search-results" aria-label="Search results">
+              <div className="header-popover-title"><strong>{search.trim() ? "Search results" : "Quick navigation"}</strong><small>Press Enter to open the first result</small></div>
+              {searchItems.length ? searchItems.map(({ href, label, description, icon: Icon }) => <Link key={href} href={href} onClick={() => { setSearchOpen(false); setSearch(""); }}><Icon size={16} /><span><strong>{label}</strong><small>{description}</small></span></Link>) : <p className="header-empty">No matching platform section.</p>}
+            </div> : null}
+          </div>
+          <div className="topbar-actions">
+            <div className="header-action-wrap">
+              <button className="header-guide-button" type="button" aria-label="Open platform guide" aria-expanded={panel === "guide"} onClick={() => togglePanel("guide")}><CircleHelp size={18} /><span>Guide</span></button>
+              {panel === "guide" ? <div className="header-popover action-popover" aria-label="Platform guide">
+                <div className="header-popover-title"><strong>Platform guide</strong><small>Recommended operating flow</small></div>
+                <Link href="/business" onClick={() => setPanel(null)}><span className="header-step">1</span><span><strong>Create the business</strong><small>Add its profile, owner, and logo.</small></span></Link>
+                <Link href="/screens" onClick={() => setPanel(null)}><span className="header-step">2</span><span><strong>Pair the screens</strong><small>Connect devices to approved locations.</small></span></Link>
+                <Link href="/media" onClick={() => setPanel(null)}><span className="header-step">3</span><span><strong>Approve the media</strong><small>Prepare ads for channel playback.</small></span></Link>
+                <Link href="/channels" onClick={() => setPanel(null)}><span className="header-step">4</span><span><strong>Publish the channel</strong><small>Assign ads and configure the stream.</small></span></Link>
+              </div> : null}
+            </div>
+            <div className="header-action-wrap">
+              <button className="icon-button notification-button" type="button" aria-label="Open notifications" aria-expanded={panel === "notifications"} onClick={() => togglePanel("notifications")}><Bell size={19} /><span aria-hidden="true" /></button>
+              {panel === "notifications" ? <div className="header-popover action-popover notification-popover" aria-label="Notifications">
+                <div className="header-popover-title"><strong>Notifications</strong><small>2 operational updates</small></div>
+                <Link href={liveHref} onClick={() => setPanel(null)}><RadioTower size={16} /><span><strong>{header.liveStream ? "Live Beta is broadcasting" : "Live channel needs attention"}</strong><small>{header.liveStream?.name ?? "Open Channels to configure a stream."}</small></span></Link>
+                <Link href="/proof" onClick={() => setPanel(null)}><ShieldCheck size={16} /><span><strong>Playback verification available</strong><small>Review recent proof-of-play activity.</small></span></Link>
+              </div> : null}
+            </div>
+            <Link className="environment-pill environment-active live-beta-link" href={liveHref} aria-label={header.liveStream ? `Open ${header.liveStream.name} live stream` : "Configure live beta stream"}><span aria-hidden="true" /><RadioTower size={14} /><b>Live Beta</b></Link>
+          </div>
         </header>
         <main className="main-content">{workspace.notice ? <div className={`workspace-notice notice-${workspace.mode}`}><ShieldCheck size={17} /><span>{workspace.notice}</span></div> : null}{children}</main>
       </div>

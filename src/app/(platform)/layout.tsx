@@ -2,6 +2,7 @@ import { AppShell } from "@/components/app-shell";
 import { PendingWorkspace } from "@/components/pending-workspace";
 import { signOut } from "@/app/login/actions";
 import { getWorkspaceContext } from "@/lib/auth/workspace";
+import { getHeaderData } from "@/lib/repositories/header";
 
 export const dynamic = "force-dynamic";
 
@@ -10,5 +11,6 @@ export default async function PlatformLayout({ children }: { children: React.Rea
   if (workspace.mode === "setup") {
     return <PendingWorkspace workspace={workspace} signOutAction={signOut} />;
   }
-  return <AppShell workspace={workspace} signOutAction={signOut}>{children}</AppShell>;
+  const header = await getHeaderData();
+  return <AppShell workspace={workspace} header={header} signOutAction={signOut}>{children}</AppShell>;
 }
