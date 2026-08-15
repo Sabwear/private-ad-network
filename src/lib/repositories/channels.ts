@@ -1,6 +1,7 @@
 import "server-only";
 
 import { createClient } from "@/lib/supabase/server";
+import type { ChannelDisplaySettings } from "@/components/channel-display-settings-fields";
 
 export type StreamingChannel = {
   id: number;
@@ -10,6 +11,7 @@ export type StreamingChannel = {
   description: string;
   status: string;
   streamPath: string;
+  settings: ChannelDisplaySettings;
   organizations: Array<{ id: number; name: string }>;
   items: Array<{ id: number; assetId: number; name: string; owner: string; position: number; hasHls: boolean }>;
 };
@@ -26,7 +28,7 @@ const setupCodes = new Set(["PGRST204", "PGRST205", "42501"]);
 export async function getChannelManagementData(): Promise<ChannelManagementData> {
   const supabase = await createClient();
   const [channelsResult, assignmentsResult, itemsResult, organizationsResult, mediaResult] = await Promise.all([
-    supabase.from("streaming_channels").select("id,public_id,access_key,name,description,status").order("created_at"),
+    supabase.from("streaming_channels").select("id,public_id,access_key,name,description,status,show_live_badge,show_channel_name,show_now_playing,show_audio_control,show_advertiser_logo,show_stripe_banner,show_video_time,stripe_banner_text,stripe_banner_position,video_fit").order("created_at"),
     supabase.from("streaming_channel_organizations").select("channel_id,organization_id"),
     supabase.from("streaming_channel_items").select("id,channel_id,media_asset_id,position,status").eq("status", "active").order("position"),
     supabase.from("organizations").select("id,display_name,status").order("display_name"),
@@ -61,6 +63,18 @@ export async function getChannelManagementData(): Promise<ChannelManagementData>
     description: channel.description ?? "",
     status: channel.status,
     streamPath: `/stream/${channel.public_id}/${channel.access_key}`,
+    settings: {
+      showLiveBadge: channel.show_live_badge,
+      showChannelName: channel.show_channel_name,
+      showNowPlaying: channel.show_now_playing,
+      showAudioControl: channel.show_audio_control,
+      showAdvertiserLogo: channel.show_advertiser_logo,
+      showStripeBanner: channel.show_stripe_banner,
+      showVideoTime: channel.show_video_time,
+      stripeBannerText: channel.stripe_banner_text ?? "",
+      stripeBannerPosition: channel.stripe_banner_position,
+      videoFit: channel.video_fit,
+    },
     organizations: (assignmentsResult.data ?? [])
       .filter((assignment) => assignment.channel_id === channel.id)
       .map((assignment) => ({ id: assignment.organization_id, name: organizationNames.get(assignment.organization_id) ?? "Unknown business" })),

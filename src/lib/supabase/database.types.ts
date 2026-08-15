@@ -29,6 +29,12 @@ export type Database = {
         status: string;
         accepted_policy_version_id: number | null;
         billing_profile: Json;
+        website_url: string | null;
+        contact_email: string | null;
+        contact_phone: string | null;
+        logo_storage_path: string | null;
+        logo_position: string;
+        logo_size_percent: number;
         created_at: string;
         updated_at: string;
       }>;
@@ -151,6 +157,16 @@ export type Database = {
         slug: string;
         description: string | null;
         status: string;
+        show_live_badge: boolean;
+        show_channel_name: boolean;
+        show_now_playing: boolean;
+        show_audio_control: boolean;
+        show_advertiser_logo: boolean;
+        show_stripe_banner: boolean;
+        show_video_time: boolean;
+        stripe_banner_text: string | null;
+        stripe_banner_position: string;
+        video_fit: string;
         created_by: string | null;
         created_at: string;
         updated_at: string;
@@ -366,6 +382,34 @@ export type Database = {
           p_status: string;
           p_reason: string;
         };
+        Returns: undefined;
+      };
+      admin_update_organization_profile: {
+        Args: {
+          p_organization_id: number;
+          p_display_name: string;
+          p_legal_name: string;
+          p_category: string;
+          p_status: string;
+          p_website_url: string;
+          p_contact_email: string;
+          p_contact_phone: string;
+          p_logo_position: string;
+          p_logo_size_percent: number;
+          p_reason: string;
+        };
+        Returns: undefined;
+      };
+      admin_set_organization_logo: {
+        Args: { p_organization_id: number; p_logo_storage_path: string | null };
+        Returns: string | null;
+      };
+      admin_assign_business_ad_to_channel: {
+        Args: { p_organization_id: number; p_channel_id: number; p_media_asset_id: number };
+        Returns: number;
+      };
+      admin_remove_business_ad_from_channel: {
+        Args: { p_organization_id: number; p_channel_item_id: number };
         Returns: undefined;
       };
       update_location: {

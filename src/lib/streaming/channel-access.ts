@@ -9,7 +9,7 @@ export async function authorizeChannel(channelPublicId: string, accessKey: strin
   const credentials = credentialSchema.safeParse({ channelPublicId, accessKey });
   if (!credentials.success) return null;
   const admin = createAdminClient();
-  const { data } = await admin.from("streaming_channels").select("id,public_id,name,description,status").eq("public_id", credentials.data.channelPublicId).eq("access_key", credentials.data.accessKey).eq("status", "active").maybeSingle();
+  const { data } = await admin.from("streaming_channels").select("id,public_id,name,description,status,show_live_badge,show_channel_name,show_now_playing,show_audio_control,show_advertiser_logo,show_stripe_banner,show_video_time,stripe_banner_text,stripe_banner_position,video_fit").eq("public_id", credentials.data.channelPublicId).eq("access_key", credentials.data.accessKey).eq("status", "active").maybeSingle();
   return data ? { admin, channel: data } : null;
 }
 

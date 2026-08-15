@@ -4,6 +4,9 @@ const nextConfig: NextConfig = {
   // Keep a portable Node.js bundle for generic hosts and containers. Vercel
   // provides its own Next.js packaging and must not receive standalone output.
   output: process.env.VERCEL ? undefined : "standalone",
+  images: {
+    remotePatterns: [{ protocol: "https", hostname: "*.supabase.co" }],
+  },
   async headers() {
     const contentSecurityPolicy = [
       "default-src 'self'",
@@ -13,7 +16,7 @@ const nextConfig: NextConfig = {
       "object-src 'none'",
       "script-src 'self' 'unsafe-inline'",
       "style-src 'self' 'unsafe-inline'",
-      "img-src 'self' data: blob:",
+      "img-src 'self' data: blob: https://*.supabase.co",
       "font-src 'self'",
       "connect-src 'self' https://*.supabase.co wss://*.supabase.co",
       "media-src 'self' blob: https://*.supabase.co",
