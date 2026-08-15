@@ -54,10 +54,10 @@ create policy campaign_targets_platform_admin_insert on public.campaign_target_o
     and exists (
       select 1
       from public.campaigns campaign
-      join public.organizations target on target.id = organization_id
+      join public.organizations target on target.id = campaign_target_organizations.organization_id
       where campaign.id = campaign_id
         and campaign.status = 'draft'
-        and campaign.organization_id <> organization_id
+        and campaign.organization_id <> campaign_target_organizations.organization_id
         and target.status = 'active'
     )
   );
