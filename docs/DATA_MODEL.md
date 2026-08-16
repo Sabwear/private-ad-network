@@ -44,9 +44,9 @@ Command type, parameters, issued/acknowledged/completed timestamps, result
 
 ### media_assets
 
-Owner, original/normalized/thumbnail storage keys, original filename, MIME type, file size, duration, dimensions, codec, SHA-256 checksum, technical metadata, moderation state, rights declaration, rejection reason, submit/moderate timestamps, moderator, and creator.
+Owner, source type (`upload` or `youtube`), external provider/ID/URL when applicable, original/normalized/thumbnail storage keys, original filename, MIME type, file size, duration, dimensions, codec, SHA-256 checksum, technical metadata, moderation state, rights declaration, rejection reason, submit/moderate timestamps, moderator, and creator.
 
-Original objects use `<organization-public-id>/<asset-public-id>/original.mp4`. The bucket is private; tenant members and platform administrators receive only short-lived authorized preview URLs. Business users cannot directly set approval state.
+Uploaded objects use `<organization-public-id>/<asset-public-id>/original.mp4`. The bucket is private; tenant members and platform administrators receive only short-lived authorized preview URLs. YouTube rows store a canonical video ID and source URL rather than copying third-party bytes. Business users cannot directly set approval state for either source.
 
 ### campaigns
 
@@ -62,7 +62,7 @@ Channel-to-business assignment. Assigned organizations can discover and consume 
 
 ### streaming_channel_items
 
-Channel, approved/processed media asset, deterministic position, status, and creator. The database rejects media that is not approved, ready, and backed by a normalized object.
+Channel, approved/ready media asset, deterministic position, status, and creator. The database requires uploads to have a normalized object and YouTube sources to have constrained provider metadata before either source can be assigned.
 
 Business ad assignment reuses this ordered channel-item model; ownership is validated before an administrator can add or remove the asset.
 

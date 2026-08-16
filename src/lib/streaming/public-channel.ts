@@ -13,7 +13,7 @@ export type PublicChannelStream = {
   broadcastStartedAt: string;
   clockUrl: string;
   settings: ChannelDisplaySettings;
-  items: Array<{ id: string; name: string; durationMs: number; hlsUrl: string | null; fallbackUrl: string; advertiserName: string; logoUrl: string | null; logoPosition: string; logoSizePercent: number }>;
+  items: Array<{ id: string; name: string; sourceType: "upload" | "youtube"; youtubeVideoId: string | null; durationMs: number; hlsUrl: string | null; fallbackUrl: string | null; advertiserName: string; logoUrl: string | null; logoPosition: string; logoSizePercent: number }>;
 };
 
 export const getPublicChannelStream = cache(async (channelPublicId: string, accessKey: string): Promise<PublicChannelStream | null> => {
@@ -21,7 +21,7 @@ export const getPublicChannelStream = cache(async (channelPublicId: string, acce
   if (!access) return null;
   const { data: items } = await access.admin.from("streaming_channel_items").select("media_asset_id,position").eq("channel_id", access.channel.id).eq("status", "active").order("position");
   const assetIds = (items ?? []).map((item) => item.media_asset_id);
-  const { data: assets } = assetIds.length ? await access.admin.from("media_assets").select("id,public_id,organization_id,name,duration_ms,hls_master_storage_path").in("id", assetIds).eq("moderation_status", "approved").eq("processing_status", "ready") : { data: [] };
+  const { data: assets } = assetIds.length ? await access.admin.from("media_assets").select("id,public_id,organization_id,name,source_type,external_id,duration_ms,hls_master_storage_path").in("id", assetIds).eq("moderation_status", "approved").eq("processing_status", "ready") : { data: [] };
   const assetsById = new Map((assets ?? []).map((asset) => [asset.id, asset]));
   const organizationIds = [...new Set((assets ?? []).map((asset) => asset.organization_id))];
   const { data: organizations } = organizationIds.length ? await access.admin.from("organizations").select("id,display_name,logo_storage_path,logo_position,logo_size_percent").in("id", organizationIds) : { data: [] };
@@ -54,9 +54,11 @@ export const getPublicChannelStream = cache(async (channelPublicId: string, acce
       return [{
         id: asset.public_id,
         name: asset.name,
+        sourceType: asset.source_type === "youtube" ? "youtube" as const : "upload" as const,
+        youtubeVideoId: asset.source_type === "youtube" ? asset.external_id : null,
         durationMs: Math.max(asset.duration_ms ?? 15_000, 1_000),
         hlsUrl: asset.hls_master_storage_path ? `${base}/hls/${asset.public_id}/master.m3u8?key=${accessKey}` : null,
-        fallbackUrl: `${base}/media/${asset.public_id}?key=${accessKey}`,
+        fallbackUrl: asset.source_type === "youtube" ? null : `${base}/media/${asset.public_id}?key=${accessKey}`,
         advertiserName: organization?.display_name ?? "Advertiser",
         logoUrl: organization?.logo_storage_path ? access.admin.storage.from(BUSINESS_LOGO_BUCKET).getPublicUrl(organization.logo_storage_path).data.publicUrl : null,
         logoPosition: organization?.logo_position ?? "bottom-left",

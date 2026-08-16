@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { getWorkspaceContext } from "@/lib/auth/workspace";
+import { parseYouTubeVideoId } from "@/lib/media/youtube";
 import type { Json } from "@/lib/supabase/database.types";
 import { createClient } from "@/lib/supabase/server";
 import { MEDIA_ALLOWED_MIME_TYPES, MEDIA_MAX_FILE_BYTES } from "@/lib/storage/media-storage";
@@ -14,6 +15,7 @@ export type PrepareMediaUploadResult =
   | { ok: false; error: string };
 
 const prepareSchema = z.object({
+  organizationId: z.number().int().positive().optional(),
   name: z.string().trim().min(2).max(120),
   originalFilename: z.string().trim().min(1).max(255),
   mimeType: z.string().refine((value) => MEDIA_ALLOWED_MIME_TYPES.has(value)),
@@ -36,18 +38,66 @@ const moderationSchema = z.object({
   reason: z.string().trim().min(5).max(500),
 });
 
+const youtubeSchema = z.object({
+  organizationId: z.coerce.number().int().positive(),
+  name: z.string().trim().min(2).max(120),
+  url: z.string().trim().url().max(500),
+  durationSeconds: z.coerce.number().int().min(5).max(3600),
+  rightsDeclared: z.literal("on"),
+});
+
+export async function createYouTubeMedia(
+  _previousState: MediaActionState,
+  formData: FormData,
+): Promise<MediaActionState> {
+  const workspace = await getWorkspaceContext();
+  if (!workspace.permissions.canUploadMedia && !workspace.permissions.canAccessAdmin) {
+    return { status: "error", message: "An active business workspace is required to add media." };
+  }
+
+  const parsed = youtubeSchema.safeParse({
+    organizationId: formData.get("organizationId"),
+    name: formData.get("name"),
+    url: formData.get("url"),
+    durationSeconds: formData.get("durationSeconds"),
+    rightsDeclared: formData.get("rightsDeclared"),
+  });
+  if (!parsed.success) return { status: "error", message: "Check the media name, secure YouTube URL, duration, and rights declaration." };
+  const videoId = parseYouTubeVideoId(parsed.data.url);
+  if (!videoId) return { status: "error", message: "Enter a supported YouTube watch, Shorts, embed, or youtu.be URL." };
+
+  const organizationId = workspace.permissions.canAccessAdmin ? parsed.data.organizationId : workspace.organization.id;
+  if (!organizationId) return { status: "error", message: "Select the advertiser business for this video." };
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("create_youtube_media", {
+    p_organization_id: organizationId,
+    p_name: parsed.data.name,
+    p_youtube_video_id: videoId,
+    p_duration_ms: parsed.data.durationSeconds * 1000,
+  });
+  if (error) {
+    const duplicate = error.message.toLowerCase().includes("already");
+    return { status: "error", message: duplicate ? "This YouTube video is already in the media library." : "The YouTube video could not be submitted." };
+  }
+
+  revalidatePath("/media");
+  return { status: "success", message: "YouTube video submitted for platform review." };
+}
+
 export async function prepareMediaUpload(input: unknown): Promise<PrepareMediaUploadResult> {
   const workspace = await getWorkspaceContext();
-  if (!workspace.permissions.canUploadMedia || !workspace.organization.id) {
+  if (!workspace.permissions.canUploadMedia && !workspace.permissions.canAccessAdmin) {
     return { ok: false, error: "An active business workspace is required to upload media." };
   }
 
   const parsed = prepareSchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: "Check the media name, file type, size, and rights declaration." };
+  const organizationId = workspace.permissions.canAccessAdmin ? parsed.data.organizationId : workspace.organization.id;
+  if (!organizationId) return { ok: false, error: "Select the advertiser business for this video." };
 
   const supabase = await createClient();
   const { data, error } = await supabase.rpc("create_media_upload", {
-    p_organization_id: workspace.organization.id,
+    p_organization_id: organizationId,
     p_name: parsed.data.name,
     p_original_filename: parsed.data.originalFilename,
     p_mime_type: parsed.data.mimeType,
@@ -63,7 +113,7 @@ export async function prepareMediaUpload(input: unknown): Promise<PrepareMediaUp
 
 export async function submitMediaUpload(input: unknown): Promise<MediaActionState> {
   const workspace = await getWorkspaceContext();
-  if (!workspace.permissions.canUploadMedia) return { status: "error", message: "You do not have media submission access." };
+  if (!workspace.permissions.canUploadMedia && !workspace.permissions.canAccessAdmin) return { status: "error", message: "You do not have media submission access." };
 
   const parsed = submissionSchema.safeParse(input);
   if (!parsed.success) return { status: "error", message: "The uploaded video metadata is invalid." };

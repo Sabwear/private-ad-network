@@ -21,11 +21,15 @@ export type MediaLibraryItem = {
   processingStatus: string;
   processingError: string;
   previewUrl: string | null;
+  sourceType: "upload" | "youtube";
+  youtubeVideoId: string | null;
+  externalUrl: string | null;
 };
 
 export type MediaLibraryResult = {
   source: "demo" | "supabase" | "setup";
   assets: MediaLibraryItem[];
+  organizations: Array<{ id: number; name: string }>;
   summary: { total: number; inReview: number; approved: number; rejected: number };
 };
 
@@ -51,7 +55,7 @@ function fileSizeLabel(bytes: number | null) {
 function durationLabel(milliseconds: number | null) {
   if (!milliseconds) return "--:--";
   const seconds = Math.round(milliseconds / 1000);
-  return `0:${seconds.toString().padStart(2, "0")}`;
+  return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
 }
 
 function summarize(assets: MediaLibraryItem[]) {
@@ -80,21 +84,24 @@ function demoResult(): MediaLibraryResult {
     processingStatus: "ready",
     processingError: "",
     previewUrl: null,
+    sourceType: "upload" as const,
+    youtubeVideoId: null,
+    externalUrl: null,
   }));
-  return { source: "demo", assets, summary: summarize(assets) };
+  return { source: "demo", assets, organizations: [], summary: summarize(assets) };
 }
 
 export async function getMediaLibrary(): Promise<MediaLibraryResult> {
   if (!hasSupabaseEnv()) return demoResult();
   const supabase = await createClient();
   const [assetsResult, organizationsResult] = await Promise.all([
-    supabase.from("media_assets").select("public_id,organization_id,name,original_storage_path,original_filename,mime_type,file_size_bytes,duration_ms,width,height,codec,moderation_status,rejection_reason,processing_status,processing_error,updated_at").order("created_at", { ascending: false }),
-    supabase.from("organizations").select("id,display_name"),
+    supabase.from("media_assets").select("public_id,organization_id,name,source_type,external_id,external_url,original_storage_path,original_filename,mime_type,file_size_bytes,duration_ms,width,height,codec,moderation_status,rejection_reason,processing_status,processing_error,updated_at").order("created_at", { ascending: false }),
+    supabase.from("organizations").select("id,display_name,status").order("display_name"),
   ]);
 
   const error = assetsResult.error ?? organizationsResult.error;
   if (error) {
-    if (setupErrorCodes.has(error.code)) return { source: "setup", assets: [], summary: summarize([]) };
+    if (setupErrorCodes.has(error.code)) return { source: "setup", assets: [], organizations: [], summary: summarize([]) };
     throw new Error(`Unable to load media: ${error.message}`);
   }
 
@@ -109,7 +116,7 @@ export async function getMediaLibrary(): Promise<MediaLibraryResult> {
       status: titleCase(asset.moderation_status),
       rawStatus: asset.moderation_status,
       tone: toneForStatus(asset.moderation_status),
-      format: `${asset.mime_type ?? "MP4 pending"} / ${asset.codec ?? "codec pending"} / ${dimensions}`,
+      format: asset.source_type === "youtube" ? `YouTube embed / ${dimensions}` : `${asset.mime_type ?? "MP4 pending"} / ${asset.codec ?? "codec pending"} / ${dimensions}`,
       duration: durationLabel(asset.duration_ms),
       updated: new Date(asset.updated_at).toLocaleDateString("en", { day: "numeric", month: "short", year: "numeric" }),
       fileName: asset.original_filename ?? "Not reported",
@@ -118,8 +125,12 @@ export async function getMediaLibrary(): Promise<MediaLibraryResult> {
       processingStatus: asset.processing_status,
       processingError: asset.processing_error ?? "",
       previewUrl,
+      sourceType: asset.source_type === "youtube" ? "youtube" : "upload",
+      youtubeVideoId: asset.source_type === "youtube" ? asset.external_id : null,
+      externalUrl: asset.external_url,
     };
   });
 
-  return { source: "supabase", assets, summary: summarize(assets) };
+  const organizations = (organizationsResult.data ?? []).filter((organization) => organization.status === "active").map((organization) => ({ id: organization.id, name: organization.display_name }));
+  return { source: "supabase", assets, organizations, summary: summarize(assets) };
 }

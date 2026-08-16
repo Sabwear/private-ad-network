@@ -65,6 +65,7 @@ Outcome: one approved file is delivered and played locally on a reference device
 - [x] Add channel display controls for live state, channel/now-playing text, audio, banner, time, logos, and video scaling
 - [x] Add an administrator-only in-player settings menu
 - [x] Synchronize browser viewers to one persistent server-clock channel loop with standby/resume controls and drift recovery
+- [x] Accept business-scoped YouTube URLs alongside private MP4 uploads and play both through the synchronized channel timeline
 - [ ] Implement a dedicated non-admin moderator role and queue
 - [ ] Create Android TV project using Kotlin, Compose for TV, Media3, Room, and OkHttp
 - [ ] Implement activation, signed channel/manifest fetch, asset download, checksum, cache, and fallback media on Android TV

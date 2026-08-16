@@ -62,6 +62,8 @@ No single weak hardware signal should automatically accuse a venue of fraud. Sto
 - Business logos are intentionally public presentation assets, but upload, replacement, deletion, and organization association require platform-administrator authorization
 - Public stream viewers receive only the resolved logo URL and display settings; the in-player settings mutation control is rendered only after a separate administrator session check
 - Pilot uploads accept MP4 only, enforce a 100 MB bucket limit, compute a browser SHA-256 checksum, and require 16:9 video at an approved duration
+- External media accepts only recognized HTTPS YouTube URL shapes, stores the canonical video ID, uses the privacy-enhanced embed domain, and never permits arbitrary iframe origins
+- Both uploaded and YouTube media require a business selection, rights declaration, and platform moderation before channel assignment
 - Business roles can prepare and submit media but cannot directly update approval status; only the protected moderation function can approve or reject
 - Browser preflight is backed by the server-side FFmpeg media processor; malware scanning remains required before the scope expands beyond controlled beta media
 

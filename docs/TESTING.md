@@ -31,6 +31,9 @@ The following authenticated smoke checks were completed manually for the current
 - Guide and notification panels open exclusively and their links navigate correctly
 - Live Beta resolves the active channel dynamically and opens its player
 - The stream player reports no browser console errors during the smoke path
+- Platform administrators can choose an advertiser business and switch between private MP4 and YouTube source forms
+- Unsupported external URLs fail closed without creating a media row
+- Approved YouTube items use the shared channel offset, seek/play commands, audio control, and existing information overlays
 
 The hosted beta also contains a removable demo dataset for authenticated workflow testing. Verify the Overview, Business, Locations, Screens, Media, Campaigns, Channels, and public stream pages before clearing it. Demo cleanup must require the acknowledgement, exact phrase, final confirmation dialog, administrator session, and server-side demo marker.
 
@@ -44,6 +47,7 @@ Database migrations must be reviewed against the linked hosted project before de
 - Business, location, and role isolation under row-level security
 - Pairing-code single use, expiry, credential suspension, and heartbeat idempotency
 - Private upload lifecycle, moderation boundaries, and worker retry/recovery
+- YouTube URL variants, duplicate prevention, rights enforcement, moderation boundaries, embed availability, declared-duration drift, and removal/unavailability recovery
 - Channel assignment isolation and access-key rotation
 - Business-logo upload/delete authorization, file limits, and overlay placement
 - Channel-overlay persistence and administrator-only in-player controls

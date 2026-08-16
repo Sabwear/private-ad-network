@@ -13,14 +13,14 @@ export type StreamingChannel = {
   streamPath: string;
   settings: ChannelDisplaySettings;
   organizations: Array<{ id: number; name: string }>;
-  items: Array<{ id: number; assetId: number; name: string; owner: string; position: number; hasHls: boolean }>;
+  items: Array<{ id: number; assetId: number; name: string; owner: string; position: number; hasHls: boolean; sourceType: "upload" | "youtube" }>;
 };
 
 export type ChannelManagementData = {
   source: "live" | "setup";
   channels: StreamingChannel[];
   organizations: Array<{ id: number; name: string; status: string }>;
-  availableMedia: Array<{ id: number; name: string; owner: string; hasHls: boolean }>;
+  availableMedia: Array<{ id: number; name: string; owner: string; hasHls: boolean; sourceType: "upload" | "youtube" }>;
 };
 
 const setupCodes = new Set(["PGRST204", "PGRST205", "42501"]);
@@ -32,7 +32,7 @@ export async function getChannelManagementData(): Promise<ChannelManagementData>
     supabase.from("streaming_channel_organizations").select("channel_id,organization_id"),
     supabase.from("streaming_channel_items").select("id,channel_id,media_asset_id,position,status").eq("status", "active").order("position"),
     supabase.from("organizations").select("id,display_name,status").order("display_name"),
-    supabase.from("media_assets").select("id,name,organization_id,hls_master_storage_path,moderation_status,processing_status").eq("moderation_status", "approved").eq("processing_status", "ready").order("name"),
+    supabase.from("media_assets").select("id,name,organization_id,source_type,hls_master_storage_path,moderation_status,processing_status").eq("moderation_status", "approved").eq("processing_status", "ready").order("name"),
   ]);
 
   const error = channelsResult.error ?? assignmentsResult.error ?? itemsResult.error ?? organizationsResult.error ?? mediaResult.error;
@@ -52,6 +52,7 @@ export async function getChannelManagementData(): Promise<ChannelManagementData>
     name: asset.name,
     owner: organizationNames.get(asset.organization_id) ?? "Unknown business",
     hasHls: Boolean(asset.hls_master_storage_path),
+    sourceType: asset.source_type === "youtube" ? "youtube" as const : "upload" as const,
   }));
   const mediaById = new Map(media.map((asset) => [asset.id, asset]));
 
@@ -83,7 +84,7 @@ export async function getChannelManagementData(): Promise<ChannelManagementData>
       .filter((item) => item.channel_id === channel.id)
       .flatMap((item) => {
         const asset = mediaById.get(item.media_asset_id);
-        return asset ? [{ id: item.id, assetId: asset.id, name: asset.name, owner: asset.owner, position: item.position, hasHls: asset.hasHls }] : [];
+        return asset ? [{ id: item.id, assetId: asset.id, name: asset.name, owner: asset.owner, position: item.position, hasHls: asset.hasHls, sourceType: asset.sourceType }] : [];
       }),
   }));
 

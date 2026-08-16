@@ -1,6 +1,6 @@
 # Project Status and Next-Phase Handoff
 
-Last reviewed: 2026-08-15
+Last reviewed: 2026-08-16
 
 ## Current product state
 
@@ -29,6 +29,7 @@ The central portal is suitable for controlled administrator testing. It is not y
 ### Media and streaming
 
 - Resumable private media uploads, client preflight, checksum, rights declaration, and moderation
+- Business-scoped YouTube submissions with strict URL parsing, declared duration, rights confirmation, moderation, and privacy-enhanced embedded playback
 - Durable FFmpeg worker for validation, normalized MP4, thumbnails, retry recovery, and 720p/480p HLS
 - Protected media delivery with short-lived storage access
 - Multiple streaming-channel schema and management UI; one seeded Primary Network Channel is active for beta
@@ -61,6 +62,7 @@ The central portal is suitable for controlled administrator testing. It is not y
 |   `-- lib/
 |       |-- auth/             Workspace, role, redirect, and optional-admin checks
 |       |-- device/           Client/network telemetry helpers
+|       |-- media/            Constrained external-media parsing and playback helpers
 |       |-- repositories/     Server-only page data access
 |       |-- storage/          Media and business-logo storage adapters
 |       |-- streaming/        Channel authorization and public-player data
@@ -79,11 +81,12 @@ The future Android TV application and shared contract packages have not been cre
 
 ## Environment and deployment state
 
-- Hosted database migrations are applied through `20260815135535_synchronized_continuous_channel_broadcast.sql`.
+- Hosted database migrations are applied through `20260815235423_admin_media_ingestion.sql`.
 - Supabase is the current database, authentication, and temporary object-storage provider.
 - Vercel is the current web host; the application also supports standalone Node.js container deployment.
 - The media worker must run on a separate worker-capable host. A normal Vercel web deployment does not run FFmpeg jobs continuously.
 - The hosted project contains removable demo content for beta verification.
+- YouTube playback depends on the source remaining available, embeddable, and unchanged; exact duration is currently declared at submission and verified during moderation.
 - The local Supabase CLI is not yet linked and its migration history still needs reconciliation with the hosted project.
 
 ## Known gaps and risks

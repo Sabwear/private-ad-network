@@ -104,6 +104,10 @@ export type Database = {
         public_id: string;
         organization_id: number;
         name: string;
+        source_type: string;
+        external_provider: string | null;
+        external_id: string | null;
+        external_url: string | null;
         original_storage_path: string | null;
         normalized_storage_path: string | null;
         thumbnail_storage_path: string | null;
@@ -477,6 +481,15 @@ export type Database = {
           p_file_size_bytes: number;
         };
         Returns: Array<{ asset_public_id: string; storage_path: string }>;
+      };
+      create_youtube_media: {
+        Args: {
+          p_organization_id: number;
+          p_name: string;
+          p_youtube_video_id: string;
+          p_duration_ms: number;
+        };
+        Returns: string;
       };
       submit_media_upload: {
         Args: {

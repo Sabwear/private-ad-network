@@ -35,6 +35,7 @@ Authenticates with the per-device bearer credential and reports app, runtime, di
 - `GET /stream/{channelId}/{accessKey}` opens the continuous channel viewer. The access key is a bearer credential and should only be shared with assigned business devices.
 - `GET /api/v1/channels/{channelId}/hls/{assetId}/{resource}?key=...` authorizes an HLS playlist or redirects an authorized segment to short-lived private storage.
 - `GET /api/v1/channels/{channelId}/media/{assetId}?key=...` provides the normalized MP4 fallback for previously processed media or browsers without HLS support.
+- YouTube channel items do not use the private media routes. The server exposes only the validated canonical video ID to the player, which builds an allowlisted privacy-enhanced embed and synchronizes it to the same channel clock.
 - Every asset request verifies that the channel is active and the approved asset is currently in that channel.
 - The viewer response composes channel presentation settings and the current advertiser's public logo metadata. A logged-in platform administrator additionally receives the in-player settings control; bearer-link viewers do not.
 

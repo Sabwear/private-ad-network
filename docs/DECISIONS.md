@@ -78,6 +78,12 @@ Business logos are public presentation assets with administrator-only mutation. 
 
 A browser viewer joins a shared, continuously advancing pre-recorded loop derived from a database epoch and authoritative media durations. Reloading or opening another viewer does not restart the channel. The player periodically corrects drift and recovers after background suspension. The administrator may place the broadcast on standby; re-enabling it starts a new epoch. No media bytes are emitted when there are no viewers because continuity is represented by time, not by a wasteful always-connected server encoder.
 
+## ADR-014 - External YouTube media remains a moderated reference
+
+**Status:** Accepted
+
+The media library supports private MP4 uploads and constrained YouTube references. A YouTube submission stores its canonical video ID and declared exact duration; it does not copy or rehost third-party bytes. It follows the same business ownership, rights declaration, moderation, channel assignment, and synchronized-loop rules as uploaded media. Playback uses YouTube's privacy-enhanced embed domain and a dedicated player adapter. External availability, embedding permission, and duration accuracy must be checked during moderation because they remain outside platform control.
+
 ## Open decisions
 
 - Final product/brand name
