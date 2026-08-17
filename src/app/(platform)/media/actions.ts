@@ -6,7 +6,7 @@ import { getWorkspaceContext } from "@/lib/auth/workspace";
 import { parseYouTubeVideoId } from "@/lib/media/youtube";
 import type { Json } from "@/lib/supabase/database.types";
 import { createClient } from "@/lib/supabase/server";
-import { MEDIA_ALLOWED_MIME_TYPES, MEDIA_MAX_FILE_BYTES } from "@/lib/storage/media-storage";
+import { MEDIA_ALLOWED_MIME_TYPES, MEDIA_BUCKET, MEDIA_MAX_FILE_BYTES } from "@/lib/storage/media-storage";
 
 export type MediaActionState = { status: "idle" | "error" | "success"; message: string };
 
@@ -15,6 +15,7 @@ export type PrepareMediaUploadResult =
   | { ok: false; error: string };
 
 export type CancelMediaUploadResult = { ok: true } | { ok: false; error: string };
+export type DeleteMediaState = { status: "idle" | "error" | "success"; message: string };
 
 const prepareSchema = z.object({
   organizationId: z.number().int().positive().optional(),
@@ -168,14 +169,11 @@ export async function submitMediaUpload(input: unknown): Promise<MediaActionStat
   }
   if (submissionError) {
     console.error("media_upload_finalization_failed", { code: submissionError.code });
-    const durationRejected = /15, 30, or 60 seconds/i.test(submissionError.message);
     return {
       status: "error",
-      message: durationRejected
-        ? "The upload finished, but the connected database still has the old duration rule. Deploy the latest media migration, then retry finalizing this upload."
-        : workspace.permissions.canAccessAdmin
-          ? "The upload finished, but processing could not start. Refresh and retry finalizing the same upload."
-          : "The upload finished, but it could not enter processing.",
+      message: workspace.permissions.canAccessAdmin
+        ? "The upload finished, but processing could not start. Refresh and retry finalizing the same upload."
+        : "The upload finished, but it could not enter processing.",
     };
   }
 
@@ -196,6 +194,40 @@ export async function cancelMediaUpload(assetPublicId: string): Promise<CancelMe
   if (error) return { ok: false, error: "The cancelled upload could not be cleared. It can be removed from the media library later." };
   revalidatePath("/media");
   return { ok: true };
+}
+
+export async function deleteMediaAsset(
+  _previousState: DeleteMediaState,
+  formData: FormData,
+): Promise<DeleteMediaState> {
+  const workspace = await getWorkspaceContext();
+  if (!workspace.permissions.canAccessAdmin) return { status: "error", message: "Platform administrator access is required." };
+
+  const parsed = z.string().uuid().safeParse(formData.get("assetPublicId"));
+  if (!parsed.success) return { status: "error", message: "The media reference is invalid." };
+
+  const supabase = await createClient();
+  const { data: objectPaths, error: preparationError } = await supabase.rpc("prepare_media_asset_deletion", {
+    p_asset_public_id: parsed.data,
+  });
+  if (preparationError) {
+    const blocked = /campaign or delivery history|processing to finish/i.test(preparationError.message);
+    return { status: "error", message: blocked ? preparationError.message : "The media could not be prepared for deletion." };
+  }
+
+  const paths = objectPaths ?? [];
+  for (let offset = 0; offset < paths.length; offset += 100) {
+    const { error: storageError } = await supabase.storage.from(MEDIA_BUCKET).remove(paths.slice(offset, offset + 100));
+    if (storageError) return { status: "error", message: "The media files could not be removed. Nothing was deleted from the library." };
+  }
+
+  const { error: deletionError } = await supabase.rpc("delete_media_asset", { p_asset_public_id: parsed.data });
+  if (deletionError) return { status: "error", message: "The files were removed, but the library record could not be deleted. Retry deletion to finish cleanup." };
+
+  revalidatePath("/media");
+  revalidatePath("/campaigns");
+  revalidatePath("/channels");
+  return { status: "success", message: "Media permanently deleted." };
 }
 
 export async function moderateMedia(

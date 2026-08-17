@@ -630,6 +630,14 @@ export type Database = {
         Args: { p_asset_public_id: string };
         Returns: undefined;
       };
+      prepare_media_asset_deletion: {
+        Args: { p_asset_public_id: string };
+        Returns: string[];
+      };
+      delete_media_asset: {
+        Args: { p_asset_public_id: string };
+        Returns: undefined;
+      };
       create_youtube_media: {
         Args: {
           p_organization_id: number;

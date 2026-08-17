@@ -1,6 +1,6 @@
 import { Film, Play, Upload } from "lucide-react";
 import Link from "next/link";
-import { MediaModerationPanel, MediaUploadPanel } from "@/components/media-management";
+import { MediaDeleteControl, MediaModerationPanel, MediaPreviewControls, MediaUploadPanel } from "@/components/media-management";
 import { PageHeading } from "@/components/page-heading";
 import { StatusPill } from "@/components/status-pill";
 import { getWorkspaceContext } from "@/lib/auth/workspace";
@@ -36,7 +36,7 @@ export default async function MediaPage() {
 
     {result.assets.length === 0 ? <section className="empty-state"><Film size={28} /><h2>No media uploaded yet</h2><p>{workspace.permissions.canAccessAdmin ? "Add the first MP4 or YouTube creative above." : canModerate ? "Submitted business creatives will appear here for review." : canUpload ? "Upload the first MP4 creative above to begin moderation." : "Media will appear after a business submits its first creative."}</p></section> : <section className="media-grid">{result.assets.map((asset, index) => <article className="media-card" key={asset.id}>
       <div className={`media-preview preview-${["teal", "orange", "blue", "purple"][index % 4]}`}>
-        {asset.youtubeVideoId ? <iframe className="media-video media-youtube-preview" src={youtubeEmbedUrl(asset.youtubeVideoId)} title={`Preview ${asset.name}`} loading="lazy" allow="accelerometer; autoplay; encrypted-media; picture-in-picture" allowFullScreen /> : asset.previewUrl ? <video className="media-video" controls controlsList="nodownload" preload="metadata" src={asset.previewUrl} aria-label={`Preview ${asset.name}`} /> : <><span className="preview-noise" /><span className="media-preview-placeholder"><Play size={22} fill="currentColor" /></span></>}
+        {asset.youtubeVideoId ? <MediaPreviewControls source={youtubeEmbedUrl(asset.youtubeVideoId)} title={asset.name} youtube /> : asset.previewUrl ? <MediaPreviewControls source={asset.previewUrl} title={asset.name} /> : <><span className="preview-noise" /><span className="media-preview-placeholder"><Play size={22} fill="currentColor" /></span></>}
         <small>{asset.duration}</small>
       </div>
       <div className="media-body">
@@ -45,6 +45,7 @@ export default async function MediaPage() {
         {asset.processingError ? <p className="media-rejection"><strong>Processing issue:</strong> {asset.processingError}</p> : null}
         {asset.rejectionReason ? <p className="media-rejection"><strong>Rejection reason:</strong> {asset.rejectionReason}</p> : null}
         {canModerate ? <MediaModerationPanel asset={asset} /> : null}
+        {workspace.permissions.canAccessAdmin ? <MediaDeleteControl assetPublicId={asset.id} name={asset.name} /> : null}
       </div>
     </article>)}</section>}
   </>;

@@ -1,14 +1,15 @@
 "use client";
 
-import { CheckCircle2, CirclePlay, FileVideo, Link2, LoaderCircle, ShieldCheck, Upload, XCircle } from "lucide-react";
+import { CheckCircle2, CirclePlay, FileVideo, Link2, LoaderCircle, Maximize2, Pause, Play, ShieldCheck, Trash2, Upload, Volume2, VolumeX, XCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useActionState, useEffect, useRef, useState } from "react";
-import { cancelMediaUpload, createYouTubeMedia, moderateMedia, prepareMediaUpload, submitMediaUpload, type MediaActionState } from "@/app/(platform)/media/actions";
+import { cancelMediaUpload, createYouTubeMedia, deleteMediaAsset, moderateMedia, prepareMediaUpload, submitMediaUpload, type DeleteMediaState, type MediaActionState } from "@/app/(platform)/media/actions";
 import type { MediaLibraryItem } from "@/lib/repositories/media";
 import { createClient } from "@/lib/supabase/client";
 import { MEDIA_BUCKET, MEDIA_MAX_FILE_BYTES } from "@/lib/storage/media-storage";
 
 const initialActionState: MediaActionState = { status: "idle", message: "" };
+const initialDeleteState: DeleteMediaState = { status: "idle", message: "" };
 type VideoInspection = { durationMs: number; width: number; height: number };
 type PendingUpload = {
   key: string;
@@ -55,6 +56,70 @@ function validateInspection(inspection: VideoInspection) {
 
 function mediaNameFromFilename(filename: string) {
   return filename.replace(/\.[^.]+$/, "").replace(/[_-]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 120);
+}
+
+export function MediaPreviewControls({ source, title, youtube = false }: { source: string; title: string; youtube?: boolean }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const [paused, setPaused] = useState(true);
+  const [muted, setMuted] = useState(false);
+
+  function sendYouTubeCommand(command: "playVideo" | "pauseVideo" | "mute" | "unMute") {
+    iframeRef.current?.contentWindow?.postMessage(JSON.stringify({ event: "command", func: command, args: [] }), "https://www.youtube.com");
+  }
+
+  async function togglePlayback() {
+    if (youtube) {
+      sendYouTubeCommand(paused ? "playVideo" : "pauseVideo");
+      setPaused((current) => !current);
+      return;
+    }
+    const video = videoRef.current;
+    if (!video) return;
+    if (video.paused) await video.play();
+    else video.pause();
+  }
+
+  function toggleMuted() {
+    const nextMuted = !muted;
+    if (youtube) sendYouTubeCommand(nextMuted ? "mute" : "unMute");
+    else if (videoRef.current) videoRef.current.muted = nextMuted;
+    setMuted(nextMuted);
+  }
+
+  async function openFullscreen() {
+    await containerRef.current?.requestFullscreen();
+  }
+
+  return <div className="media-player" ref={containerRef}>
+    {youtube
+      ? <iframe ref={iframeRef} className="media-video media-youtube-preview" src={`${source}${source.includes("?") ? "&" : "?"}enablejsapi=1`} title={`Preview ${title}`} loading="lazy" allow="accelerometer; autoplay; encrypted-media; picture-in-picture" allowFullScreen />
+      : <video ref={videoRef} className="media-video" controls controlsList="nodownload" preload="metadata" src={source} aria-label={`Preview ${title}`} onPlay={() => setPaused(false)} onPause={() => setPaused(true)} onVolumeChange={(event) => setMuted(event.currentTarget.muted)} />}
+    <div className="media-player-controls" aria-label={`Playback controls for ${title}`}>
+      <button type="button" onClick={() => void togglePlayback()} aria-label={paused ? `Play ${title}` : `Pause ${title}`} title={paused ? "Play" : "Pause"}>{paused ? <Play size={15} fill="currentColor" /> : <Pause size={15} fill="currentColor" />}</button>
+      <button type="button" onClick={toggleMuted} aria-label={muted ? `Unmute ${title}` : `Mute ${title}`} title={muted ? "Unmute" : "Mute"}>{muted ? <VolumeX size={15} /> : <Volume2 size={15} />}</button>
+      <button type="button" onClick={() => void openFullscreen()} aria-label={`Open ${title} fullscreen`} title="Fullscreen"><Maximize2 size={15} /></button>
+    </div>
+  </div>;
+}
+
+export function MediaDeleteControl({ assetPublicId, name }: { assetPublicId: string; name: string }) {
+  const router = useRouter();
+  const [state, action, pending] = useActionState(deleteMediaAsset, initialDeleteState);
+  useEffect(() => {
+    if (state.status === "success") router.refresh();
+  }, [router, state.status]);
+
+  return <div className="media-delete-control">
+    {state.message ? <p className={`form-status-${state.status}`}>{state.message}</p> : null}
+    <form action={action} onSubmit={(event) => {
+      if (!window.confirm(`Permanently delete “${name}” and all of its stored video files? This cannot be undone.`)) event.preventDefault();
+    }}>
+      <input type="hidden" name="assetPublicId" value={assetPublicId} />
+      <button className="button button-danger" type="submit" disabled={pending}>{pending ? <LoaderCircle className="auth-spinner" size={15} /> : <Trash2 size={15} />}{pending ? "Deleting..." : "Delete media"}</button>
+    </form>
+  </div>;
 }
 
 export function MediaUploadPanel({ organizations, autoApproves = false }: { organizations: Array<{ id: number; name: string }>; autoApproves?: boolean }) {
