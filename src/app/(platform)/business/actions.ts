@@ -18,6 +18,7 @@ export type OrganizationUpdateActionState = {
   fieldErrors?: Partial<Record<"displayName" | "legalName" | "category" | "organizationStatus" | "websiteUrl" | "contactEmail" | "contactPhone" | "logoPosition" | "logoSizePercent" | "reason", string>>;
 };
 export type BusinessAdActionState = { status: "idle" | "error" | "success"; message: string };
+export type StreamCreditActionState = { status: "idle" | "error" | "success"; message: string };
 
 const organizationSchema = z.object({
   displayName: z.string().trim().min(2, "Enter the business display name.").max(120),
@@ -229,4 +230,55 @@ export async function removeBusinessAdFromChannel(formData: FormData) {
   if (error) throw new Error("The channel assignment could not be removed.");
   revalidatePath("/business");
   revalidatePath("/channels");
+}
+
+export async function updateBusinessStreamSettings(
+  _state: StreamCreditActionState,
+  formData: FormData,
+): Promise<StreamCreditActionState> {
+  const workspace = await getWorkspaceContext();
+  const parsed = z.object({
+    organizationId: z.coerce.number().int().positive(),
+    earningEnabled: z.enum(["on", "off"]),
+    earningRate: z.coerce.number().min(0).max(100000),
+    consumptionRate: z.coerce.number().min(0).max(100000),
+  }).safeParse({
+    organizationId: stringField(formData, "organizationId"),
+    earningEnabled: formData.get("earningEnabled") === "on" ? "on" : "off",
+    earningRate: stringField(formData, "earningRate"),
+    consumptionRate: stringField(formData, "consumptionRate"),
+  });
+  if (!parsed.success) return { status: "error", message: "Enter valid non-negative credit rates." };
+  const ownsOrganization = workspace.organization.id === parsed.data.organizationId && workspace.permissions.canManageFinance;
+  if (!workspace.permissions.canProvisionOrganizations && !ownsOrganization) return { status: "error", message: "Credit settings access is required." };
+
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("update_stream_credit_settings", {
+    p_organization_id: parsed.data.organizationId,
+    p_earning_enabled: parsed.data.earningEnabled === "on",
+    p_earning_rate: parsed.data.earningRate,
+    p_consumption_rate: parsed.data.consumptionRate,
+  });
+  if (error) return { status: "error", message: error.code === "PGRST202" ? "Deploy the viewer-credit migration first." : "The stream credit settings could not be saved." };
+  revalidatePath("/business");
+  revalidatePath("/profile");
+  return { status: "success", message: "Stream credit settings updated." };
+}
+
+export async function regenerateBusinessStreamCode(
+  _state: StreamCreditActionState,
+  formData: FormData,
+): Promise<StreamCreditActionState> {
+  const workspace = await getWorkspaceContext();
+  const organizationId = Number(stringField(formData, "organizationId"));
+  const ownsOrganization = workspace.organization.id === organizationId && workspace.permissions.canManageOrganization;
+  if (!Number.isInteger(organizationId) || organizationId <= 0 || (!workspace.permissions.canProvisionOrganizations && !ownsOrganization)) {
+    return { status: "error", message: "Business owner access is required." };
+  }
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("regenerate_stream_access_code", { p_organization_id: organizationId });
+  if (error) return { status: "error", message: "A new access code could not be generated." };
+  revalidatePath("/business");
+  revalidatePath("/profile");
+  return { status: "success", message: "A new six-digit stream code is now active." };
 }

@@ -1,6 +1,6 @@
 const authEntryRoutes = new Set(["/login", "/signup", "/forgot-password"]);
 const publicRoutes = new Set([...authEntryRoutes, "/auth/callback", "/api/health", "/api/ready"]);
-const publicRoutePrefixes = ["/api/v1/devices/activation/", "/api/v1/devices/heartbeat", "/api/v1/channels/", "/device/setup", "/stream/"];
+const publicRoutePrefixes = ["/api/v1/devices/activation/", "/api/v1/devices/heartbeat", "/api/v1/channels/", "/api/v1/streams/", "/device/setup", "/stream/"];
 
 function normalizedPathname(pathname: string) {
   return pathname.length > 1 && pathname.endsWith("/")

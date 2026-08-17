@@ -2,7 +2,7 @@ import { createWriteStream } from "node:fs";
 import { mkdtemp, readFile, readdir, rm, stat } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { basename, dirname, join } from "node:path";
-import { Readable } from "node:stream";
+import { Readable, Transform } from "node:stream";
 import { pipeline } from "node:stream/promises";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
@@ -11,6 +11,7 @@ import { logger } from "./logger.js";
 import { generateAdaptiveHls, normalizeMedia, probeMedia, sha256File, validateProbe } from "./media-tools.js";
 
 const mediaBucket = "media";
+const maxOriginalBytes = 100 * 1024 * 1024;
 
 const claimedJobSchema = z.object({
   job_public_id: z.string().uuid(),
@@ -43,7 +44,16 @@ async function downloadOriginal(client: SupabaseClient, storagePath: string, des
 
   const response = await fetch(data.signedUrl, { signal: AbortSignal.timeout(10 * 60 * 1000) });
   if (!response.ok || !response.body) throw new Error(`Original media download failed with status ${response.status}.`);
-  await pipeline(Readable.fromWeb(response.body as never), createWriteStream(destination));
+  const reportedLength = Number(response.headers.get("content-length"));
+  if (Number.isFinite(reportedLength) && reportedLength > maxOriginalBytes) throw new Error("Original media exceeds the 100 MB processing limit.");
+  let downloadedBytes = 0;
+  const byteLimit = new Transform({
+    transform(chunk: Buffer, _encoding, callback) {
+      downloadedBytes += chunk.length;
+      callback(downloadedBytes > maxOriginalBytes ? new Error("Original media exceeds the 100 MB processing limit.") : null, chunk);
+    },
+  });
+  await pipeline(Readable.fromWeb(response.body as never), byteLimit, createWriteStream(destination));
 }
 
 async function uploadFile(

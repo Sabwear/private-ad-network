@@ -13,6 +13,21 @@ export async function runCommand(command: string, args: string[]): Promise<Comma
     const child = spawn(command, args, { windowsHide: true });
     let stdout = "";
     let stderr = "";
+    let settled = false;
+    const timeout = setTimeout(() => {
+      if (settled) return;
+      settled = true;
+      child.kill("SIGKILL");
+      reject(new Error(`${command} exceeded the 15 minute processing limit.`));
+    }, 15 * 60 * 1000);
+    timeout.unref();
+
+    const finish = (callback: () => void) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timeout);
+      callback();
+    };
 
     child.stdout.on("data", (chunk: Buffer) => {
       if (stdout.length < maxCapturedOutput) stdout += chunk.toString();
@@ -20,10 +35,12 @@ export async function runCommand(command: string, args: string[]): Promise<Comma
     child.stderr.on("data", (chunk: Buffer) => {
       if (stderr.length < maxCapturedOutput) stderr += chunk.toString();
     });
-    child.once("error", reject);
+    child.once("error", (error) => finish(() => reject(error)));
     child.once("close", (code) => {
-      if (code === 0) resolve({ stdout, stderr });
-      else reject(new Error(`${command} exited with code ${code}: ${stderr.slice(-4000)}`));
+      finish(() => {
+        if (code === 0) resolve({ stdout, stderr });
+        else reject(new Error(`${command} exited with code ${code}: ${stderr.slice(-4000)}`));
+      });
     });
   });
 }

@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "check": "tsc -p tsconfig.json --noEmit",
+    "check": "tsc -p tsconfig.json --noEmit && tsx --test src/media-tools.test.ts",
     "dev": "tsx watch src/index.ts",
     "start": "node dist/index.js"
   },

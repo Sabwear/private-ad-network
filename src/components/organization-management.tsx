@@ -5,6 +5,7 @@ import { useActionState } from "react";
 import { createOrganization, type OrganizationActionState, type OrganizationUpdateActionState, updateOrganization } from "@/app/(platform)/business/actions";
 import { BusinessChannelAds } from "@/components/business-channel-ads";
 import { BusinessLogoUploader } from "@/components/business-logo-uploader";
+import { BusinessStreamAccess } from "@/components/business-stream-access";
 import { StatusPill } from "@/components/status-pill";
 import { businessCategories } from "@/lib/domain-options";
 import type { OrganizationAdminData, OrganizationAdminRow } from "@/lib/repositories/organizations";
@@ -50,6 +51,7 @@ function OrganizationEditor({ organization, channels }: { organization: Organiza
         <button className="button button-primary" type="submit" disabled={pending}>{pending ? <LoaderCircle className="auth-spinner" size={16} /> : <ShieldCheck size={16} />}{pending ? "Saving…" : "Save business information"}</button>
       </form>
       <BusinessLogoUploader organizationId={organization.id} organizationPublicId={organization.publicId} logoUrl={organization.logoUrl} />
+      <BusinessStreamAccess organizationId={organization.id} accessCode={organization.streamAccessCode} accessCodeExpiresAt={organization.streamAccessCodeExpiresAt} earningEnabled={organization.streamEarningEnabled} earningRate={organization.streamEarningRate} consumptionRate={organization.adConsumptionRate} channels={organization.streamChannels} rotations={organization.streamCodeRotations} />
       <BusinessChannelAds organization={organization} channels={channels} />
     </div>
   </details>;

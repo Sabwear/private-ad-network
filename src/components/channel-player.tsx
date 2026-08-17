@@ -2,7 +2,7 @@
 
 import Hls from "hls.js";
 import Image from "next/image";
-import { CheckCircle2, Clock3, LoaderCircle, Menu, RadioTower, Settings2, Volume2, VolumeX, X } from "lucide-react";
+import { CheckCircle2, Clock3, LoaderCircle, LogOut, Maximize2, Menu, RadioTower, Settings2, Volume2, VolumeX, X } from "lucide-react";
 import { useActionState, useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { updateChannelDisplaySettings, type ChannelActionState } from "@/app/(platform)/channels/actions";
@@ -59,6 +59,7 @@ export function ChannelPlayer({ channel, canAdminister }: { channel: PublicChann
   const [unavailable, setUnavailable] = useState(false);
   const [sourceRevision, setSourceRevision] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
+  const currentTimeRef = useRef(0);
   const [duration, setDuration] = useState(0);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [settings, setSettings] = useState(channel.settings);
@@ -67,6 +68,7 @@ export function ChannelPlayer({ channel, canAdminister }: { channel: PublicChann
   const currentIndexRef = useRef(initialPosition.index);
   const desiredOffsetRef = useRef(initialPosition.offsetSeconds);
   const lastYoutubeSeekAtRef = useRef(0);
+  const youtubePlayingRef = useRef(false);
   const item = channel.items[index];
 
   const estimatedServerTime = useCallback(() => {
@@ -111,6 +113,10 @@ export function ChannelPlayer({ channel, canAdminister }: { channel: PublicChann
   useEffect(() => {
     currentIndexRef.current = index;
   }, [index]);
+
+  useEffect(() => {
+    currentTimeRef.current = currentTime;
+  }, [currentTime]);
 
   useEffect(() => {
     let cancelled = false;
@@ -218,6 +224,8 @@ export function ChannelPlayer({ channel, canAdminister }: { channel: PublicChann
 
   const handleYouTubeLoad = useCallback(() => {
     if (!item || item.sourceType !== "youtube") return;
+    youtubePlayingRef.current = false;
+    youtubeRef.current?.contentWindow?.postMessage(JSON.stringify({ event: "listening", id: "loopline-stream-player" }), "https://www.youtube-nocookie.com");
     const target = resolveTimeline(channel.items, channel.broadcastStartedAt, estimatedServerTime());
     sendYouTubeCommand("seekTo", [target.offsetSeconds, true]);
     sendYouTubeCommand(muted ? "mute" : "unMute");
@@ -232,8 +240,9 @@ export function ChannelPlayer({ channel, canAdminister }: { channel: PublicChann
     const handleYouTubeMessage = (event: MessageEvent) => {
       if (event.origin !== "https://www.youtube-nocookie.com" || event.source !== youtubeRef.current?.contentWindow) return;
       try {
-        const payload = typeof event.data === "string" ? JSON.parse(event.data) as { event?: string } : event.data as { event?: string };
+        const payload = typeof event.data === "string" ? JSON.parse(event.data) as { event?: string; info?: number } : event.data as { event?: string; info?: number };
         if (payload.event === "onReady") handleYouTubeLoad();
+        if (payload.event === "onStateChange") youtubePlayingRef.current = payload.info === 1;
         if (payload.event === "onError") setUnavailable(true);
       } catch {
         // Ignore unrelated or malformed postMessage traffic.
@@ -243,6 +252,32 @@ export function ChannelPlayer({ channel, canAdminister }: { channel: PublicChann
     return () => window.removeEventListener("message", handleYouTubeMessage);
   }, [handleYouTubeLoad, item]);
 
+  useEffect(() => {
+    if (!item || !channel.settings.broadcastEnabled || unavailable) return;
+    const recordHeartbeat = async () => {
+      if (document.visibilityState !== "visible") return;
+      const response = await fetch("/api/v1/streams/heartbeat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          mediaId: item.id,
+          eventKey: crypto.randomUUID(),
+          positionSeconds: currentTimeRef.current,
+          clientEventAt: new Date().toISOString(),
+          pageVisible: document.visibilityState === "visible",
+          isPlaying: item.sourceType === "youtube" ? youtubePlayingRef.current : !videoRef.current?.paused,
+        }),
+        keepalive: true,
+      }).catch(() => null);
+      if (response?.ok) {
+        const payload = await response.json().catch(() => null) as { credit?: { validation_result?: string } } | null;
+        if (payload?.credit?.validation_result === "insufficient_credit") router.refresh();
+      }
+    };
+    const interval = window.setInterval(recordHeartbeat, 15_000);
+    return () => window.clearInterval(interval);
+  }, [channel.settings.broadcastEnabled, item, router, unavailable]);
+
   const toggleAudio = () => {
     setMuted((current) => {
       const next = !current;
@@ -251,15 +286,21 @@ export function ChannelPlayer({ channel, canAdminister }: { channel: PublicChann
     });
   };
 
+  const leaveStream = async () => {
+    await fetch("/api/v1/streams/end", { method: "POST" }).catch(() => undefined);
+    await document.exitFullscreen?.().catch(() => undefined);
+    router.refresh();
+  };
+
   const hasInformation = settings.showLiveBadge || settings.showChannelName || settings.showNowPlaying;
   return <main className="stream-page">
     {item && channel.settings.broadcastEnabled ? item.sourceType === "youtube" && item.youtubeVideoId ? <iframe key={item.id} ref={youtubeRef} className={`stream-youtube stream-youtube-${settings.videoFit}`} src={youtubeEmbedUrl(item.youtubeVideoId, { autoplay: true, controls: false })} title={item.name} allow="autoplay; encrypted-media; picture-in-picture" onLoad={handleYouTubeLoad} /> : <video ref={videoRef} autoPlay muted={muted} playsInline style={{ objectFit: settings.videoFit === "cover" ? "cover" : "contain" }} onEnded={synchronizePlayback} onTimeUpdate={(event) => { const next = Math.floor(event.currentTarget.currentTime); setCurrentTime((current) => current === next ? current : next); }} onLoadedMetadata={(event) => setDuration(event.currentTarget.duration)} /> : <div className="stream-empty"><RadioTower size={38} /><p className="eyebrow">{channel.name}</p><h1>{item ? "Broadcast on standby" : "Channel is ready"}</h1><span>{item ? "The viewer link is available, but continuous playback is paused by an administrator." : "Add approved media from the Channels or Business dashboard to begin streaming."}</span></div>}
     {item && channel.settings.broadcastEnabled && settings.showStripeBanner && settings.stripeBannerText ? <div className={`stream-stripe stream-stripe-${settings.stripeBannerPosition}`}><span>{settings.stripeBannerText}</span></div> : null}
     {item && channel.settings.broadcastEnabled && settings.showAdvertiserLogo && item.logoUrl ? <div className={`stream-advertiser-logo stream-logo-${item.logoPosition}${canAdminister ? " stream-logo-admin" : ""}`} style={{ width: `${item.logoSizePercent}vw` }}><Image src={item.logoUrl} alt={`${item.advertiserName} logo`} width={420} height={210} unoptimized /></div> : null}
     {unavailable ? <div className="stream-playback-error" role="alert">This media is temporarily unavailable. The player will recover when the source is restored.</div> : null}
-    {item && channel.settings.broadcastEnabled && (hasInformation || settings.showAudioControl || settings.showVideoTime) ? <div className="stream-overlay">
+    {item && channel.settings.broadcastEnabled ? <div className="stream-overlay">
       {hasInformation ? <div>{settings.showLiveBadge ? <span className="stream-live"><i /> Live channel</span> : null}{settings.showChannelName ? <h1>{channel.name}</h1> : null}{settings.showNowPlaying ? <p>Now playing: {item.name}</p> : null}</div> : <span />}
-      <div className="stream-overlay-controls">{settings.showVideoTime ? <span className="stream-video-time"><Clock3 size={16} /> {formatTime(currentTime)} / {formatTime(duration)}</span> : null}{settings.showAudioControl ? <button type="button" onClick={toggleAudio}>{muted ? <VolumeX size={18} /> : <Volume2 size={18} />}{muted ? "Enable sound" : "Mute"}</button> : null}</div>
+      <div className="stream-overlay-controls">{settings.showVideoTime ? <span className="stream-video-time"><Clock3 size={16} /> {formatTime(currentTime)} / {formatTime(duration)}</span> : null}{settings.showAudioControl ? <button type="button" onClick={toggleAudio}>{muted ? <VolumeX size={18} /> : <Volume2 size={18} />}{muted ? "Enable sound" : "Mute"}</button> : null}<button type="button" onClick={() => document.documentElement.requestFullscreen?.()}><Maximize2 size={18} /> Fullscreen</button><button type="button" onClick={leaveStream}><LogOut size={18} /> Leave</button></div>
     </div> : null}
     {canAdminister ? <><button className="stream-settings-button" type="button" aria-label="Open stream settings" aria-expanded={settingsOpen} onClick={() => setSettingsOpen((open) => !open)}>{settingsOpen ? <X size={20} /> : <Menu size={20} />}</button>{settingsOpen ? <aside className="stream-settings-panel" aria-label="Stream settings"><header><div><Settings2 size={17} /><span><strong>Video settings</strong><small>Administrator controls</small></span></div><button type="button" aria-label="Close stream settings" onClick={() => setSettingsOpen(false)}><X size={17} /></button></header><form action={action}>
       <input type="hidden" name="channelPublicId" value={channel.publicId} />

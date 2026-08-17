@@ -124,7 +124,7 @@ export async function getUserAdminData(): Promise<UserAdminData> {
         accountStatus: profile.account_status,
         platformRole: profile.platform_role,
         organizationId: membership?.organization_id ?? null,
-        organizationName: membership ? organizationById.get(membership.organization_id) ?? "Unknown business" : "Not assigned",
+        organizationName: membership ? organizationById.get(membership.organization_id) ?? "Unknown business" : profile.account_status === "active" ? "Viewer only" : "Not assigned",
         membershipRole: membership?.role ?? null,
         membershipStatus: membership?.status ?? null,
         emailVerifiedAt: profile.email_verified_at,

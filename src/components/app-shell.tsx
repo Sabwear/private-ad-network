@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Bell, Building2, ChevronDown, CircleHelp, Clapperboard, Gauge, LayoutDashboard, LogOut, Mail, MapPinned, Menu, MonitorPlay, Orbit, RadioTower, ReceiptText, Search, Settings, ShieldCheck, UsersRound, WalletCards, X } from "lucide-react";
+import { Activity, Bell, Building2, ChevronDown, CircleHelp, Clapperboard, Gauge, LayoutDashboard, LogOut, Mail, MapPinned, Menu, MonitorPlay, Orbit, RadioTower, ReceiptText, Search, Settings, ShieldCheck, UsersRound, WalletCards, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Brand } from "@/components/brand";
 import type { WorkspaceContext } from "@/lib/auth/workspace";
@@ -35,11 +35,12 @@ export function AppShell({ children, workspace, header, signOutAction }: { child
       ...(workspace.permissions.canProvisionOrganizations ? [{ href: "/business", label: "Business", description: "Business profiles, logos, and channel ads", icon: Building2 }] : []),
       ...flowNav,
       ...(workspace.permissions.canProvisionOrganizations ? [{ href: "/users", label: "Users", description: "Accounts, permissions, and sessions", icon: UsersRound }] : []),
+      ...(workspace.membership.role === "admin" ? [{ href: "/monitor", label: "Stream monitor", description: "Live audience, channel health, credits, and incidents", icon: Activity }] : []),
       ...(workspace.permissions.canAccessAdmin ? [{ href: "/admin", label: "Admin control", description: "Platform operations and audit controls", icon: Settings }] : []),
     ];
     const term = search.trim().toLowerCase();
     return term ? items.filter((item) => `${item.label} ${item.description}`.toLowerCase().includes(term)).slice(0, 7) : items.slice(0, 7);
-  }, [search, workspace.permissions.canAccessAdmin, workspace.permissions.canProvisionOrganizations]);
+  }, [search, workspace.membership.role, workspace.permissions.canAccessAdmin, workspace.permissions.canProvisionOrganizations]);
 
   function togglePanel(next: Exclude<HeaderPanel, null>) {
     setSearchOpen(false);
@@ -71,6 +72,7 @@ export function AppShell({ children, workspace, header, signOutAction }: { child
           {workspace.permissions.canProvisionOrganizations ? <Link href="/business" className={pathname === "/business" ? "nav-link active" : "nav-link"} onClick={() => setOpen(false)}><Building2 size={19} strokeWidth={1.9} /><span>Business</span></Link> : null}
           {flowNav.map(({ href, label, icon: Icon }) => <Link key={href} href={href} className={pathname === href ? "nav-link active" : "nav-link"} onClick={() => setOpen(false)}><Icon size={19} strokeWidth={1.9} /><span>{label}</span></Link>)}
           <span className="nav-label nav-label-spaced">Operations</span>
+          {workspace.membership.role === "admin" ? <Link href="/monitor" className={pathname === "/monitor" ? "nav-link active" : "nav-link"} onClick={() => setOpen(false)}><Activity size={19} strokeWidth={1.9} /><span>Stream monitor</span></Link> : null}
           {workspace.permissions.canProvisionOrganizations ? <Link href="/users" className={pathname === "/users" ? "nav-link active" : "nav-link"} onClick={() => setOpen(false)}><UsersRound size={19} strokeWidth={1.9} /><span>Users</span></Link> : null}
           {workspace.permissions.canAccessAdmin ? <Link href="/admin" className={pathname === "/admin" ? "nav-link active" : "nav-link"} onClick={() => setOpen(false)}><Settings size={19} strokeWidth={1.9} /><span>Admin control</span></Link> : null}
           <span className="nav-link nav-link-disabled" aria-disabled="true"><ReceiptText size={19} strokeWidth={1.9} /><span>Reports</span><span className="nav-badge">Later</span></span>
@@ -78,7 +80,7 @@ export function AppShell({ children, workspace, header, signOutAction }: { child
         <div className="pilot-card"><div className="pilot-card-icon"><Orbit size={18} /></div><div><strong>Limited beta</strong><p>Controlled testers only</p></div><div className="pilot-progress"><span /></div></div>
         <div className="account-wrap">
           <button className="sidebar-user" type="button" aria-expanded={accountOpen} onClick={() => setAccountOpen((current) => !current)}><span className="avatar">{workspace.user.initials}</span><span><strong>{workspace.organization.name}</strong><small>{workspace.membership.label}</small></span><ChevronDown size={17} /></button>
-          {accountOpen ? <div className="account-menu"><div><Mail size={14} /><span><small>Signed in as</small><strong>{workspace.user.email}</strong></span></div><form action={signOutAction}><button type="submit"><LogOut size={15} /> Sign out</button></form></div> : null}
+          {accountOpen ? <div className="account-menu"><div><Mail size={14} /><span><small>Signed in as</small><strong>{workspace.user.email}</strong></span></div>{workspace.organization.id ? <Link href="/profile" onClick={() => setAccountOpen(false)}><Building2 size={15} /> Business profile</Link> : null}<form action={signOutAction}><button type="submit"><LogOut size={15} /> Sign out</button></form></div> : null}
         </div>
       </aside>
       {open ? <button className="sidebar-scrim" onClick={() => setOpen(false)} aria-label="Close navigation" /> : null}

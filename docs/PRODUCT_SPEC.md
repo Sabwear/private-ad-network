@@ -77,6 +77,16 @@ Public signup is disabled. Business users cannot create accounts, organizations,
 5. Accepted completion creates exactly one balanced ledger transaction.
 6. Advertiser, host, and administrator see the same evidence-linked result.
 
+### Private web streaming
+
+1. A business opens an assigned private channel link and enters the unique six-digit code shown in its profile.
+2. The viewer chooses anonymous access or signs in with an email-verified account approved by the current platform administrator. Public self-registration remains disabled.
+3. Successful validation starts a 12-hour browser session and requests fullscreen playback.
+4. Visible, active playback sends rate-limited verification heartbeats with position and timing evidence. The advertiser consumes its configured credits per verified minute whenever its eligible ad is playing.
+5. The host business earns its configured per-minute rate only when its earning toggle is enabled and the advertiser has enough spendable credit. Every movement is posted as an idempotent, balanced ledger transaction; wallets cannot be driven negative.
+6. Business profiles and owner assignments can only be created by platform administrators. Registered viewers never receive a business profile automatically.
+7. Platform administrators monitor live audience, coarse viewer geography, channel uptime, playback validation, credit velocity, access failures, and application/database readiness from the Stream Monitor. Channel pause/resume/restart and viewer termination require a recorded reason and produce an audit event.
+
 ## Pilot product policy
 
 | Rule | Default |

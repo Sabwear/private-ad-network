@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { authorizeChannelAsset } from "@/lib/streaming/channel-access";
 import { MEDIA_BUCKET } from "@/lib/storage/media-storage";
+import { viewerTokenFromRequest } from "@/lib/streaming/viewer-session";
 
 const safePart = /^[a-zA-Z0-9._-]+$/;
 
@@ -8,7 +9,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ chan
   const { channelId, assetId, resource } = await params;
   const accessKey = new URL(request.url).searchParams.get("key") ?? "";
   if (!resource.length || resource.some((part) => !safePart.test(part) || part === "." || part === "..")) return new NextResponse("Not found", { status: 404 });
-  const access = await authorizeChannelAsset(channelId, accessKey, assetId);
+  const access = await authorizeChannelAsset(channelId, accessKey, assetId, viewerTokenFromRequest(request));
   const masterPath = access?.asset.hls_master_storage_path;
   if (!access || !masterPath) return new NextResponse("Stream unavailable", { status: 404 });
   const root = masterPath.slice(0, -"master.m3u8".length);

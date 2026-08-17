@@ -4,7 +4,7 @@
 
 ### organizations
 
-`id`, `public_id`, `display_name`, `legal_name`, `category`, `status`, website/contact details, logo storage path, logo position, logo size percentage, billing profile, accepted policy version, timestamps
+`id`, `public_id`, `display_name`, `legal_name`, `category`, `status`, website/contact details, logo storage path, logo position, logo size percentage, unique six-digit stream access code, stream earning toggle, earning rate per verified minute, ad consumption rate per verified minute, billing profile, accepted policy version, timestamps
 
 ### users
 
@@ -65,6 +65,22 @@ Channel-to-business assignment. Assigned organizations can discover and consume 
 Channel, approved/ready media asset, deterministic position, status, and creator. The database requires uploads to have a normalized object and YouTube sources to have constrained provider metadata before either source can be assigned.
 
 Business ad assignment reuses this ordered channel-item model; ownership is validated before an administrator can add or remove the asset.
+
+### stream_viewer_sessions
+
+Server-only viewer sessions created after a valid channel bearer link and assigned business code. A viewer can remain anonymous or identify through an authenticated, email-verified account that the current platform administrator approved. Registered sessions retain a name/email snapshot for 90 days, then purge personal data while preserving anonymous accounting history. Sessions store only a token hash, expire after 12 hours, support explicit termination, and track verified activity and playback evidence. Coarse country, region, city, and edge-colocation metadata may be retained during the operations window and is removed by the same privacy purge; raw viewer IP addresses are never stored.
+
+### stream_credit_events
+
+Idempotent web-stream heartbeats linked to a viewer session and active channel asset. Each event records capped verified seconds, playback position, validation evidence, rejection reasons, and the business-specific earning and consumption amounts posted to the balanced ledger. Advertiser wallets are locked in deterministic order and charged promotional, earned, then purchased credits; unfunded playback never creates earnings or a negative balance.
+
+### stream_access_attempts
+
+Server-only, hashed-network attempt records used to rate-limit six-digit code validation without retaining raw IP addresses.
+
+### stream_access_code_rotations
+
+Audit history for business access-code rotation. Previous codes are retained only as SHA-256 hashes. Rotation expires all open viewer sessions and assigns a new 180-day code lifetime.
 
 ### campaign_holds
 

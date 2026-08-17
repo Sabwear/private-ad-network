@@ -14,6 +14,8 @@ export type PrepareMediaUploadResult =
   | { ok: true; assetPublicId: string; storagePath: string }
   | { ok: false; error: string };
 
+export type CancelMediaUploadResult = { ok: true } | { ok: false; error: string };
+
 const prepareSchema = z.object({
   organizationId: z.number().int().positive().optional(),
   name: z.string().trim().min(2).max(120),
@@ -132,6 +134,21 @@ export async function submitMediaUpload(input: unknown): Promise<MediaActionStat
 
   revalidatePath("/media");
   return { status: "success", message: "Upload complete. The video is now waiting for moderation." };
+}
+
+export async function cancelMediaUpload(assetPublicId: string): Promise<CancelMediaUploadResult> {
+  const workspace = await getWorkspaceContext();
+  if (!workspace.permissions.canUploadMedia && !workspace.permissions.canAccessAdmin) {
+    return { ok: false, error: "You do not have media upload access." };
+  }
+  const parsed = z.string().uuid().safeParse(assetPublicId);
+  if (!parsed.success) return { ok: false, error: "The upload reference is invalid." };
+
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("cancel_media_upload", { p_asset_public_id: parsed.data });
+  if (error) return { ok: false, error: "The cancelled upload could not be cleared. It can be removed from the media library later." };
+  revalidatePath("/media");
+  return { ok: true };
 }
 
 export async function moderateMedia(

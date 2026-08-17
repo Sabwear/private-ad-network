@@ -61,6 +61,12 @@ No single weak hardware signal should automatically accuse a venue of fraud. Sto
 - Private media objects are scoped to an existing tenant asset and served through short-lived authorized URLs
 - Business logos are intentionally public presentation assets, but upload, replacement, deletion, and organization association require platform-administrator authorization
 - Public stream viewers receive only the resolved logo URL and display settings; the in-player settings mutation control is rendered only after a separate administrator session check
+- Private web streams require both the channel bearer URL and a non-expired, rate-limited six-digit business code; rotating the code terminates existing viewer sessions
+- Network identifiers used for stream rate limiting are HMAC-peppered with a server-only secret; raw IP addresses are never stored
+- Anonymous viewers never provide identity. Identified viewers must use an active, email-verified account created or approved by the current platform administrator
+- Stream cookies are HTTP-only, SameSite strict, time-limited, stored only as token hashes, and independently terminable from the player
+- Playback heartbeats are idempotent and validate server timing, client clock, foreground visibility, playing state, asset membership, and playback position before credit movement
+- Stream operations telemetry and handling controls are restricted to the active platform administrator role; operational mutations require a reason and write an audit record
 - Pilot uploads accept MP4 only, enforce a 100 MB bucket limit, compute a browser SHA-256 checksum, and require 16:9 video at an approved duration
 - External media accepts only recognized HTTPS YouTube URL shapes, stores the canonical video ID, uses the privacy-enhanced embed domain, and never permits arbitrary iframe origins
 - Both uploaded and YouTube media require a business selection, rights declaration, and platform moderation before channel assignment
@@ -76,10 +82,13 @@ No single weak hardware signal should automatically accuse a venue of fraud. Sto
 - Adjustment reason, evidence, actor, and approval path
 - Automated reconciliation and alert on projection mismatch
 - Purchased, earned, promotional, held, and platform credits remain distinguishable
+- Stream consumption locks wallets in consistent ID order and debits promotional, then earned, then purchased credit without allowing a negative balance
+- Host earnings are not created when an advertiser lacks spendable credit; unfunded ads are excluded when building a fresh stream playlist and recorded as insufficient-credit evidence under settlement races
 
 ## Privacy
 
-- Collect operational device telemetry, not audience identities
+- Anonymous viewing collects operational session evidence without audience identity
+- Registered viewing stores the administrator-approved account ID plus a name/email snapshot for business reporting after explicit viewer choice
 - Operational telemetry currently includes server-observed IP, device/browser/OS type, locale, timezone, screen capabilities, connection hints, app version, and heartbeat time
 - Portal security telemetry includes user session ID, server-observed IP, user agent, coarse edge location, last route, and activity timestamps
 - Exact IP observations are visible only to authorized tenant users and platform administrators under RLS
@@ -87,6 +96,7 @@ No single weak hardware signal should automatically accuse a venue of fraud. Sto
 - Use registered venue/zone rather than continuous personal geolocation
 - Limit raw evidence retention to settlement, fraud, and dispute needs
 - Aggregate or delete expired detailed telemetry under a documented policy
+- Registered stream identity, hashed network context, and user agent are purged after 90 days; accounting history remains anonymous and access-attempt records are removed after 24 hours
 - Provide a clear device data notice to participating businesses
 - Define and automate a raw IP/device-observation retention window before the external pilot; the recommended starting point is 30 days unless legal or incident requirements demand less or more
 

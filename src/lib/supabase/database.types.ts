@@ -35,6 +35,11 @@ export type Database = {
         logo_storage_path: string | null;
         logo_position: string;
         logo_size_percent: number;
+        stream_access_code: string;
+        stream_access_code_expires_at: string;
+        stream_earning_enabled: boolean;
+        stream_earning_rate: number;
+        ad_consumption_rate: number;
         created_at: string;
         updated_at: string;
       }>;
@@ -192,6 +197,66 @@ export type Database = {
         created_by: string | null;
         created_at: string;
         updated_at: string;
+      }>;
+      stream_viewer_sessions: Table<{
+        id: string;
+        channel_id: number;
+        host_organization_id: number;
+        token_hash: string;
+        viewer_mode: string;
+        viewer_user_id: string | null;
+        viewer_name: string | null;
+        viewer_email: string | null;
+        ip_hash: string | null;
+        user_agent: string | null;
+        country_code: string | null;
+        region_code: string | null;
+        city: string | null;
+        edge_colo: string | null;
+        created_at: string;
+        consented_at: string;
+        last_activity_at: string;
+        last_credit_at: string | null;
+        retention_expires_at: string;
+        personal_data_purged_at: string | null;
+        last_media_asset_id: number | null;
+        last_position_seconds: number | null;
+        last_client_event_at: string | null;
+        expires_at: string;
+        ended_at: string | null;
+      }>;
+      stream_access_attempts: Table<{
+        id: number;
+        ip_hash: string;
+        channel_public_id: string | null;
+        succeeded: boolean;
+        attempted_at: string;
+      }>;
+      stream_credit_events: Table<{
+        id: number;
+        event_key: string;
+        viewer_session_id: string;
+        media_asset_id: number;
+        host_organization_id: number;
+        advertiser_organization_id: number;
+        verified_seconds: number;
+        earned_credits: number;
+        consumed_credits: number;
+        ledger_transaction_id: number | null;
+        validation_result: string;
+        reason_codes: string[];
+        playback_position_seconds: number | null;
+        client_event_at: string | null;
+        evidence: Json;
+        created_at: string;
+      }>;
+      stream_access_code_rotations: Table<{
+        id: number;
+        organization_id: number;
+        previous_code_hash: string;
+        rotated_by: string | null;
+        rotated_at: string;
+        expires_at: string;
       }>;
       campaigns: Table<{
         id: number;
@@ -418,6 +483,55 @@ export type Database = {
         Args: { p_organization_id: number; p_channel_item_id: number };
         Returns: undefined;
       };
+      update_stream_credit_settings: {
+        Args: {
+          p_organization_id: number;
+          p_earning_enabled: boolean;
+          p_earning_rate: number;
+          p_consumption_rate: number;
+        };
+        Returns: undefined;
+      };
+      regenerate_stream_access_code: {
+        Args: { p_organization_id: number };
+        Returns: string;
+      };
+      record_stream_viewer_heartbeat: {
+        Args: { p_session_id: string; p_media_public_id: string; p_event_key: string };
+        Returns: Array<{ verified_seconds: number; earned_credits: number; consumed_credits: number }>;
+      };
+      record_stream_viewer_heartbeat_v2: {
+        Args: {
+          p_session_id: string;
+          p_media_public_id: string;
+          p_event_key: string;
+          p_playback_position_seconds: number;
+          p_client_event_at: string;
+          p_page_visible: boolean;
+          p_is_playing: boolean;
+        };
+        Returns: Array<{ validation_result: string; verified_seconds: number; earned_credits: number; consumed_credits: number; reason_codes: string[] }>;
+      };
+      purge_expired_stream_viewer_data: {
+        Args: Record<string, never>;
+        Returns: Array<{ sessions_anonymized: number; attempts_deleted: number }>;
+      };
+      get_stream_report_summary: {
+        Args: { p_organization_id: number };
+        Returns: Json;
+      };
+      get_stream_monitor_snapshot: {
+        Args: { p_window_hours: number };
+        Returns: Json;
+      };
+      admin_handle_stream_channel: {
+        Args: { p_channel_id: number; p_action: string; p_reason: string };
+        Returns: undefined;
+      };
+      admin_end_stream_viewer_session: {
+        Args: { p_session_id: string; p_reason: string };
+        Returns: undefined;
+      };
       update_location: {
         Args: {
           p_location_id: number;
@@ -481,6 +595,10 @@ export type Database = {
           p_file_size_bytes: number;
         };
         Returns: Array<{ asset_public_id: string; storage_path: string }>;
+      };
+      cancel_media_upload: {
+        Args: { p_asset_public_id: string };
+        Returns: undefined;
       };
       create_youtube_media: {
         Args: {

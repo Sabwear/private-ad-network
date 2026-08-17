@@ -11,12 +11,13 @@ import { createClient } from "@/lib/supabase/server";
 export type UserActionState = {
   status: "idle" | "error" | "success";
   message: string;
-  fieldErrors?: Partial<Record<"name" | "email" | "accountStatus" | "membershipRole" | "reason", string>>;
+  fieldErrors?: Partial<Record<"name" | "email" | "accountPurpose" | "accountStatus" | "membershipRole" | "reason", string>>;
 };
 
 const inviteSchema = z.object({
-  name: z.string().trim().min(2, "Enter the owner's full name.").max(100),
-  email: z.string().trim().max(254).email("Enter a valid business email."),
+  name: z.string().trim().min(2, "Enter the user's full name.").max(100),
+  email: z.string().trim().max(254).email("Enter a valid email address."),
+  accountPurpose: z.enum(["viewer", "business-owner"]),
   reason: z.string().trim().min(5, "Record why access is being created.").max(300),
 });
 
@@ -53,6 +54,7 @@ export async function inviteOwnerAccount(_state: UserActionState, formData: Form
   const parsed = inviteSchema.safeParse({
     name: stringField(formData, "name"),
     email: stringField(formData, "email"),
+    accountPurpose: stringField(formData, "accountPurpose"),
     reason: stringField(formData, "reason"),
   });
   if (!parsed.success) return { status: "error", message: "Check the highlighted fields and try again.", fieldErrors: errorsFrom(parsed.error) };
@@ -62,7 +64,7 @@ export async function inviteOwnerAccount(_state: UserActionState, formData: Form
   const admin = createAdminClient();
   const { data, error } = await admin.auth.admin.inviteUserByEmail(parsed.data.email, {
     redirectTo: `${origin}/auth/callback?next=/reset-password&flow=invite`,
-    data: { full_name: parsed.data.name, access_source: "administrator_invite" },
+    data: { full_name: parsed.data.name, access_source: "administrator_invite", account_purpose: parsed.data.accountPurpose },
   });
   if (error || !data.user) {
     const duplicate = error?.message.toLowerCase().includes("already") || error?.status === 422;
@@ -80,9 +82,22 @@ export async function inviteOwnerAccount(_state: UserActionState, formData: Form
     return { status: "error", message: "The account was not finalized. Deploy the latest database migration and try again." };
   }
 
+  if (parsed.data.accountPurpose === "viewer") {
+    const { error: approvalError } = await supabase.rpc("admin_update_user_access", {
+      p_user_id: data.user.id,
+      p_account_status: "active",
+      p_membership_role: null,
+      p_reason: parsed.data.reason,
+    });
+    if (approvalError) {
+      await admin.auth.admin.deleteUser(data.user.id);
+      return { status: "error", message: "The approved viewer account could not be activated." };
+    }
+  }
+
   revalidatePath("/users");
   revalidatePath("/business");
-  return { status: "success", message: `Invitation sent to ${parsed.data.email}. The owner must use that link to choose a password.` };
+  return { status: "success", message: `Invitation sent to ${parsed.data.email}. ${parsed.data.accountPurpose === "viewer" ? "The approved viewer can register stream activity after email setup." : "The owner remains pending until an administrator creates and assigns the business."}` };
 }
 
 export async function updateUserAccess(_state: UserActionState, formData: FormData): Promise<UserActionState> {

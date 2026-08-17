@@ -16,16 +16,24 @@ export type PublicChannelStream = {
   items: Array<{ id: string; name: string; sourceType: "upload" | "youtube"; youtubeVideoId: string | null; durationMs: number; hlsUrl: string | null; fallbackUrl: string | null; advertiserName: string; logoUrl: string | null; logoPosition: string; logoSizePercent: number }>;
 };
 
-export const getPublicChannelStream = cache(async (channelPublicId: string, accessKey: string): Promise<PublicChannelStream | null> => {
-  const access = await authorizeChannel(channelPublicId, accessKey);
+export const getPublicChannelStream = cache(async (channelPublicId: string, accessKey: string, viewerToken: string): Promise<PublicChannelStream | null> => {
+  const access = await authorizeChannel(channelPublicId, accessKey, viewerToken);
   if (!access) return null;
   const { data: items } = await access.admin.from("streaming_channel_items").select("media_asset_id,position").eq("channel_id", access.channel.id).eq("status", "active").order("position");
   const assetIds = (items ?? []).map((item) => item.media_asset_id);
   const { data: assets } = assetIds.length ? await access.admin.from("media_assets").select("id,public_id,organization_id,name,source_type,external_id,duration_ms,hls_master_storage_path").in("id", assetIds).eq("moderation_status", "approved").eq("processing_status", "ready") : { data: [] };
   const assetsById = new Map((assets ?? []).map((asset) => [asset.id, asset]));
   const organizationIds = [...new Set((assets ?? []).map((asset) => asset.organization_id))];
-  const { data: organizations } = organizationIds.length ? await access.admin.from("organizations").select("id,display_name,logo_storage_path,logo_position,logo_size_percent").in("id", organizationIds) : { data: [] };
+  const [{ data: organizations }, { data: wallets }] = await Promise.all([
+    organizationIds.length ? access.admin.from("organizations").select("id,display_name,logo_storage_path,logo_position,logo_size_percent,ad_consumption_rate").in("id", organizationIds) : Promise.resolve({ data: [] }),
+    organizationIds.length ? access.admin.from("wallets").select("organization_id,wallet_type,balance_projection").in("organization_id", organizationIds).in("wallet_type", ["promotional", "earned", "purchased"]) : Promise.resolve({ data: [] }),
+  ]);
   const organizationsById = new Map((organizations ?? []).map((organization) => [organization.id, organization]));
+  const spendableByOrganization = new Map<number, number>();
+  for (const wallet of wallets ?? []) {
+    if (wallet.organization_id === null) continue;
+    spendableByOrganization.set(wallet.organization_id, (spendableByOrganization.get(wallet.organization_id) ?? 0) + Math.max(0, Number(wallet.balance_projection)));
+  }
   return {
     publicId: access.channel.public_id,
     name: access.channel.name,
@@ -50,13 +58,16 @@ export const getPublicChannelStream = cache(async (channelPublicId: string, acce
       const asset = assetsById.get(item.media_asset_id);
       if (!asset) return [];
       const organization = organizationsById.get(asset.organization_id);
+      const durationMs = Math.max(asset.duration_ms ?? 15_000, 1_000);
+      const requiredCredits = Number(organization?.ad_consumption_rate ?? 0) * durationMs / 60_000;
+      if ((spendableByOrganization.get(asset.organization_id) ?? 0) + Number.EPSILON < requiredCredits) return [];
       const base = `/api/v1/channels/${channelPublicId}`;
       return [{
         id: asset.public_id,
         name: asset.name,
         sourceType: asset.source_type === "youtube" ? "youtube" as const : "upload" as const,
         youtubeVideoId: asset.source_type === "youtube" ? asset.external_id : null,
-        durationMs: Math.max(asset.duration_ms ?? 15_000, 1_000),
+        durationMs,
         hlsUrl: asset.hls_master_storage_path ? `${base}/hls/${asset.public_id}/master.m3u8?key=${accessKey}` : null,
         fallbackUrl: asset.source_type === "youtube" ? null : `${base}/media/${asset.public_id}?key=${accessKey}`,
         advertiserName: organization?.display_name ?? "Advertiser",
