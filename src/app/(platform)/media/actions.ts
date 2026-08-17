@@ -172,13 +172,13 @@ export async function submitMediaUpload(input: unknown): Promise<MediaActionStat
     return {
       status: "error",
       message: workspace.permissions.canAccessAdmin
-        ? "The upload finished, but processing could not start. Refresh and retry finalizing the same upload."
+        ? "The upload finished, but automatic activation failed. Refresh and retry finalizing the same upload."
         : "The upload finished, but it could not enter processing.",
     };
   }
 
   revalidatePath("/media");
-  return { status: "success", message: workspace.permissions.canAccessAdmin ? "Upload complete. Processing started; the video will become available automatically when ready." : "Upload complete. The video is now waiting for moderation." };
+  return { status: "success", message: workspace.permissions.canAccessAdmin ? "Upload complete. The video is approved and ready to use." : "Upload complete. The video is now waiting for moderation." };
 }
 
 export async function cancelMediaUpload(assetPublicId: string): Promise<CancelMediaUploadResult> {

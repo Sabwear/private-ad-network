@@ -42,6 +42,14 @@ test("viewer access validation remains public but rejects malformed requests", a
   await expect(response.json()).resolves.toMatchObject({ error: "Enter a valid six-digit code and viewer details." });
 });
 
+test("anonymous stream access does not require a business code", async ({ request }) => {
+  const response = await request.post("/api/v1/streams/access", {
+    data: { channelId: crypto.randomUUID(), accessKey: crypto.randomUUID(), mode: "anonymous" },
+  });
+  expect(response.status()).toBe(403);
+  await expect(response.json()).resolves.toMatchObject({ error: "The stream code is invalid or the channel is unavailable." });
+});
+
 test("stream heartbeat and session ending require a validated viewer cookie", async ({ request }) => {
   const heartbeat = await request.post("/api/v1/streams/heartbeat", { data: { mediaId: crypto.randomUUID(), eventKey: crypto.randomUUID(), positionSeconds: 1, clientEventAt: new Date().toISOString(), pageVisible: true, isPlaying: true } });
   expect(heartbeat.status()).toBe(401);

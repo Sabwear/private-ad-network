@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 import { ChannelPlayer } from "@/components/channel-player";
-import { StreamAccessGate } from "@/components/stream-access-gate";
+import { AnonymousStreamBootstrap } from "@/components/stream-access-gate";
 import { getPublicChannelStream } from "@/lib/streaming/public-channel";
 import { getChannelAccessPreview } from "@/lib/streaming/channel-access";
 import { getApprovedStreamViewer, STREAM_VIEWER_COOKIE } from "@/lib/streaming/viewer-session";
@@ -23,9 +23,8 @@ export default async function StreamPage({ params }: Props) {
   const viewerToken = (await cookies()).get(STREAM_VIEWER_COOKIE)?.value;
   const channel = viewerToken ? await getPublicChannelStream(channelId, accessKey, viewerToken) : null;
   if (!channel) {
-    const approvedViewer = await getApprovedStreamViewer();
-    return <StreamAccessGate channelId={channelId} accessKey={accessKey} channelName={access.channel.name} description={access.channel.description ?? ""} approvedViewer={approvedViewer} />;
+    return <AnonymousStreamBootstrap channelId={channelId} accessKey={accessKey} />;
   }
-  const canAdminister = await isCurrentUserPlatformAdmin();
-  return <ChannelPlayer key={`${channel.broadcastStartedAt}:${JSON.stringify(channel.settings)}`} channel={channel} canAdminister={canAdminister} />;
+  const [canAdminister, approvedViewer] = await Promise.all([isCurrentUserPlatformAdmin(), getApprovedStreamViewer()]);
+  return <ChannelPlayer key={`${channel.broadcastStartedAt}:${JSON.stringify(channel.settings)}`} channel={channel} canAdminister={canAdminister} accessKey={accessKey} approvedViewer={approvedViewer} />;
 }

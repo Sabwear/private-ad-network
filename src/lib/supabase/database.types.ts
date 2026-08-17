@@ -209,7 +209,7 @@ export type Database = {
       stream_viewer_sessions: Table<{
         id: string;
         channel_id: number;
-        host_organization_id: number;
+        host_organization_id: number | null;
         token_hash: string;
         viewer_mode: string;
         viewer_user_id: string | null;
@@ -245,7 +245,7 @@ export type Database = {
         event_key: string;
         viewer_session_id: string;
         media_asset_id: number;
-        host_organization_id: number;
+        host_organization_id: number | null;
         advertiser_organization_id: number;
         verified_seconds: number;
         earned_credits: number;

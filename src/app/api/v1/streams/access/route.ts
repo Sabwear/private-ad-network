@@ -15,7 +15,7 @@ const accessSchema = z.discriminatedUnion("mode", [
   z.object({
     channelId: z.string().uuid(),
     accessKey: z.string().uuid(),
-    passcode: z.string().regex(/^\d{6}$/),
+    passcode: z.string().regex(/^\d{6}$/).optional(),
     mode: z.literal("anonymous"),
   }),
   z.object({
@@ -61,10 +61,11 @@ export async function POST(request: Request) {
       .gte("attempted_at", cutoff);
     if ((channelFailureCount ?? 0) >= 60) return NextResponse.json({ error: "This channel is temporarily locked after repeated invalid code attempts." }, { status: 429 });
   }
-  const { data: organization } = channel ? await admin
+  const passcode = parsed.data.passcode;
+  const { data: organization } = channel && passcode ? await admin
     .from("organizations")
     .select("id")
-    .eq("stream_access_code", parsed.data.passcode)
+    .eq("stream_access_code", passcode)
     .eq("status", "active")
     .gt("stream_access_code_expires_at", new Date().toISOString())
     .maybeSingle() : { data: null };
@@ -75,13 +76,16 @@ export async function POST(request: Request) {
     .eq("organization_id", organization.id)
     .maybeSingle() : { data: null };
 
-  const succeeded = Boolean(channel && organization && assignment);
+  const attributed = Boolean(organization && assignment);
+  const succeeded = Boolean(channel && (parsed.data.mode === "anonymous" && !passcode || attributed));
   await admin.from("stream_access_attempts").insert({
     ip_hash: ipHash,
     channel_public_id: channel?.public_id ?? null,
     succeeded,
   });
-  if (!channel || !organization || !assignment) return NextResponse.json({ error: genericError }, { status: 403 });
+  if (!channel || (passcode && !attributed) || parsed.data.mode === "registered" && !attributed) {
+    return NextResponse.json({ error: genericError }, { status: 403 });
+  }
 
   const approvedViewer = parsed.data.mode === "registered" ? await getApprovedStreamViewer() : null;
   if (parsed.data.mode === "registered" && !approvedViewer) {
@@ -101,7 +105,7 @@ export async function POST(request: Request) {
   const token = createViewerToken();
   const { error } = await admin.from("stream_viewer_sessions").insert({
     channel_id: channel.id,
-    host_organization_id: organization.id,
+    host_organization_id: organization?.id ?? null,
     token_hash: hashViewerToken(token),
     viewer_mode: parsed.data.mode,
     viewer_user_id: approvedViewer?.id ?? null,

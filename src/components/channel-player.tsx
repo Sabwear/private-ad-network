@@ -2,13 +2,15 @@
 
 import Hls from "hls.js";
 import Image from "next/image";
-import { CheckCircle2, Clock3, LoaderCircle, LogOut, Maximize2, Menu, RadioTower, Settings2, Volume2, VolumeX, X } from "lucide-react";
+import { CheckCircle2, Clock3, LoaderCircle, LogIn, LogOut, Maximize2, Menu, RadioTower, Settings2, Volume2, VolumeX, X } from "lucide-react";
 import { useActionState, useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { updateChannelDisplaySettings, type ChannelActionState } from "@/app/(platform)/channels/actions";
 import type { ChannelDisplaySettings } from "@/components/channel-display-settings-fields";
+import { StreamAccessGate } from "@/components/stream-access-gate";
 import { youtubeEmbedUrl } from "@/lib/media/youtube";
 import type { PublicChannelStream } from "@/lib/streaming/public-channel";
+import type { ApprovedStreamViewer } from "@/lib/streaming/viewer-session";
 
 const initialActionState: ChannelActionState = { status: "idle", message: "" };
 const toggleFields: Array<[keyof ChannelDisplaySettings, string]> = [
@@ -49,7 +51,7 @@ function resolveTimeline(items: PublicChannelStream["items"], startedAt: string,
   return { index: 0, offsetSeconds: 0 };
 }
 
-export function ChannelPlayer({ channel, canAdminister }: { channel: PublicChannelStream; canAdminister: boolean }) {
+export function ChannelPlayer({ channel, canAdminister, accessKey, approvedViewer }: { channel: PublicChannelStream; canAdminister: boolean; accessKey: string; approvedViewer: ApprovedStreamViewer | null }) {
   const router = useRouter();
   const videoRef = useRef<HTMLVideoElement>(null);
   const youtubeRef = useRef<HTMLIFrameElement>(null);
@@ -62,6 +64,7 @@ export function ChannelPlayer({ channel, canAdminister }: { channel: PublicChann
   const currentTimeRef = useRef(0);
   const [duration, setDuration] = useState(0);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [viewerAccessOpen, setViewerAccessOpen] = useState(false);
   const [settings, setSettings] = useState(channel.settings);
   const [actionState, action, pending] = useActionState(updateChannelDisplaySettings, initialActionState);
   const serverClockOffsetRef = useRef(0);
@@ -302,6 +305,8 @@ export function ChannelPlayer({ channel, canAdminister }: { channel: PublicChann
       {hasInformation ? <div>{settings.showLiveBadge ? <span className="stream-live"><i /> Live channel</span> : null}{settings.showChannelName ? <h1>{channel.name}</h1> : null}{settings.showNowPlaying ? <p>Now playing: {item.name}</p> : null}</div> : <span />}
       <div className="stream-overlay-controls">{settings.showVideoTime ? <span className="stream-video-time"><Clock3 size={16} /> {formatTime(currentTime)} / {formatTime(duration)}</span> : null}{settings.showAudioControl ? <button type="button" onClick={toggleAudio}>{muted ? <VolumeX size={18} /> : <Volume2 size={18} />}{muted ? "Enable sound" : "Mute"}</button> : null}<button type="button" onClick={() => document.documentElement.requestFullscreen?.()}><Maximize2 size={18} /> Fullscreen</button><button type="button" onClick={leaveStream}><LogOut size={18} /> Leave</button></div>
     </div> : null}
+    <button className="stream-viewer-login-button" style={{ right: canAdminister ? 74 : 20 }} type="button" aria-label="Open optional viewer login" aria-expanded={viewerAccessOpen} onClick={() => setViewerAccessOpen(true)}><LogIn size={20} /></button>
+    <StreamAccessGate channelId={channel.publicId} accessKey={accessKey} channelName={channel.name} approvedViewer={approvedViewer} open={viewerAccessOpen} onClose={() => setViewerAccessOpen(false)} />
     {canAdminister ? <><button className="stream-settings-button" type="button" aria-label="Open stream settings" aria-expanded={settingsOpen} onClick={() => setSettingsOpen((open) => !open)}>{settingsOpen ? <X size={20} /> : <Menu size={20} />}</button>{settingsOpen ? <aside className="stream-settings-panel" aria-label="Stream settings"><header><div><Settings2 size={17} /><span><strong>Video settings</strong><small>Administrator controls</small></span></div><button type="button" aria-label="Close stream settings" onClick={() => setSettingsOpen(false)}><X size={17} /></button></header><form action={action}>
       <input type="hidden" name="channelPublicId" value={channel.publicId} />
       {actionState.message ? <div className={`auth-message auth-message-${actionState.status}`} role={actionState.status === "error" ? "alert" : "status"}>{actionState.status === "success" ? <CheckCircle2 size={14} /> : <Settings2 size={14} />}<span>{actionState.message}</span></div> : null}
