@@ -211,8 +211,14 @@ export async function deleteMediaAsset(
     p_asset_public_id: parsed.data,
   });
   if (preparationError) {
-    const blocked = /campaign or delivery history|processing to finish/i.test(preparationError.message);
-    return { status: "error", message: blocked ? preparationError.message : "The media could not be prepared for deletion." };
+    console.error("media_deletion_preparation_failed", { code: preparationError.code, message: preparationError.message });
+    const safeDatabaseMessage = /platform administrator access|media asset not found|campaign or delivery history|processing to finish/i.test(preparationError.message);
+    return {
+      status: "error",
+      message: safeDatabaseMessage
+        ? preparationError.message
+        : `Deletion preparation failed (${preparationError.code || "database error"}). Refresh and try again.`,
+    };
   }
 
   const paths = objectPaths ?? [];

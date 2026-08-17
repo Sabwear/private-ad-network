@@ -1,14 +1,4 @@
--- Administrator-only permanent media deletion with Storage cleanup safeguards.
-
-drop policy if exists media_objects_platform_admin_select on storage.objects;
-create policy media_objects_platform_admin_select on storage.objects
-  for select to authenticated
-  using (bucket_id = 'media' and (select private.is_platform_admin()));
-
-drop policy if exists media_objects_platform_admin_delete on storage.objects;
-create policy media_objects_platform_admin_delete on storage.objects
-  for delete to authenticated
-  using (bucket_id = 'media' and (select private.is_platform_admin()));
+-- Keep media deletion compatible while credit-event migrations roll out.
 
 create or replace function private.media_asset_has_protected_history(p_media_asset_id bigint)
 returns boolean
@@ -139,30 +129,4 @@ begin
 end;
 $$;
 
-create or replace function public.prepare_media_asset_deletion(p_asset_public_id uuid)
-returns text[]
-language sql
-security invoker
-set search_path = ''
-as $$
-  select private.prepare_media_asset_deletion(p_asset_public_id);
-$$;
-
-create or replace function public.delete_media_asset(p_asset_public_id uuid)
-returns void
-language sql
-security invoker
-set search_path = ''
-as $$
-  select private.delete_media_asset(p_asset_public_id);
-$$;
-
-revoke all on function private.prepare_media_asset_deletion(uuid) from public, anon, authenticated;
-revoke all on function private.delete_media_asset(uuid) from public, anon, authenticated;
 revoke all on function private.media_asset_has_protected_history(bigint) from public, anon, authenticated;
-grant execute on function private.prepare_media_asset_deletion(uuid) to authenticated;
-grant execute on function private.delete_media_asset(uuid) to authenticated;
-revoke all on function public.prepare_media_asset_deletion(uuid) from public, anon;
-revoke all on function public.delete_media_asset(uuid) from public, anon;
-grant execute on function public.prepare_media_asset_deletion(uuid) to authenticated;
-grant execute on function public.delete_media_asset(uuid) to authenticated;
