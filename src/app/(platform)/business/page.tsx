@@ -28,7 +28,7 @@ export default async function BusinessPage() {
     <PageHeading
       eyebrow="Client network"
       title="Business"
-      description="Create business clients, assign owners, manage access, and guide each organization from onboarding to active screens."
+      description="Create businesses, assign owners, manage access, and guide each business from onboarding to active screens."
       actions={<><span className={`data-source data-source-${data.source === "live" ? "supabase" : "setup"}`}>{data.source === "live" ? "Live registry" : "Setup required"}</span><Link className="button button-primary" href="#business-onboarding"><Plus size={17} /> Add business</Link></>}
     />
 

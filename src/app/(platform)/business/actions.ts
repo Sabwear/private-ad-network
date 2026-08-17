@@ -15,7 +15,7 @@ export type OrganizationActionState = {
 export type OrganizationUpdateActionState = {
   status: "idle" | "error" | "success";
   message: string;
-  fieldErrors?: Partial<Record<"displayName" | "legalName" | "category" | "organizationStatus" | "websiteUrl" | "contactEmail" | "contactPhone" | "logoPosition" | "logoSizePercent" | "reason", string>>;
+  fieldErrors?: Partial<Record<"displayName" | "legalName" | "category" | "organizationStatus" | "websiteUrl" | "contactEmail" | "contactPhone" | "logoPosition" | "logoSizePercent" | "operatingStartDate" | "operatingEndDate" | "operatingDays" | "operatingOpensAt" | "operatingClosesAt" | "operatingTimeZone" | "reason", string>>;
 };
 export type BusinessAdActionState = { status: "idle" | "error" | "success"; message: string };
 export type StreamCreditActionState = { status: "idle" | "error" | "success"; message: string };
@@ -25,8 +25,11 @@ const organizationSchema = z.object({
   legalName: z.string().trim().max(160),
   category: z.string().trim().min(2, "Select a business category.").max(80),
   ownerUserId: z.string().uuid("Select a valid owner account."),
-  reason: z.string().trim().min(5, "Record why this organization is being created.").max(300),
+  reason: z.string().trim().min(5, "Record why this business is being created.").max(300),
 });
+
+const datePattern = /^\d{4}-\d{2}-\d{2}$/;
+const timePattern = /^([01]\d|2[0-3]):[0-5]\d$/;
 
 const organizationUpdateSchema = z.object({
   organizationId: z.coerce.number().int().positive(),
@@ -39,8 +42,15 @@ const organizationUpdateSchema = z.object({
   contactPhone: z.string().trim().max(40),
   logoPosition: z.enum(["top-left", "top-right", "bottom-left", "bottom-right"]),
   logoSizePercent: z.coerce.number().int().min(6).max(32),
+  operatingStartDate: z.union([z.literal(""), z.string().regex(datePattern, "Enter a valid start date.")]),
+  operatingEndDate: z.union([z.literal(""), z.string().regex(datePattern, "Enter a valid end date.")]),
+  operatingDays: z.array(z.enum(["mon", "tue", "wed", "thu", "fri", "sat", "sun"])).min(1, "Select at least one working day."),
+  operatingOpensAt: z.string().regex(timePattern, "Enter a valid opening time."),
+  operatingClosesAt: z.string().regex(timePattern, "Enter a valid closing time."),
+  operatingTimeZone: z.enum(["Africa/Casablanca", "UTC", "Europe/London", "Europe/Paris", "America/New_York"]),
   reason: z.string().trim().min(5, "Record a reason for this change.").max(300),
-});
+}).refine((value) => !value.operatingStartDate || !value.operatingEndDate || value.operatingEndDate >= value.operatingStartDate, { path: ["operatingEndDate"], message: "End date must be on or after the start date." })
+  .refine((value) => value.operatingClosesAt > value.operatingOpensAt, { path: ["operatingClosesAt"], message: "Closing time must be after opening time." });
 
 function stringField(formData: FormData, key: string) {
   const value = formData.get(key);
@@ -94,16 +104,16 @@ export async function createOrganization(
     return {
       status: "error",
       message: setupMissing
-        ? "Organization provisioning is not available until the database migration is deployed."
+        ? "Business provisioning is not available until the database migration is deployed."
         : ownerUnavailable
           ? "That account is no longer available for assignment. Refresh and choose another account."
-          : "The organization could not be created. Please review the details and try again.",
+          : "The business could not be created. Please review the details and try again.",
     };
   }
 
   revalidatePath("/business");
   revalidatePath("/locations");
-  return { status: "success", message: "Organization created and owner access activated." };
+  return { status: "success", message: "Business created and owner access activated." };
 }
 
 export async function updateOrganization(
@@ -126,6 +136,12 @@ export async function updateOrganization(
     contactPhone: stringField(formData, "contactPhone"),
     logoPosition: stringField(formData, "logoPosition"),
     logoSizePercent: stringField(formData, "logoSizePercent"),
+    operatingStartDate: stringField(formData, "operatingStartDate"),
+    operatingEndDate: stringField(formData, "operatingEndDate"),
+    operatingDays: formData.getAll("operatingDays"),
+    operatingOpensAt: stringField(formData, "operatingOpensAt"),
+    operatingClosesAt: stringField(formData, "operatingClosesAt"),
+    operatingTimeZone: stringField(formData, "operatingTimeZone"),
     reason: stringField(formData, "reason"),
   });
 
@@ -141,7 +157,7 @@ export async function updateOrganization(
   }
 
   const supabase = await createClient();
-  const { error } = await supabase.rpc("admin_update_organization_profile", {
+  const { error } = await supabase.rpc("admin_update_business_profile", {
     p_organization_id: parsed.data.organizationId,
     p_display_name: parsed.data.displayName,
     p_legal_name: parsed.data.legalName,
@@ -152,6 +168,12 @@ export async function updateOrganization(
     p_contact_phone: parsed.data.contactPhone,
     p_logo_position: parsed.data.logoPosition,
     p_logo_size_percent: parsed.data.logoSizePercent,
+    p_operating_start_date: parsed.data.operatingStartDate || null,
+    p_operating_end_date: parsed.data.operatingEndDate || null,
+    p_operating_days: parsed.data.operatingDays,
+    p_operating_opens_at: parsed.data.operatingOpensAt,
+    p_operating_closes_at: parsed.data.operatingClosesAt,
+    p_operating_time_zone: parsed.data.operatingTimeZone,
     p_reason: parsed.data.reason,
   });
 
@@ -159,15 +181,15 @@ export async function updateOrganization(
     return {
       status: "error",
       message: error.code === "PGRST202"
-        ? "Organization editing is unavailable until the latest database migration is deployed."
-        : "The organization could not be updated. Refresh and try again.",
+        ? "Business schedule editing is unavailable until the latest database migration is deployed."
+        : "The business could not be updated. Refresh and try again.",
     };
   }
 
   revalidatePath("/business");
   revalidatePath("/locations");
   revalidatePath("/channels");
-  return { status: "success", message: "Organization details and access status updated." };
+  return { status: "success", message: "Business profile, working dates, and hours updated." };
 }
 
 export async function saveOrganizationLogo(formData: FormData): Promise<{ status: "error" | "success"; message: string }> {

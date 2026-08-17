@@ -28,6 +28,12 @@ export type OrganizationAdminRow = {
   streamEarningEnabled: boolean;
   streamEarningRate: number;
   adConsumptionRate: number;
+  operatingStartDate: string;
+  operatingEndDate: string;
+  operatingDays: string[];
+  operatingOpensAt: string;
+  operatingClosesAt: string;
+  operatingTimeZone: string;
   owner: string;
   locationCount: number;
   createdAt: string;
@@ -45,15 +51,18 @@ export type OrganizationAdminData = {
   channels: Array<{ id: number; name: string; status: string }>;
 };
 
-const setupErrorCodes = new Set(["PGRST205", "42501"]);
+const setupErrorCodes = new Set(["PGRST204", "PGRST205", "42501", "42703", "42P01"]);
 
 export async function getOrganizationAdminData(): Promise<OrganizationAdminData> {
   const supabase = await createClient();
-  const [profilesResult, organizationsResult, membershipsResult, locationsResult, channelsResult, channelAssignmentsResult, channelItemsResult, mediaResult, rotationsResult] = await Promise.all([
+  const [profilesResult, organizationsResult, membershipsResult, locationsResult, brandingResult, streamSettingsResult, scheduleResult, channelsResult, channelAssignmentsResult, channelItemsResult, mediaResult, rotationsResult] = await Promise.all([
     supabase.from("profiles").select("id,email,full_name,email_verified_at,account_status,platform_role,created_at").order("created_at", { ascending: true }),
-    supabase.from("organizations").select("id,public_id,display_name,legal_name,category,status,website_url,contact_email,contact_phone,logo_storage_path,logo_position,logo_size_percent,stream_access_code,stream_access_code_expires_at,stream_earning_enabled,stream_earning_rate,ad_consumption_rate,created_at,updated_at").order("created_at", { ascending: false }),
+    supabase.from("organizations").select("id,public_id,display_name,legal_name,category,status,created_at,updated_at").order("created_at", { ascending: false }),
     supabase.from("organization_memberships").select("organization_id,user_id,role,status").eq("role", "owner").eq("status", "active"),
     supabase.from("locations").select("id,organization_id"),
+    supabase.from("organizations").select("id,website_url,contact_email,contact_phone,logo_storage_path,logo_position,logo_size_percent"),
+    supabase.from("organizations").select("id,stream_access_code,stream_access_code_expires_at,stream_earning_enabled,stream_earning_rate,ad_consumption_rate"),
+    supabase.from("organizations").select("id,operating_start_date,operating_end_date,operating_days,operating_opens_at,operating_closes_at,operating_time_zone"),
     supabase.from("streaming_channels").select("id,public_id,access_key,name,status").order("name"),
     supabase.from("streaming_channel_organizations").select("channel_id,organization_id"),
     supabase.from("streaming_channel_items").select("id,channel_id,media_asset_id,status").eq("status", "active"),
@@ -61,9 +70,9 @@ export async function getOrganizationAdminData(): Promise<OrganizationAdminData>
     supabase.from("stream_access_code_rotations").select("organization_id,rotated_at,expires_at").order("rotated_at", { ascending: false }).limit(500),
   ]);
 
-  const error = profilesResult.error ?? organizationsResult.error ?? membershipsResult.error ?? locationsResult.error ?? channelsResult.error ?? channelAssignmentsResult.error ?? channelItemsResult.error ?? mediaResult.error ?? rotationsResult.error;
+  const error = profilesResult.error ?? organizationsResult.error ?? membershipsResult.error ?? locationsResult.error;
   if (error) {
-    if (setupErrorCodes.has(error.code) || error.code === "PGRST204") return { source: "setup", pendingAccounts: [], organizations: [], channels: [] };
+    if (setupErrorCodes.has(error.code)) return { source: "setup", pendingAccounts: [], organizations: [], channels: [] };
     throw new Error(`Unable to load organization administration: ${error.message}`);
   }
 
@@ -74,12 +83,15 @@ export async function getOrganizationAdminData(): Promise<OrganizationAdminData>
   for (const location of locationsResult.data ?? []) {
     locationCounts.set(location.organization_id, (locationCounts.get(location.organization_id) ?? 0) + 1);
   }
-  const channelRecords = channelsResult.data ?? [];
+  const channelRecords = channelsResult.error ? [] : channelsResult.data ?? [];
+  const brandingByOrganization = new Map((brandingResult.error ? [] : brandingResult.data ?? []).map((item) => [item.id, item]));
+  const streamSettingsByOrganization = new Map((streamSettingsResult.error ? [] : streamSettingsResult.data ?? []).map((item) => [item.id, item]));
+  const scheduleByOrganization = new Map((scheduleResult.error ? [] : scheduleResult.data ?? []).map((item) => [item.id, item]));
   const channels = channelRecords.map((channel) => ({ id: channel.id, name: channel.name, status: channel.status }));
   const channelNames = new Map(channels.map((channel) => [channel.id, channel.name]));
   const channelById = new Map(channelRecords.map((channel) => [channel.id, channel]));
   const streamChannelsByOrganization = new Map<number, OrganizationAdminRow["streamChannels"]>();
-  for (const assignment of channelAssignmentsResult.data ?? []) {
+  for (const assignment of channelAssignmentsResult.error ? [] : channelAssignmentsResult.data ?? []) {
     const channel = channelById.get(assignment.channel_id);
     if (!channel) continue;
     const current = streamChannelsByOrganization.get(assignment.organization_id) ?? [];
@@ -87,21 +99,21 @@ export async function getOrganizationAdminData(): Promise<OrganizationAdminData>
     streamChannelsByOrganization.set(assignment.organization_id, current);
   }
   const rotationsByOrganization = new Map<number, OrganizationAdminRow["streamCodeRotations"]>();
-  for (const rotation of rotationsResult.data ?? []) {
+  for (const rotation of rotationsResult.error ? [] : rotationsResult.data ?? []) {
     const current = rotationsByOrganization.get(rotation.organization_id) ?? [];
     if (current.length < 10) current.push({ rotatedAt: rotation.rotated_at, expiresAt: rotation.expires_at });
     rotationsByOrganization.set(rotation.organization_id, current);
   }
   const approvedAdsByOrganization = new Map<number, Array<{ id: number; name: string }>>();
   const mediaById = new Map<number, { organizationId: number; name: string }>();
-  for (const asset of mediaResult.data ?? []) {
+  for (const asset of mediaResult.error ? [] : mediaResult.data ?? []) {
     mediaById.set(asset.id, { organizationId: asset.organization_id, name: asset.name });
     const current = approvedAdsByOrganization.get(asset.organization_id) ?? [];
     current.push({ id: asset.id, name: asset.name });
     approvedAdsByOrganization.set(asset.organization_id, current);
   }
   const channelAdsByOrganization = new Map<number, OrganizationAdminRow["channelAds"]>();
-  for (const item of channelItemsResult.data ?? []) {
+  for (const item of channelItemsResult.error ? [] : channelItemsResult.data ?? []) {
     const asset = mediaById.get(item.media_asset_id);
     if (!asset) continue;
     const current = channelAdsByOrganization.get(asset.organizationId) ?? [];
@@ -123,6 +135,9 @@ export async function getOrganizationAdminData(): Promise<OrganizationAdminData>
     organizations: (organizationsResult.data ?? []).map((organization) => {
       const ownerId = ownerByOrganization.get(organization.id);
       const ownerProfile = ownerId ? profileById.get(ownerId) : undefined;
+      const branding = brandingByOrganization.get(organization.id);
+      const streamSettings = streamSettingsByOrganization.get(organization.id);
+      const schedule = scheduleByOrganization.get(organization.id);
       return {
         id: organization.id,
         publicId: organization.public_id,
@@ -130,17 +145,23 @@ export async function getOrganizationAdminData(): Promise<OrganizationAdminData>
         legalName: organization.legal_name ?? "—",
         category: organization.category,
         status: organization.status,
-        websiteUrl: organization.website_url ?? "",
-        contactEmail: organization.contact_email ?? "",
-        contactPhone: organization.contact_phone ?? "",
-        logoUrl: organization.logo_storage_path ? supabase.storage.from(BUSINESS_LOGO_BUCKET).getPublicUrl(organization.logo_storage_path).data.publicUrl : null,
-        logoPosition: organization.logo_position,
-        logoSizePercent: organization.logo_size_percent,
-        streamAccessCode: organization.stream_access_code,
-        streamAccessCodeExpiresAt: organization.stream_access_code_expires_at,
-        streamEarningEnabled: organization.stream_earning_enabled,
-        streamEarningRate: organization.stream_earning_rate,
-        adConsumptionRate: organization.ad_consumption_rate,
+        websiteUrl: branding?.website_url ?? "",
+        contactEmail: branding?.contact_email ?? "",
+        contactPhone: branding?.contact_phone ?? "",
+        logoUrl: branding?.logo_storage_path ? supabase.storage.from(BUSINESS_LOGO_BUCKET).getPublicUrl(branding.logo_storage_path).data.publicUrl : null,
+        logoPosition: branding?.logo_position ?? "bottom-left",
+        logoSizePercent: branding?.logo_size_percent ?? 14,
+        streamAccessCode: streamSettings?.stream_access_code ?? "Not configured",
+        streamAccessCodeExpiresAt: streamSettings?.stream_access_code_expires_at ?? "",
+        streamEarningEnabled: streamSettings?.stream_earning_enabled ?? false,
+        streamEarningRate: streamSettings?.stream_earning_rate ?? 0,
+        adConsumptionRate: streamSettings?.ad_consumption_rate ?? 0,
+        operatingStartDate: schedule?.operating_start_date ?? "",
+        operatingEndDate: schedule?.operating_end_date ?? "",
+        operatingDays: schedule?.operating_days ?? ["mon", "tue", "wed", "thu", "fri"],
+        operatingOpensAt: schedule?.operating_opens_at?.slice(0, 5) ?? "09:00",
+        operatingClosesAt: schedule?.operating_closes_at?.slice(0, 5) ?? "18:00",
+        operatingTimeZone: schedule?.operating_time_zone ?? "Africa/Casablanca",
         owner: ownerProfile?.email ?? "Owner not assigned",
         locationCount: locationCounts.get(organization.id) ?? 0,
         createdAt: organization.created_at,

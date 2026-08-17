@@ -40,6 +40,12 @@ export type Database = {
         stream_earning_enabled: boolean;
         stream_earning_rate: number;
         ad_consumption_rate: number;
+        operating_start_date: string | null;
+        operating_end_date: string | null;
+        operating_days: string[];
+        operating_opens_at: string;
+        operating_closes_at: string;
+        operating_time_zone: string;
         created_at: string;
         updated_at: string;
       }>;
@@ -467,6 +473,28 @@ export type Database = {
           p_contact_phone: string;
           p_logo_position: string;
           p_logo_size_percent: number;
+          p_reason: string;
+        };
+        Returns: undefined;
+      };
+      admin_update_business_profile: {
+        Args: {
+          p_organization_id: number;
+          p_display_name: string;
+          p_legal_name: string;
+          p_category: string;
+          p_status: string;
+          p_website_url: string;
+          p_contact_email: string;
+          p_contact_phone: string;
+          p_logo_position: string;
+          p_logo_size_percent: number;
+          p_operating_start_date: string | null;
+          p_operating_end_date: string | null;
+          p_operating_days: string[];
+          p_operating_opens_at: string;
+          p_operating_closes_at: string;
+          p_operating_time_zone: string;
           p_reason: string;
         };
         Returns: undefined;
