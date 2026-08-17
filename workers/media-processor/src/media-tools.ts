@@ -98,11 +98,36 @@ export async function probeMedia(ffprobePath: string, inputPath: string): Promis
 }
 
 export function validateProbe(probe: MediaProbe) {
-  const acceptedDuration = [15_000, 30_000, 60_000].some((duration) => Math.abs(duration - probe.durationMs) <= 1000);
-  if (!acceptedDuration) throw new Error("Video duration must be 15, 30, or 60 seconds.");
+  if (probe.durationMs < 1_000) throw new Error("Video must contain at least one second of playable content.");
   if (probe.width < 1280 || probe.height < 720 || Math.abs(probe.width / probe.height - 16 / 9) > 0.02) {
     throw new Error("Video must be landscape 16:9 at 1280 x 720 or higher.");
   }
+}
+
+export async function remuxMediaWithoutCompression(
+  ffmpegPath: string,
+  inputPath: string,
+  normalizedPath: string,
+  thumbnailPath: string,
+) {
+  await runCommand(ffmpegPath, [
+    "-hide_banner", "-loglevel", "error", "-y",
+    "-i", inputPath,
+    "-map", "0:v:0", "-map", "0:a:0?",
+    "-c", "copy", "-movflags", "+faststart",
+    normalizedPath,
+  ]);
+  await createThumbnail(ffmpegPath, normalizedPath, thumbnailPath);
+}
+
+async function createThumbnail(ffmpegPath: string, inputPath: string, thumbnailPath: string) {
+  await runCommand(ffmpegPath, [
+    "-hide_banner", "-loglevel", "error", "-y",
+    "-ss", "0", "-i", inputPath,
+    "-frames:v", "1", "-vf", "scale=640:-2",
+    "-q:v", "3",
+    thumbnailPath,
+  ]);
 }
 
 export async function normalizeMedia(
@@ -123,13 +148,7 @@ export async function normalizeMedia(
     normalizedPath,
   ]);
 
-  await runCommand(ffmpegPath, [
-    "-hide_banner", "-loglevel", "error", "-y",
-    "-ss", "1", "-i", normalizedPath,
-    "-frames:v", "1", "-vf", "scale=640:-2",
-    "-q:v", "3",
-    thumbnailPath,
-  ]);
+  await createThumbnail(ffmpegPath, normalizedPath, thumbnailPath);
 }
 
 export type HlsRendition = {

@@ -9,8 +9,6 @@ import { createClient } from "@/lib/supabase/client";
 import { MEDIA_BUCKET, MEDIA_MAX_FILE_BYTES } from "@/lib/storage/media-storage";
 
 const initialActionState: MediaActionState = { status: "idle", message: "" };
-const targetDurations = [15, 30, 60];
-
 type VideoInspection = { durationMs: number; width: number; height: number };
 type PendingUpload = {
   key: string;
@@ -18,6 +16,7 @@ type PendingUpload = {
   storagePath: string;
   inspection: VideoInspection;
   checksum: string;
+  compressVideo: boolean;
   uploaded: boolean;
 };
 
@@ -46,10 +45,7 @@ async function sha256(file: File) {
 }
 
 function validateInspection(inspection: VideoInspection) {
-  const seconds = inspection.durationMs / 1000;
-  if (!targetDurations.some((target) => Math.abs(target - seconds) <= 1)) {
-    return "Video duration must be 15, 30, or 60 seconds.";
-  }
+  if (inspection.durationMs < 1_000) return "Video must contain at least one second of playable content.";
   const ratio = inspection.width / inspection.height;
   if (inspection.width < 1280 || inspection.height < 720 || Math.abs(ratio - 16 / 9) > 0.02) {
     return "Video must be landscape 16:9 at 1280 x 720 or higher.";
@@ -57,12 +53,18 @@ function validateInspection(inspection: VideoInspection) {
   return null;
 }
 
-export function MediaUploadPanel({ organizations }: { organizations: Array<{ id: number; name: string }> }) {
+function mediaNameFromFilename(filename: string) {
+  return filename.replace(/\.[^.]+$/, "").replace(/[_-]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 120);
+}
+
+export function MediaUploadPanel({ organizations, autoApproves = false }: { organizations: Array<{ id: number; name: string }>; autoApproves?: boolean }) {
   const router = useRouter();
   const [sourceType, setSourceType] = useState<"upload" | "youtube">("upload");
   const [status, setStatus] = useState<"idle" | "validating" | "uploading" | "submitting" | "success" | "error">("idle");
   const [message, setMessage] = useState("");
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [mediaName, setMediaName] = useState("");
+  const [mediaNameEdited, setMediaNameEdited] = useState(false);
   const [pendingPhase, setPendingPhase] = useState<"uploading" | "uploaded" | null>(null);
   const pendingUpload = useRef<PendingUpload | null>(null);
   const uploadController = useRef<AbortController | null>(null);
@@ -116,6 +118,7 @@ export function MediaUploadPanel({ organizations }: { organizations: Array<{ id:
     const name = String(formData.get("name") ?? "").trim();
     const organizationId = Number(formData.get("organizationId"));
     const rightsDeclared = formData.get("rightsDeclared") === "on";
+    const compressVideo = formData.get("compressVideo") === "on";
 
     if (!file || file.size < 1) {
       setStatus("error");
@@ -130,19 +133,22 @@ export function MediaUploadPanel({ organizations }: { organizations: Array<{ id:
     }
 
     try {
-      const attemptKey = [file.name, file.size, file.lastModified, name, organizationId].join(":");
+      const attemptKey = [file.name, file.size, file.lastModified, name, organizationId, compressVideo].join(":");
       let attempt = pendingUpload.current?.key === attemptKey ? pendingUpload.current : null;
       if (!attempt) {
         if (pendingUpload.current && !(await clearPendingUpload(pendingUpload.current))) {
           throw new Error("The previous unfinished upload could not be cleared. Cancel it before starting a different file.");
         }
         setStatus("validating");
+        setUploadProgress(3);
         setMessage("Checking playback format...");
         const inspection = await inspectVideo(file);
         const inspectionError = validateInspection(inspection);
         if (inspectionError) throw new Error(inspectionError);
+        setUploadProgress(7);
         setMessage("Creating an integrity checksum...");
         const checksum = await sha256(file);
+        setUploadProgress(10);
         const prepared = await prepareMediaUpload({
           organizationId,
           name,
@@ -152,20 +158,20 @@ export function MediaUploadPanel({ organizations }: { organizations: Array<{ id:
           rightsDeclared,
         });
         if (!prepared.ok) throw new Error(prepared.error);
-        attempt = { key: attemptKey, ...prepared, inspection, checksum, uploaded: false };
+        attempt = { key: attemptKey, ...prepared, inspection, checksum, compressVideo, uploaded: false };
         pendingUpload.current = attempt;
         setPendingPhase("uploading");
       }
 
       if (!attempt.uploaded) {
         setStatus("uploading");
-        setUploadProgress(0);
+        setUploadProgress(10);
         setMessage("Uploading securely with automatic retry. Keep this page open until it finishes...");
         const supabase = createClient();
         const controller = new AbortController();
         uploadController.current = controller;
         const { uploadMediaResumable } = await import("@/lib/storage/media-upload-client");
-        const uploadPromise = uploadMediaResumable({ client: supabase, file, storagePath: attempt.storagePath, onProgress: setUploadProgress, signal: controller.signal });
+        const uploadPromise = uploadMediaResumable({ client: supabase, file, storagePath: attempt.storagePath, onProgress: (percent) => setUploadProgress(10 + Math.round(percent * 0.85)), signal: controller.signal });
         activeUpload.current = uploadPromise;
         await uploadPromise;
         attempt.uploaded = true;
@@ -175,13 +181,15 @@ export function MediaUploadPanel({ organizations }: { organizations: Array<{ id:
       }
 
       setStatus("submitting");
-      setMessage("Verifying the stored file and submitting it for platform review...");
+      setUploadProgress(98);
+      setMessage(autoApproves ? "Verifying the stored file and enabling automatic approval..." : "Verifying the stored file and submitting it for platform review...");
       const submission = await submitMediaUpload({
         assetPublicId: attempt.assetPublicId,
         durationMs: attempt.inspection.durationMs,
         width: attempt.inspection.width,
         height: attempt.inspection.height,
         checksumSha256: attempt.checksum,
+        compressVideo: attempt.compressVideo,
         technicalMetadata: {
           source: "browser-preflight",
           durationSeconds: attempt.inspection.durationMs / 1000,
@@ -193,10 +201,13 @@ export function MediaUploadPanel({ organizations }: { organizations: Array<{ id:
       if (submission.status === "error") throw new Error(submission.message);
 
       setStatus("success");
+      setUploadProgress(100);
       setMessage(submission.message);
       pendingUpload.current = null;
       setPendingPhase(null);
       form.reset();
+      setMediaName("");
+      setMediaNameEdited(false);
       router.refresh();
     } catch (error) {
       uploadController.current = null;
@@ -217,12 +228,13 @@ export function MediaUploadPanel({ organizations }: { organizations: Array<{ id:
       </div>
       {sourceType === "upload" ? <form className="media-upload-fields" onSubmit={handleSubmit} noValidate>
         {message ? <div className={`auth-message auth-message-${status === "error" ? "error" : "success"}`} role={status === "error" ? "alert" : "status"}>{status === "error" ? <XCircle size={17} /> : busy ? <LoaderCircle className="auth-spinner" size={17} /> : <CheckCircle2 size={17} />}<span>{message}</span></div> : null}
-        {status === "uploading" ? <div className="media-upload-progress" role="progressbar" aria-label="Video upload progress" aria-valuemin={0} aria-valuemax={100} aria-valuenow={uploadProgress}><span style={{ width: `${uploadProgress}%` }} /><small>{uploadProgress}%</small></div> : null}
+        {["validating", "uploading", "submitting", "success"].includes(status) ? <div className="media-upload-progress" role="progressbar" aria-label="Video upload and submission progress" aria-valuemin={0} aria-valuemax={100} aria-valuenow={uploadProgress}><span style={{ width: `${uploadProgress}%` }} /><small>{uploadProgress}%</small></div> : null}
         <label><span>Advertiser business</span><select name="organizationId" defaultValue="" required disabled={busy}><option value="" disabled>Select business</option>{organizations.map((organization) => <option key={organization.id} value={organization.id}>{organization.name}</option>)}</select></label>
-        <label><span>Media name</span><input name="name" minLength={2} maxLength={120} placeholder="Summer lunch offer" required disabled={busy} /></label>
-        <label className="media-file-field"><span>MP4 video</span><input name="file" type="file" accept="video/mp4,.mp4" required disabled={busy} /><small>15, 30, or 60 seconds / 16:9 / minimum 1280 x 720 / maximum 100 MB</small></label>
+        <label className="media-file-field"><span>MP4 video</span><input name="file" type="file" accept="video/mp4,.mp4" required disabled={busy} onChange={(event) => { const file = event.currentTarget.files?.[0]; if (!file) return; if (!mediaNameEdited || !mediaName.trim()) setMediaName(mediaNameFromFilename(file.name)); }} /><small>Any duration / 16:9 / minimum 1280 x 720 / maximum 100 MB</small></label>
+        <label><span>Media name <small>Optional rename</small></span><input name="name" value={mediaName} onChange={(event) => { setMediaName(event.target.value); setMediaNameEdited(true); }} minLength={2} maxLength={120} placeholder="Filled from the uploaded filename" required disabled={busy} /></label>
+        <label className="media-rights"><input name="compressVideo" type="checkbox" defaultChecked disabled={busy} /><span><strong>Compress and optimize after upload</strong><small>Turn off to preserve source quality. The file will still be prepared for reliable streaming.</small></span></label>
         <label className="media-rights"><input name="rightsDeclared" type="checkbox" required disabled={busy} /><span>I confirm that this business owns or has permission to use all video, music, logos, people, and claims in this advertisement.</span></label>
-        <div className="media-upload-actions"><button className="button button-primary" type="submit" disabled={busy}>{busy ? <LoaderCircle className="auth-spinner" size={17} /> : <Upload size={17} />}{busy ? "Processing upload..." : pendingPhase === "uploaded" ? "Retry review submission" : pendingPhase ? "Retry upload" : "Upload and submit for review"}</button>{pendingPhase && status !== "submitting" ? <button className="button button-secondary" type="button" onClick={handleCancel}>{status === "uploading" ? "Cancel upload" : "Discard unfinished upload"}</button> : null}</div>
+        <div className="media-upload-actions"><button className="button button-primary" type="submit" disabled={busy}>{busy ? <LoaderCircle className="auth-spinner" size={17} /> : <Upload size={17} />}{busy ? "Processing upload..." : pendingPhase === "uploaded" ? "Retry submission" : pendingPhase ? "Retry upload" : autoApproves ? "Upload and auto-approve" : "Upload and submit for review"}</button>{pendingPhase && status !== "submitting" ? <button className="button button-secondary" type="button" onClick={handleCancel}>{status === "uploading" ? "Cancel upload" : "Discard unfinished upload"}</button> : null}</div>
       </form> : <form className="media-upload-fields" action={youtubeAction}>
         {youtubeState.message ? <div className={`auth-message auth-message-${youtubeState.status}`} role={youtubeState.status === "error" ? "alert" : "status"}>{youtubeState.status === "error" ? <XCircle size={17} /> : <CheckCircle2 size={17} />}<span>{youtubeState.message}</span></div> : null}
         <label><span>Advertiser business</span><select name="organizationId" defaultValue="" required disabled={youtubePending}><option value="" disabled>Select business</option>{organizations.map((organization) => <option key={organization.id} value={organization.id}>{organization.name}</option>)}</select></label>

@@ -11,13 +11,14 @@ const validProbe: MediaProbe = {
   frameRate: "30/1",
 };
 
-test("accepts supported ad-video duration and dimensions", () => {
+test("accepts arbitrary ad-video durations and supported dimensions", () => {
   assert.doesNotThrow(() => validateProbe(validProbe));
-  assert.doesNotThrow(() => validateProbe({ ...validProbe, durationMs: 14_000, width: 1280, height: 720 }));
+  assert.doesNotThrow(() => validateProbe({ ...validProbe, durationMs: 20_000, width: 1280, height: 720 }));
+  assert.doesNotThrow(() => validateProbe({ ...validProbe, durationMs: 7_200_000 }));
 });
 
-test("rejects unsupported ad-video duration", () => {
-  assert.throws(() => validateProbe({ ...validProbe, durationMs: 20_000 }), /15, 30, or 60 seconds/);
+test("rejects a video without playable duration", () => {
+  assert.throws(() => validateProbe({ ...validProbe, durationMs: 999 }), /at least one second/);
 });
 
 test("rejects undersized and non-16:9 ad video", () => {

@@ -138,6 +138,8 @@ export type Database = {
         processing_status: string;
         processing_error: string | null;
         processing_completed_at: string | null;
+        compress_video: boolean;
+        auto_approve_after_processing: boolean;
         rights_declared_at: string | null;
         rejection_reason: string | null;
         submitted_at: string | null;
@@ -645,6 +647,7 @@ export type Database = {
           p_height: number;
           p_codec: string;
           p_checksum_sha256: string;
+          p_compress_video: boolean;
           p_technical_metadata: Json;
         };
         Returns: undefined;

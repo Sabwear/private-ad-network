@@ -27,10 +27,11 @@ const prepareSchema = z.object({
 
 const submissionSchema = z.object({
   assetPublicId: z.string().uuid(),
-  durationMs: z.number().int().min(1_000).max(600_000),
+  durationMs: z.number().int().min(1_000).max(2_147_483_647),
   width: z.number().int().positive().max(16_384),
   height: z.number().int().positive().max(16_384),
   checksumSha256: z.string().regex(/^[a-f0-9]{64}$/),
+  compressVideo: z.boolean(),
   technicalMetadata: z.record(z.string(), z.unknown()),
 });
 
@@ -128,12 +129,13 @@ export async function submitMediaUpload(input: unknown): Promise<MediaActionStat
     p_height: parsed.data.height,
     p_codec: "Browser-validated MP4",
     p_checksum_sha256: parsed.data.checksumSha256,
+    p_compress_video: parsed.data.compressVideo,
     p_technical_metadata: parsed.data.technicalMetadata as Json,
   });
   if (error) return { status: "error", message: "The file uploaded, but it could not be submitted for review." };
 
   revalidatePath("/media");
-  return { status: "success", message: "Upload complete. The video is now waiting for moderation." };
+  return { status: "success", message: workspace.permissions.canAccessAdmin ? "Upload complete. The video will be approved automatically after processing." : "Upload complete. The video is now waiting for moderation." };
 }
 
 export async function cancelMediaUpload(assetPublicId: string): Promise<CancelMediaUploadResult> {

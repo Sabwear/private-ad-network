@@ -8,7 +8,7 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import type { WorkerConfig } from "./config.js";
 import { logger } from "./logger.js";
-import { generateAdaptiveHls, normalizeMedia, probeMedia, sha256File, validateProbe } from "./media-tools.js";
+import { generateAdaptiveHls, normalizeMedia, probeMedia, remuxMediaWithoutCompression, sha256File, validateProbe } from "./media-tools.js";
 
 const mediaBucket = "media";
 const maxOriginalBytes = 100 * 1024 * 1024;
@@ -119,6 +119,13 @@ export class MediaProcessor {
 
     try {
       logger.info("media_processing_started", { jobId: job.job_public_id, assetId: job.asset_public_id, attempt: job.attempt });
+      const { data: processingOptions, error: optionsError } = await this.client
+        .from("media_assets")
+        .select("compress_video")
+        .eq("public_id", job.asset_public_id)
+        .single();
+      if (optionsError || !processingOptions) throw new Error("Unable to load media processing options.");
+      const compressVideo = processingOptions.compress_video !== false;
       await downloadOriginal(this.client, job.original_storage_path, inputPath);
 
       const checksum = await sha256File(inputPath);
@@ -133,7 +140,8 @@ export class MediaProcessor {
           && (job.expected_width !== sourceProbe.width || job.expected_height !== sourceProbe.height)) {
         throw new Error("Server inspection does not match the submitted video dimensions.");
       }
-      await normalizeMedia(this.config.ffmpegPath, inputPath, normalizedPath, thumbnailPath);
+      if (compressVideo) await normalizeMedia(this.config.ffmpegPath, inputPath, normalizedPath, thumbnailPath);
+      else await remuxMediaWithoutCompression(this.config.ffmpegPath, inputPath, normalizedPath, thumbnailPath);
       const normalizedProbe = await probeMedia(this.config.ffprobePath, normalizedPath);
       validateProbe(normalizedProbe);
       const renditions = await generateAdaptiveHls(this.config.ffmpegPath, normalizedPath, hlsDirectory);
@@ -163,6 +171,7 @@ export class MediaProcessor {
           normalizedProbe,
           pipelineVersion: "2",
           fastStart: true,
+          compressionRequested: compressVideo,
           adaptiveHls: true,
           checksumVerified: true,
         },

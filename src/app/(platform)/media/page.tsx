@@ -30,7 +30,7 @@ export default async function MediaPage() {
       <div><span>Rejected</span><strong className="danger-text">{result.summary.rejected}</strong><small>Reason recorded</small></div>
     </section>
 
-    {canUpload ? <div id="media-upload" className="media-upload-wrap"><MediaUploadPanel organizations={result.organizations} /></div> : null}
+    {canUpload ? <div id="media-upload" className="media-upload-wrap"><MediaUploadPanel organizations={result.organizations} autoApproves={workspace.permissions.canAccessAdmin} /></div> : null}
 
     {!canUpload && !canModerate ? <section className="upload-banner"><span className="upload-icon"><Film size={25} /></span><div><h2>{result.source === "setup" ? "Workspace setup required" : "Media library access"}</h2><p>{result.source === "setup" ? "An administrator must complete your business workspace before media can be uploaded." : "Owners and staff can submit media. Approved reviewers manage moderation."}</p></div></section> : null}
 
