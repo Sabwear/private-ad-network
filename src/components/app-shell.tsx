@@ -2,18 +2,15 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Activity, Bell, Building2, ChevronDown, CircleHelp, Clapperboard, Gauge, LayoutDashboard, LogOut, Mail, MapPinned, Menu, MonitorPlay, Orbit, RadioTower, ReceiptText, Search, Settings, ShieldCheck, UsersRound, WalletCards, X } from "lucide-react";
+import { Activity, Bell, Building2, ChevronDown, CircleHelp, Clapperboard, Gauge, LayoutDashboard, LogOut, Mail, Menu, Orbit, RadioTower, ReceiptText, Search, Settings, ShieldCheck, UsersRound, WalletCards, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Brand } from "@/components/brand";
 import type { WorkspaceContext } from "@/lib/auth/workspace";
 import type { HeaderData } from "@/lib/repositories/header";
 
 const flowNav = [
-  { href: "/locations", label: "Locations", description: "Manage approved business venues", icon: MapPinned },
-  { href: "/screens", label: "Screens", description: "Pair and monitor playback devices", icon: MonitorPlay },
   { href: "/media", label: "Media", description: "Upload and approve advertising media", icon: Clapperboard },
-  { href: "/channels", label: "Channels", description: "Configure live streams and playlists", icon: RadioTower },
-  { href: "/campaigns", label: "Campaigns", description: "Create and manage ad campaigns", icon: Gauge },
+  { href: "/campaigns", label: "Campaigns", description: "Campaigns, locations, and targeting", icon: Gauge },
   { href: "/proof", label: "Proof of play", description: "Review verified playback evidence", icon: ShieldCheck },
   { href: "/wallet", label: "Wallet", description: "Review credits and transactions", icon: WalletCards },
 ] as const;
@@ -35,7 +32,7 @@ export function AppShell({ children, workspace, header, signOutAction }: { child
       ...(workspace.permissions.canProvisionOrganizations ? [{ href: "/business", label: "Business", description: "Business profiles, logos, and channel ads", icon: Building2 }] : []),
       ...flowNav,
       ...(workspace.permissions.canProvisionOrganizations ? [{ href: "/users", label: "Users", description: "Accounts, permissions, and sessions", icon: UsersRound }] : []),
-      ...(workspace.membership.role === "admin" ? [{ href: "/monitor", label: "Stream monitor", description: "Live audience, channel health, credits, and incidents", icon: Activity }] : []),
+      ...(workspace.membership.role === "admin" ? [{ href: "/operations", label: "Operations", description: "Channels, stream links, viewers, health, and incidents", icon: Activity }] : []),
       ...(workspace.permissions.canAccessAdmin ? [{ href: "/admin", label: "Admin control", description: "Platform operations and audit controls", icon: Settings }] : []),
     ];
     const term = search.trim().toLowerCase();
@@ -60,7 +57,7 @@ export function AppShell({ children, workspace, header, signOutAction }: { child
     openFirstSearchResult();
   }
 
-  const liveHref = header.liveStream?.href ?? "/channels";
+  const liveHref = header.liveStream?.href ?? "/operations#channels";
 
   return (
     <div className="app-shell" onKeyDown={(event) => { if (event.key === "Escape") { setPanel(null); setSearchOpen(false); } }}>
@@ -72,7 +69,7 @@ export function AppShell({ children, workspace, header, signOutAction }: { child
           {workspace.permissions.canProvisionOrganizations ? <Link href="/business" className={pathname === "/business" ? "nav-link active" : "nav-link"} onClick={() => setOpen(false)}><Building2 size={19} strokeWidth={1.9} /><span>Business</span></Link> : null}
           {flowNav.map(({ href, label, icon: Icon }) => <Link key={href} href={href} className={pathname === href ? "nav-link active" : "nav-link"} onClick={() => setOpen(false)}><Icon size={19} strokeWidth={1.9} /><span>{label}</span></Link>)}
           <span className="nav-label nav-label-spaced">Operations</span>
-          {workspace.membership.role === "admin" ? <Link href="/monitor" className={pathname === "/monitor" ? "nav-link active" : "nav-link"} onClick={() => setOpen(false)}><Activity size={19} strokeWidth={1.9} /><span>Stream monitor</span></Link> : null}
+          {workspace.membership.role === "admin" ? <Link href="/operations" className={pathname === "/operations" ? "nav-link active" : "nav-link"} onClick={() => setOpen(false)}><Activity size={19} strokeWidth={1.9} /><span>Operations</span></Link> : null}
           {workspace.permissions.canProvisionOrganizations ? <Link href="/users" className={pathname === "/users" ? "nav-link active" : "nav-link"} onClick={() => setOpen(false)}><UsersRound size={19} strokeWidth={1.9} /><span>Users</span></Link> : null}
           {workspace.permissions.canAccessAdmin ? <Link href="/admin" className={pathname === "/admin" ? "nav-link active" : "nav-link"} onClick={() => setOpen(false)}><Settings size={19} strokeWidth={1.9} /><span>Admin control</span></Link> : null}
           <span className="nav-link nav-link-disabled" aria-disabled="true"><ReceiptText size={19} strokeWidth={1.9} /><span>Reports</span><span className="nav-badge">Later</span></span>
@@ -103,9 +100,9 @@ export function AppShell({ children, workspace, header, signOutAction }: { child
               {panel === "guide" ? <div className="header-popover action-popover" aria-label="Platform guide">
                 <div className="header-popover-title"><strong>Platform guide</strong><small>Recommended operating flow</small></div>
                 <Link href="/business" onClick={() => setPanel(null)}><span className="header-step">1</span><span><strong>Create the business</strong><small>Add its profile, owner, and logo.</small></span></Link>
-                <Link href="/screens" onClick={() => setPanel(null)}><span className="header-step">2</span><span><strong>Pair the screens</strong><small>Connect devices to approved locations.</small></span></Link>
+                <Link href="/business#screens" onClick={() => setPanel(null)}><span className="header-step">2</span><span><strong>Pair the screens</strong><small>Connect devices inside the business network.</small></span></Link>
                 <Link href="/media" onClick={() => setPanel(null)}><span className="header-step">3</span><span><strong>Approve the media</strong><small>Prepare ads for channel playback.</small></span></Link>
-                <Link href="/channels" onClick={() => setPanel(null)}><span className="header-step">4</span><span><strong>Publish the channel</strong><small>Assign ads and configure the stream.</small></span></Link>
+                <Link href="/operations#channels" onClick={() => setPanel(null)}><span className="header-step">4</span><span><strong>Publish the channel</strong><small>Assign ads and configure the stream.</small></span></Link>
               </div> : null}
             </div>
             <div className="header-action-wrap">

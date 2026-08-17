@@ -63,7 +63,7 @@ export async function getOrganizationAdminData(): Promise<OrganizationAdminData>
     supabase.from("organizations").select("id,website_url,contact_email,contact_phone,logo_storage_path,logo_position,logo_size_percent"),
     supabase.from("organizations").select("id,stream_access_code,stream_access_code_expires_at,stream_earning_enabled,stream_earning_rate,ad_consumption_rate"),
     supabase.from("organizations").select("id,operating_start_date,operating_end_date,operating_days,operating_opens_at,operating_closes_at,operating_time_zone"),
-    supabase.from("streaming_channels").select("id,public_id,access_key,name,status").order("name"),
+    supabase.from("streaming_channels").select("id,public_id,access_key,slug,custom_hostname,name,status").order("name"),
     supabase.from("streaming_channel_organizations").select("channel_id,organization_id"),
     supabase.from("streaming_channel_items").select("id,channel_id,media_asset_id,status").eq("status", "active"),
     supabase.from("media_assets").select("id,organization_id,name,moderation_status,processing_status").eq("moderation_status", "approved").eq("processing_status", "ready").order("name"),
@@ -95,7 +95,7 @@ export async function getOrganizationAdminData(): Promise<OrganizationAdminData>
     const channel = channelById.get(assignment.channel_id);
     if (!channel) continue;
     const current = streamChannelsByOrganization.get(assignment.organization_id) ?? [];
-    current.push({ name: channel.name, href: `/stream/${channel.public_id}/${channel.access_key}` });
+    current.push({ name: channel.name, href: channel.custom_hostname ? `https://${channel.custom_hostname}` : `/watch/${channel.slug}` });
     streamChannelsByOrganization.set(assignment.organization_id, current);
   }
   const rotationsByOrganization = new Map<number, OrganizationAdminRow["streamCodeRotations"]>();

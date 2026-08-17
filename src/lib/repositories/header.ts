@@ -10,7 +10,7 @@ export async function getHeaderData(): Promise<HeaderData> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("streaming_channels")
-    .select("public_id,access_key,name")
+    .select("public_id,access_key,slug,custom_hostname,name")
     .eq("status", "active")
     .order("created_at", { ascending: true })
     .limit(1)
@@ -20,7 +20,7 @@ export async function getHeaderData(): Promise<HeaderData> {
 
   return {
     liveStream: {
-      href: `/stream/${data.public_id}/${data.access_key}`,
+      href: data.custom_hostname ? `https://${data.custom_hostname}` : `/watch/${data.slug}`,
       name: data.name,
     },
   };

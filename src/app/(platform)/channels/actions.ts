@@ -11,6 +11,10 @@ const channelSchema = z.object({
   name: z.string().trim().min(2).max(120),
   description: z.string().trim().max(300),
 });
+const streamAddressSchema = z.object({
+  slug: z.string().trim().toLowerCase().min(3).max(80).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+  customHostname: z.string().trim().toLowerCase().max(253).refine((hostname) => !hostname || /^(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z]{2,63}$/.test(hostname)),
+});
 const channelDisplaySchema = z.object({
   broadcastEnabled: z.boolean(),
   showLiveBadge: z.boolean(),
@@ -84,7 +88,7 @@ export async function createChannel(_state: ChannelActionState, formData: FormDa
     created_by: typeof claims?.claims?.sub === "string" ? claims.claims.sub : null,
   });
   if (error) return { status: "error", message: "The channel could not be created." };
-  revalidatePath("/channels");
+  revalidatePath("/operations");
   return { status: "success", message: "Channel created." };
 }
 
@@ -93,13 +97,14 @@ export async function updateChannel(_state: ChannelActionState, formData: FormDa
   const publicId = z.string().uuid().safeParse(value(formData, "channelPublicId"));
   const status = z.enum(["active", "paused"]).safeParse(value(formData, "status"));
   const parsed = channelSchema.safeParse({ name: value(formData, "name"), description: value(formData, "description") });
+  const address = streamAddressSchema.safeParse({ slug: value(formData, "slug"), customHostname: value(formData, "customHostname") });
   const display = displayValues(formData);
-  if (!publicId.success || !status.success || !parsed.success || !display.success) return { status: "error", message: "Review the channel details and stream display settings." };
+  if (!publicId.success || !status.success || !parsed.success || !address.success || !display.success) return { status: "error", message: "Review the channel details, stream address, and display settings." };
 
   const supabase = await createClient();
-  const { error } = await supabase.from("streaming_channels").update({ name: parsed.data.name, description: parsed.data.description || null, status: status.data, ...displayUpdate(display.data) }).eq("public_id", publicId.data);
-  if (error) return { status: "error", message: "The channel could not be updated." };
-  revalidatePath("/channels");
+  const { error } = await supabase.from("streaming_channels").update({ name: parsed.data.name, slug: address.data.slug, custom_hostname: address.data.customHostname || null, description: parsed.data.description || null, status: status.data, ...displayUpdate(display.data) }).eq("public_id", publicId.data);
+  if (error) return { status: "error", message: error.code === "23505" ? "That stream path or hostname is already assigned to another channel." : "The channel could not be updated." };
+  revalidatePath("/operations");
   return { status: "success", message: "Channel updated." };
 }
 
@@ -111,7 +116,7 @@ export async function updateChannelDisplaySettings(_state: ChannelActionState, f
   const supabase = await createClient();
   const { error } = await supabase.from("streaming_channels").update(displayUpdate(display.data)).eq("public_id", publicId.data);
   if (error) return { status: "error", message: "The stream display settings could not be saved." };
-  revalidatePath("/channels");
+  revalidatePath("/operations");
   revalidatePath("/stream/[channelId]/[accessKey]", "page");
   return { status: "success", message: "Stream display settings updated." };
 }
@@ -123,7 +128,7 @@ export async function deleteChannel(formData: FormData) {
   const supabase = await createClient();
   const { error } = await supabase.from("streaming_channels").delete().eq("public_id", publicId.data);
   if (error) throw new Error("The channel could not be deleted.");
-  revalidatePath("/channels");
+  revalidatePath("/operations");
 }
 
 export async function rotateChannelAccessKey(formData: FormData) {
@@ -133,7 +138,7 @@ export async function rotateChannelAccessKey(formData: FormData) {
   const supabase = await createClient();
   const { error } = await supabase.from("streaming_channels").update({ access_key: crypto.randomUUID() }).eq("public_id", publicId.data);
   if (error) throw new Error("The stream link could not be rotated.");
-  revalidatePath("/channels");
+  revalidatePath("/operations");
 }
 
 export async function setBusinessAssignment(formData: FormData) {
@@ -155,7 +160,7 @@ export async function setBusinessAssignment(formData: FormData) {
     const { error } = await supabase.from("streaming_channel_organizations").delete().eq("channel_id", parsed.data.channelId).eq("organization_id", parsed.data.organizationId);
     if (error) throw new Error("The business assignment could not be removed.");
   }
-  revalidatePath("/channels");
+  revalidatePath("/operations");
 }
 
 export async function addChannelMedia(formData: FormData) {
@@ -175,7 +180,7 @@ export async function addChannelMedia(formData: FormData) {
     created_by: typeof claims?.claims?.sub === "string" ? claims.claims.sub : null,
   });
   if (error) throw new Error("The media could not be added to this channel.");
-  revalidatePath("/channels");
+  revalidatePath("/operations");
 }
 
 export async function removeChannelMedia(formData: FormData) {
@@ -185,5 +190,5 @@ export async function removeChannelMedia(formData: FormData) {
   const supabase = await createClient();
   const { error } = await supabase.from("streaming_channel_items").delete().eq("id", itemId.data);
   if (error) throw new Error("The media could not be removed from this channel.");
-  revalidatePath("/channels");
+  revalidatePath("/operations");
 }

@@ -86,7 +86,7 @@ export async function claimScreen(
     };
   }
 
-  revalidatePath("/screens");
+  revalidatePath("/business");
   revalidatePath("/overview");
   return { status: "success", message: "Screen paired. Waiting for its first secure heartbeat." };
 }
@@ -113,7 +113,7 @@ export async function suspendScreen(
   });
   if (error) return { status: "error", message: "The screen could not be suspended." };
 
-  revalidatePath("/screens");
+  revalidatePath("/business");
   revalidatePath("/overview");
   return { status: "success", message: "Screen suspended and its credential revoked." };
 }

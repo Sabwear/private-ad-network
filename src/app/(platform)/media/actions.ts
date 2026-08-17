@@ -232,7 +232,7 @@ export async function deleteMediaAsset(
 
   revalidatePath("/media");
   revalidatePath("/campaigns");
-  revalidatePath("/channels");
+  revalidatePath("/operations");
   return { status: "success", message: "Media permanently deleted." };
 }
 

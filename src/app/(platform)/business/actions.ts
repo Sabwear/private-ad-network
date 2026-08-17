@@ -112,7 +112,7 @@ export async function createOrganization(
   }
 
   revalidatePath("/business");
-  revalidatePath("/locations");
+  revalidatePath("/campaigns");
   return { status: "success", message: "Business created and owner access activated." };
 }
 
@@ -187,8 +187,8 @@ export async function updateOrganization(
   }
 
   revalidatePath("/business");
-  revalidatePath("/locations");
-  revalidatePath("/channels");
+  revalidatePath("/campaigns");
+  revalidatePath("/operations");
   return { status: "success", message: "Business profile, working dates, and hours updated." };
 }
 
@@ -211,7 +211,7 @@ export async function saveOrganizationLogo(formData: FormData): Promise<{ status
     await supabase.storage.from(BUSINESS_LOGO_BUCKET).remove([previousPath]);
   }
   revalidatePath("/business");
-  revalidatePath("/channels");
+  revalidatePath("/operations");
   return { status: "success", message: parsed.data.logoStoragePath ? "Business logo updated." : "Business logo removed." };
 }
 
@@ -232,7 +232,7 @@ export async function assignBusinessAdToChannel(_state: BusinessAdActionState, f
   });
   if (error) return { status: "error", message: "The ad could not be assigned. Confirm it is approved and fully processed." };
   revalidatePath("/business");
-  revalidatePath("/channels");
+  revalidatePath("/operations");
   return { status: "success", message: "Ad assigned to the channel." };
 }
 
@@ -251,7 +251,7 @@ export async function removeBusinessAdFromChannel(formData: FormData) {
   });
   if (error) throw new Error("The channel assignment could not be removed.");
   revalidatePath("/business");
-  revalidatePath("/channels");
+  revalidatePath("/operations");
 }
 
 export async function updateBusinessStreamSettings(

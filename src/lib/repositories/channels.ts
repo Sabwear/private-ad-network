@@ -7,6 +7,8 @@ export type StreamingChannel = {
   id: number;
   publicId: string;
   accessKey: string;
+  slug: string;
+  customHostname: string;
   name: string;
   description: string;
   status: string;
@@ -28,7 +30,7 @@ const setupCodes = new Set(["PGRST204", "PGRST205", "42501"]);
 export async function getChannelManagementData(): Promise<ChannelManagementData> {
   const supabase = await createClient();
   const [channelsResult, assignmentsResult, itemsResult, organizationsResult, mediaResult] = await Promise.all([
-    supabase.from("streaming_channels").select("id,public_id,access_key,name,description,status,broadcast_enabled,broadcast_started_at,show_live_badge,show_channel_name,show_now_playing,show_audio_control,show_advertiser_logo,show_stripe_banner,show_video_time,stripe_banner_text,stripe_banner_position,video_fit").order("created_at"),
+    supabase.from("streaming_channels").select("id,public_id,access_key,name,slug,custom_hostname,description,status,broadcast_enabled,broadcast_started_at,show_live_badge,show_channel_name,show_now_playing,show_audio_control,show_advertiser_logo,show_stripe_banner,show_video_time,stripe_banner_text,stripe_banner_position,video_fit").order("created_at"),
     supabase.from("streaming_channel_organizations").select("channel_id,organization_id"),
     supabase.from("streaming_channel_items").select("id,channel_id,media_asset_id,position,status").eq("status", "active").order("position"),
     supabase.from("organizations").select("id,display_name,status").order("display_name"),
@@ -60,10 +62,12 @@ export async function getChannelManagementData(): Promise<ChannelManagementData>
     id: channel.id,
     publicId: channel.public_id,
     accessKey: channel.access_key,
+    slug: channel.slug,
+    customHostname: channel.custom_hostname ?? "",
     name: channel.name,
     description: channel.description ?? "",
     status: channel.status,
-    streamPath: `/stream/${channel.public_id}/${channel.access_key}`,
+    streamPath: `/watch/${channel.slug}`,
     settings: {
       broadcastEnabled: channel.broadcast_enabled,
       showLiveBadge: channel.show_live_badge,

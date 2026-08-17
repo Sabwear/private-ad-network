@@ -34,6 +34,6 @@ export async function clearDemoData(_state: DemoCleanupState, formData: FormData
   const { data: removed, error } = await supabase.rpc("admin_clear_demo_data", { p_confirmation: "DELETE DEMO DATA" });
   if (error) return { status: "error", message: "Demo database records could not be removed." };
 
-  for (const path of ["/admin", "/overview", "/business", "/locations", "/screens", "/media", "/campaigns", "/channels"]) revalidatePath(path);
+  for (const path of ["/admin", "/overview", "/business", "/media", "/campaigns", "/operations"]) revalidatePath(path);
   return { status: "success", message: `${removed} demo businesses and all related demo content were removed. Real client data was not touched.` };
 }

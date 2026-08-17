@@ -5,12 +5,21 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { hashViewerToken } from "@/lib/streaming/viewer-session";
 
 const credentialSchema = z.object({ channelPublicId: z.string().uuid(), accessKey: z.string().uuid() });
+const channelSelection = "id,public_id,access_key,name,description,status,broadcast_enabled,broadcast_started_at,show_live_badge,show_channel_name,show_now_playing,show_audio_control,show_advertiser_logo,show_stripe_banner,show_video_time,stripe_banner_text,stripe_banner_position,video_fit";
 
 export async function getChannelAccessPreview(channelPublicId: string, accessKey: string) {
   const credentials = credentialSchema.safeParse({ channelPublicId, accessKey });
   if (!credentials.success) return null;
   const admin = createAdminClient();
-  const { data: channel } = await admin.from("streaming_channels").select("id,public_id,name,description,status,broadcast_enabled,broadcast_started_at,show_live_badge,show_channel_name,show_now_playing,show_audio_control,show_advertiser_logo,show_stripe_banner,show_video_time,stripe_banner_text,stripe_banner_position,video_fit").eq("public_id", credentials.data.channelPublicId).eq("access_key", credentials.data.accessKey).eq("status", "active").maybeSingle();
+  const { data: channel } = await admin.from("streaming_channels").select(channelSelection).eq("public_id", credentials.data.channelPublicId).eq("access_key", credentials.data.accessKey).eq("status", "active").maybeSingle();
+  return channel ? { admin, channel } : null;
+}
+
+export async function getChannelAccessBySlug(slug: string) {
+  const parsed = z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/).safeParse(slug);
+  if (!parsed.success) return null;
+  const admin = createAdminClient();
+  const { data: channel } = await admin.from("streaming_channels").select(channelSelection).eq("slug", parsed.data).eq("status", "active").maybeSingle();
   return channel ? { admin, channel } : null;
 }
 

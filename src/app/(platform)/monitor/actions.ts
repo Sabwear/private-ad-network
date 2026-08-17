@@ -26,7 +26,7 @@ export async function handleMonitorChannel(_state: MonitorActionState, formData:
   const supabase = await createClient();
   const { error } = await supabase.rpc("admin_handle_stream_channel", { p_channel_id: parsed.data.channelId, p_action: parsed.data.action, p_reason: parsed.data.reason });
   if (error) return { status: "error", message: "The channel operation could not be completed." };
-  revalidatePath("/monitor"); revalidatePath("/channels"); revalidatePath("/stream/[channelId]/[accessKey]", "page");
+  revalidatePath("/operations"); revalidatePath("/stream/[channelId]/[accessKey]", "page");
   return { status: "success", message: `Channel ${parsed.data.action} completed and audited.` };
 }
 
@@ -37,6 +37,6 @@ export async function endMonitorViewerSession(_state: MonitorActionState, formDa
   const supabase = await createClient();
   const { error } = await supabase.rpc("admin_end_stream_viewer_session", { p_session_id: parsed.data.sessionId, p_reason: parsed.data.reason });
   if (error) return { status: "error", message: "The viewer session could not be ended." };
-  revalidatePath("/monitor");
+  revalidatePath("/operations");
   return { status: "success", message: "Viewer session ended and recorded in the audit log." };
 }

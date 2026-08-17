@@ -112,7 +112,7 @@ export async function createLocation(
     };
   }
 
-  revalidatePath("/locations");
+  revalidatePath("/campaigns");
   revalidatePath("/admin");
   return { status: "success", message: "Location created and activated." };
 }
@@ -188,7 +188,7 @@ export async function updateLocation(
     };
   }
 
-  revalidatePath("/locations");
+  revalidatePath("/campaigns");
   revalidatePath("/admin");
   return { status: "success", message: "Location details and eligibility controls updated." };
 }

@@ -45,7 +45,7 @@ export async function getBusinessStreamProfile(filters: StreamReportFilters = {}
 
   const channelIds = (assignmentsResult.data ?? []).map((assignment) => assignment.channel_id);
   const [{ data: channels }, { data: summaryData }] = await Promise.all([
-    channelIds.length ? supabase.from("streaming_channels").select("id,public_id,access_key,name").in("id", channelIds).order("name") : Promise.resolve({ data: [] }),
+    channelIds.length ? supabase.from("streaming_channels").select("id,public_id,access_key,slug,custom_hostname,name").in("id", channelIds).order("name") : Promise.resolve({ data: [] }),
     supabase.rpc("get_stream_report_summary", { p_organization_id: workspace.organization.id }),
   ]);
 
@@ -90,7 +90,7 @@ export async function getBusinessStreamProfile(filters: StreamReportFilters = {}
     earningEnabled: organization.stream_earning_enabled,
     earningRate: organization.stream_earning_rate,
     consumptionRate: organization.ad_consumption_rate,
-    channels: (channels ?? []).map((channel) => ({ id: channel.id, name: channel.name, href: `/stream/${channel.public_id}/${channel.access_key}` })),
+    channels: (channels ?? []).map((channel) => ({ id: channel.id, name: channel.name, href: channel.custom_hostname ? `https://${channel.custom_hostname}` : `/watch/${channel.slug}` })),
     summary: numericSummary(summaryData),
     filters,
     rotations: (rotationsResult.data ?? []).map((rotation) => ({ rotatedAt: rotation.rotated_at, expiresAt: rotation.expires_at })),

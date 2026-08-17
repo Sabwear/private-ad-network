@@ -170,6 +170,7 @@ export type Database = {
         id: number;
         public_id: string;
         access_key: string;
+        custom_hostname: string | null;
         name: string;
         slug: string;
         description: string | null;
@@ -713,6 +714,10 @@ export type Database = {
       fail_media_processing_job: {
         Args: { p_job_public_id: string; p_worker_id: string; p_error: string };
         Returns: boolean;
+      };
+      resolve_stream_hostname: {
+        Args: { p_hostname: string };
+        Returns: Array<{ channel_public_id: string; channel_access_key: string }>;
       };
     };
     Enums: Record<string, never>;
