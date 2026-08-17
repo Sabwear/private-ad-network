@@ -19,13 +19,13 @@ export default async function MediaPage() {
     <PageHeading
       eyebrow="Creative library"
       title="Media"
-      description={canModerate ? "Review submitted advertising, record decisions, and keep unapproved media out of campaigns." : "Upload compliant video, complete technical preflight, and follow platform moderation."}
+      description={workspace.permissions.canAccessAdmin ? "Add advertising media, track technical processing, and manage what is available to campaigns and channels." : canModerate ? "Review submitted advertising, record decisions, and keep unapproved media out of campaigns." : "Upload compliant video, complete technical preflight, and follow platform moderation."}
       actions={<><span className={`data-source data-source-${result.source}`}>{sourceLabel}</span>{canUpload ? <Link className="button button-primary" href="#media-upload"><Upload size={17} /> Add media</Link> : null}</>}
     />
 
     <section className="mini-metric-grid media-metrics">
       <div><span>Total creatives</span><strong>{result.summary.total}</strong><small>Visible to this workspace</small></div>
-      <div><span>Waiting for review</span><strong>{result.summary.inReview}</strong><small>Needs a platform decision</small></div>
+      <div><span>{workspace.permissions.canAccessAdmin ? "Processing / pending" : "Waiting for review"}</span><strong>{result.summary.inReview}</strong><small>{workspace.permissions.canAccessAdmin ? "Becomes available automatically" : "Needs a platform decision"}</small></div>
       <div><span>Approved</span><strong className="success-text">{result.summary.approved}</strong><small>Eligible for campaigns</small></div>
       <div><span>Rejected</span><strong className="danger-text">{result.summary.rejected}</strong><small>Reason recorded</small></div>
     </section>
@@ -34,7 +34,7 @@ export default async function MediaPage() {
 
     {!canUpload && !canModerate ? <section className="upload-banner"><span className="upload-icon"><Film size={25} /></span><div><h2>{result.source === "setup" ? "Workspace setup required" : "Media library access"}</h2><p>{result.source === "setup" ? "An administrator must complete your business workspace before media can be uploaded." : "Owners and staff can submit media. Approved reviewers manage moderation."}</p></div></section> : null}
 
-    {result.assets.length === 0 ? <section className="empty-state"><Film size={28} /><h2>{canModerate ? "No media waiting yet" : "No media uploaded yet"}</h2><p>{canModerate ? "Submitted business creatives will appear here for review." : canUpload ? "Upload the first MP4 creative above to begin moderation." : "Media will appear after a business submits its first creative."}</p></section> : <section className="media-grid">{result.assets.map((asset, index) => <article className="media-card" key={asset.id}>
+    {result.assets.length === 0 ? <section className="empty-state"><Film size={28} /><h2>No media uploaded yet</h2><p>{workspace.permissions.canAccessAdmin ? "Add the first MP4 or YouTube creative above." : canModerate ? "Submitted business creatives will appear here for review." : canUpload ? "Upload the first MP4 creative above to begin moderation." : "Media will appear after a business submits its first creative."}</p></section> : <section className="media-grid">{result.assets.map((asset, index) => <article className="media-card" key={asset.id}>
       <div className={`media-preview preview-${["teal", "orange", "blue", "purple"][index % 4]}`}>
         {asset.youtubeVideoId ? <iframe className="media-video media-youtube-preview" src={youtubeEmbedUrl(asset.youtubeVideoId)} title={`Preview ${asset.name}`} loading="lazy" allow="accelerometer; autoplay; encrypted-media; picture-in-picture" allowFullScreen /> : asset.previewUrl ? <video className="media-video" controls controlsList="nodownload" preload="metadata" src={asset.previewUrl} aria-label={`Preview ${asset.name}`} /> : <><span className="preview-noise" /><span className="media-preview-placeholder"><Play size={22} fill="currentColor" /></span></>}
         <small>{asset.duration}</small>

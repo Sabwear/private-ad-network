@@ -109,11 +109,14 @@ export async function getMediaLibrary(): Promise<MediaLibraryResult> {
   const assets = (assetsResult.data ?? []).map((asset): MediaLibraryItem => {
     const previewUrl = asset.original_storage_path ? portalMediaPlaybackPath(asset.public_id) : null;
     const dimensions = asset.width && asset.height ? `${asset.width} x ${asset.height}` : "Pending inspection";
+    const status = asset.moderation_status === "in_review" && asset.processing_status !== "ready"
+      ? "Processing"
+      : titleCase(asset.moderation_status);
     return {
       id: asset.public_id,
       name: asset.name,
       owner: organizationNames.get(asset.organization_id) ?? "Unknown organization",
-      status: titleCase(asset.moderation_status),
+      status,
       rawStatus: asset.moderation_status,
       tone: toneForStatus(asset.moderation_status),
       format: asset.source_type === "youtube" ? `YouTube embed / ${dimensions}` : `${asset.mime_type ?? "MP4 pending"} / ${asset.codec ?? "codec pending"} / ${dimensions}`,

@@ -182,7 +182,7 @@ export function MediaUploadPanel({ organizations, autoApproves = false }: { orga
 
       setStatus("submitting");
       setUploadProgress(98);
-      setMessage(autoApproves ? "Verifying the stored file and enabling automatic approval..." : "Verifying the stored file and submitting it for platform review...");
+      setMessage(autoApproves ? "Verifying the stored file and starting video processing..." : "Verifying the stored file and submitting it for platform review...");
       const submission = await submitMediaUpload({
         assetPublicId: attempt.assetPublicId,
         durationMs: attempt.inspection.durationMs,
@@ -221,7 +221,7 @@ export function MediaUploadPanel({ organizations, autoApproves = false }: { orga
   const busy = ["validating", "uploading", "submitting"].includes(status);
   return (
     <section className="panel media-upload-form">
-      <div className="panel-header"><div><p className="eyebrow">Media source</p><h2>Add a new creative</h2><p>Upload a private MP4 or submit a YouTube video while keeping the same review and channel-assignment workflow.</p></div>{sourceType === "upload" ? <FileVideo size={22} /> : <CirclePlay size={22} />}</div>
+      <div className="panel-header"><div><p className="eyebrow">Media source</p><h2>Add a new creative</h2><p>{autoApproves ? "Add a private MP4 or YouTube video. Administrator media becomes available automatically after technical processing." : "Upload a private MP4 or submit a YouTube video while keeping the same review and channel-assignment workflow."}</p></div>{sourceType === "upload" ? <FileVideo size={22} /> : <CirclePlay size={22} />}</div>
       <div className="media-source-tabs" role="tablist" aria-label="Media source">
         <button type="button" role="tab" aria-selected={sourceType === "upload"} className={sourceType === "upload" ? "active" : ""} disabled={busy} onClick={() => setSourceType("upload")}><Upload size={15} /> Upload video</button>
         <button type="button" role="tab" aria-selected={sourceType === "youtube"} className={sourceType === "youtube" ? "active" : ""} disabled={busy} onClick={() => setSourceType("youtube")}><CirclePlay size={15} /> YouTube link</button>
@@ -234,7 +234,7 @@ export function MediaUploadPanel({ organizations, autoApproves = false }: { orga
         <label><span>Media name <small>Optional rename</small></span><input name="name" value={mediaName} onChange={(event) => { setMediaName(event.target.value); setMediaNameEdited(true); }} minLength={2} maxLength={120} placeholder="Filled from the uploaded filename" required disabled={busy} /></label>
         <label className="media-rights"><input name="compressVideo" type="checkbox" defaultChecked disabled={busy} /><span><strong>Compress and optimize after upload</strong><small>Turn off to preserve source quality. The file will still be prepared for reliable streaming.</small></span></label>
         <label className="media-rights"><input name="rightsDeclared" type="checkbox" required disabled={busy} /><span>I confirm that this business owns or has permission to use all video, music, logos, people, and claims in this advertisement.</span></label>
-        <div className="media-upload-actions"><button className="button button-primary" type="submit" disabled={busy}>{busy ? <LoaderCircle className="auth-spinner" size={17} /> : <Upload size={17} />}{busy ? "Processing upload..." : pendingPhase === "uploaded" ? "Retry submission" : pendingPhase ? "Retry upload" : autoApproves ? "Upload and auto-approve" : "Upload and submit for review"}</button>{pendingPhase && status !== "submitting" ? <button className="button button-secondary" type="button" onClick={handleCancel}>{status === "uploading" ? "Cancel upload" : "Discard unfinished upload"}</button> : null}</div>
+        <div className="media-upload-actions"><button className="button button-primary" type="submit" disabled={busy}>{busy ? <LoaderCircle className="auth-spinner" size={17} /> : <Upload size={17} />}{busy ? "Processing upload..." : pendingPhase === "uploaded" ? "Retry processing" : pendingPhase ? "Retry upload" : autoApproves ? "Upload video" : "Upload and submit for review"}</button>{pendingPhase && status !== "submitting" ? <button className="button button-secondary" type="button" onClick={handleCancel}>{status === "uploading" ? "Cancel upload" : "Discard unfinished upload"}</button> : null}</div>
       </form> : <form className="media-upload-fields" action={youtubeAction}>
         {youtubeState.message ? <div className={`auth-message auth-message-${youtubeState.status}`} role={youtubeState.status === "error" ? "alert" : "status"}>{youtubeState.status === "error" ? <XCircle size={17} /> : <CheckCircle2 size={17} />}<span>{youtubeState.message}</span></div> : null}
         <label><span>Advertiser business</span><select name="organizationId" defaultValue="" required disabled={youtubePending}><option value="" disabled>Select business</option>{organizations.map((organization) => <option key={organization.id} value={organization.id}>{organization.name}</option>)}</select></label>
@@ -242,7 +242,7 @@ export function MediaUploadPanel({ organizations, autoApproves = false }: { orga
         <label><span>YouTube video URL</span><span className="input-with-icon"><Link2 size={15} /><input name="url" type="url" maxLength={500} placeholder="https://www.youtube.com/watch?v=..." required disabled={youtubePending} /></span><small>Supports YouTube watch, Shorts, embed, and youtu.be links. The video must allow embedding.</small></label>
         <label><span>Exact video duration in seconds</span><input name="durationSeconds" type="number" min={5} max={3600} step={1} placeholder="30" required disabled={youtubePending} /><small>Used to keep every viewer synchronized in the continuous channel loop.</small></label>
         <label className="media-rights"><input name="rightsDeclared" type="checkbox" required disabled={youtubePending} /><span>I confirm that this business owns or has permission to stream this YouTube video and all content contained in it.</span></label>
-        <button className="button button-primary" type="submit" disabled={youtubePending}>{youtubePending ? <LoaderCircle className="auth-spinner" size={17} /> : <CirclePlay size={17} />}{youtubePending ? "Submitting..." : "Submit YouTube video for review"}</button>
+        <button className="button button-primary" type="submit" disabled={youtubePending}>{youtubePending ? <LoaderCircle className="auth-spinner" size={17} /> : <CirclePlay size={17} />}{youtubePending ? "Adding..." : autoApproves ? "Add YouTube video" : "Submit YouTube video for review"}</button>
       </form>}
     </section>
   );
@@ -250,7 +250,7 @@ export function MediaUploadPanel({ organizations, autoApproves = false }: { orga
 
 export function MediaModerationPanel({ asset }: { asset: MediaLibraryItem }) {
   const [state, formAction, pending] = useActionState(moderateMedia, initialActionState);
-  if (asset.rawStatus !== "in_review") return null;
+  if (asset.rawStatus !== "in_review" || asset.processingStatus !== "ready") return null;
   const processingReady = asset.processingStatus === "ready";
   return (
     <form className="media-moderation-form" action={formAction}>

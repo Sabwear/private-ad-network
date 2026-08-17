@@ -72,7 +72,7 @@ export async function createYouTubeMedia(
   const organizationId = workspace.permissions.canAccessAdmin ? parsed.data.organizationId : workspace.organization.id;
   if (!organizationId) return { status: "error", message: "Select the advertiser business for this video." };
   const supabase = await createClient();
-  const { error } = await supabase.rpc("create_youtube_media", {
+  const { data: assetPublicId, error } = await supabase.rpc("create_youtube_media", {
     p_organization_id: organizationId,
     p_name: parsed.data.name,
     p_youtube_video_id: videoId,
@@ -83,8 +83,20 @@ export async function createYouTubeMedia(
     return { status: "error", message: duplicate ? "This YouTube video is already in the media library." : "The YouTube video could not be submitted." };
   }
 
+  if (workspace.permissions.canAccessAdmin && assetPublicId) {
+    const { error: approvalError } = await supabase.rpc("moderate_media_asset", {
+      p_asset_public_id: assetPublicId,
+      p_decision: "approved",
+      p_reason: "Added directly by a platform administrator.",
+    });
+    if (approvalError) {
+      console.error("admin_youtube_auto_approval_failed", { code: approvalError.code });
+      return { status: "error", message: "The YouTube video was added, but automatic activation failed. Refresh the media library and try again." };
+    }
+  }
+
   revalidatePath("/media");
-  return { status: "success", message: "YouTube video submitted for platform review." };
+  return { status: "success", message: workspace.permissions.canAccessAdmin ? "YouTube video added and ready to use." : "YouTube video submitted for platform review." };
 }
 
 export async function prepareMediaUpload(input: unknown): Promise<PrepareMediaUploadResult> {
@@ -122,7 +134,7 @@ export async function submitMediaUpload(input: unknown): Promise<MediaActionStat
   if (!parsed.success) return { status: "error", message: "The uploaded video metadata is invalid." };
 
   const supabase = await createClient();
-  const { error } = await supabase.rpc("submit_media_upload", {
+  const rpcArguments = {
     p_asset_public_id: parsed.data.assetPublicId,
     p_duration_ms: parsed.data.durationMs,
     p_width: parsed.data.width,
@@ -131,11 +143,44 @@ export async function submitMediaUpload(input: unknown): Promise<MediaActionStat
     p_checksum_sha256: parsed.data.checksumSha256,
     p_compress_video: parsed.data.compressVideo,
     p_technical_metadata: parsed.data.technicalMetadata as Json,
-  });
-  if (error) return { status: "error", message: "The file uploaded, but it could not be submitted for review." };
+  };
+  const { error: currentRpcError } = await supabase.rpc("submit_media_upload", rpcArguments);
+  let submissionError: { code?: string; message: string } | null = currentRpcError;
+
+  // Keep uploads working while the flexible-media migration rolls out. The old
+  // function has the same validation contract except for the compression flag.
+  if (submissionError?.code === "PGRST202") {
+    const legacyRpc = supabase.rpc.bind(supabase) as unknown as (
+      functionName: string,
+      arguments_: Record<string, unknown>,
+    ) => Promise<{ error: { code?: string; message: string } | null }>;
+    const legacyArguments = {
+      p_asset_public_id: rpcArguments.p_asset_public_id,
+      p_duration_ms: rpcArguments.p_duration_ms,
+      p_width: rpcArguments.p_width,
+      p_height: rpcArguments.p_height,
+      p_codec: rpcArguments.p_codec,
+      p_checksum_sha256: rpcArguments.p_checksum_sha256,
+      p_technical_metadata: rpcArguments.p_technical_metadata,
+    };
+    const legacyResult = await legacyRpc("submit_media_upload", legacyArguments);
+    submissionError = legacyResult.error;
+  }
+  if (submissionError) {
+    console.error("media_upload_finalization_failed", { code: submissionError.code });
+    const durationRejected = /15, 30, or 60 seconds/i.test(submissionError.message);
+    return {
+      status: "error",
+      message: durationRejected
+        ? "The upload finished, but the connected database still has the old duration rule. Deploy the latest media migration, then retry finalizing this upload."
+        : workspace.permissions.canAccessAdmin
+          ? "The upload finished, but processing could not start. Refresh and retry finalizing the same upload."
+          : "The upload finished, but it could not enter processing.",
+    };
+  }
 
   revalidatePath("/media");
-  return { status: "success", message: workspace.permissions.canAccessAdmin ? "Upload complete. The video will be approved automatically after processing." : "Upload complete. The video is now waiting for moderation." };
+  return { status: "success", message: workspace.permissions.canAccessAdmin ? "Upload complete. Processing started; the video will become available automatically when ready." : "Upload complete. The video is now waiting for moderation." };
 }
 
 export async function cancelMediaUpload(assetPublicId: string): Promise<CancelMediaUploadResult> {

@@ -110,9 +110,11 @@ begin
   insert into public.audit_logs (
     organization_id, actor_user_id, action, object_type, object_id, reason, after_summary
   ) values (
-    matched_asset.organization_id, (select auth.uid()), 'submit_for_review', 'media_assets',
+    matched_asset.organization_id, (select auth.uid()),
+    case when admin_submission then 'admin_upload_processing' else 'submit_for_review' end,
+    'media_assets',
     p_asset_public_id::text,
-    case when admin_submission then 'Administrator upload queued for automatic approval after processing' else 'Media submitted for platform review' end,
+    case when admin_submission then 'Administrator upload queued for technical processing and automatic activation' else 'Media submitted for platform review' end,
     jsonb_build_object(
       'moderation_status', 'in_review', 'duration_ms', p_duration_ms,
       'compress_video', p_compress_video, 'auto_approve_after_processing', admin_submission

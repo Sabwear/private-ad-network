@@ -119,13 +119,21 @@ export class MediaProcessor {
 
     try {
       logger.info("media_processing_started", { jobId: job.job_public_id, assetId: job.asset_public_id, attempt: job.attempt });
+      const { data: asset, error: assetError } = await this.client
+        .from("media_assets")
+        .select("created_by,organization_id")
+        .eq("public_id", job.asset_public_id)
+        .single();
+      if (assetError || !asset) throw new Error("Unable to load the media owner.");
+
       const { data: processingOptions, error: optionsError } = await this.client
         .from("media_assets")
         .select("compress_video")
         .eq("public_id", job.asset_public_id)
         .single();
-      if (optionsError || !processingOptions) throw new Error("Unable to load media processing options.");
-      const compressVideo = processingOptions.compress_video !== false;
+      const compressionColumnMissing = optionsError && ["PGRST204", "42703"].includes(optionsError.code);
+      if (optionsError && !compressionColumnMissing) throw new Error("Unable to load media processing options.");
+      const compressVideo = processingOptions?.compress_video !== false;
       await downloadOriginal(this.client, job.original_storage_path, inputPath);
 
       const checksum = await sha256File(inputPath);
@@ -177,6 +185,41 @@ export class MediaProcessor {
         },
       });
       if (error) throw new Error(`Unable to complete the processing job: ${error.message}`);
+
+      // Admin-created media never enters a human review queue. This also keeps
+      // deployments safe while the database auto-approval trigger rolls out.
+      const { data: creator } = await this.client
+        .from("profiles")
+        .select("platform_role,account_status")
+        .eq("id", asset.created_by)
+        .maybeSingle();
+      if (creator?.platform_role === "admin" && creator.account_status === "active") {
+        const { data: approvedAsset, error: approvalError } = await this.client
+          .from("media_assets")
+          .update({
+            moderation_status: "approved",
+            moderated_at: new Date().toISOString(),
+            moderated_by: asset.created_by,
+            rejection_reason: null,
+          })
+          .eq("public_id", job.asset_public_id)
+          .eq("moderation_status", "in_review")
+          .select("id")
+          .maybeSingle();
+        if (approvalError) logger.error("admin_media_auto_approval_failed", { assetId: job.asset_public_id, error: approvalError.message });
+        else if (approvedAsset) {
+          const { error: auditError } = await this.client.from("audit_logs").insert({
+            organization_id: asset.organization_id,
+            actor_user_id: asset.created_by,
+            action: "auto_approve",
+            object_type: "media_assets",
+            object_id: job.asset_public_id,
+            reason: "Administrator-uploaded media activated after successful processing",
+            after_summary: { moderation_status: "approved", processing_status: "ready" },
+          });
+          if (auditError) logger.warn("admin_media_auto_approval_audit_failed", { assetId: job.asset_public_id, error: auditError.message });
+        }
+      }
       logger.info("media_processing_completed", { jobId: job.job_public_id, assetId: job.asset_public_id, bytes: normalizedStats.size });
     } finally {
       await rm(workDirectory, { recursive: true, force: true });
