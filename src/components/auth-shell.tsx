@@ -9,9 +9,9 @@ export function AuthShell({ children }: { children: React.ReactNode }) {
         <div>
           <span className="auth-kicker"><LockKeyhole size={15} /> Private pilot network</span>
           <h1>Every play accounted for. Every credit explainable.</h1>
-          <p>Manage verified advertising delivery, screen health, and the credit economy from one trusted workspace.</p>
+          <p>Manage every business, campaign, screen, stream, and credit rule from one administrator-controlled platform.</p>
           <ul className="auth-trust-list">
-            <li><span>01</span> Tenant-isolated workspaces</li>
+            <li><span>01</span> Central administrator control</li>
             <li><span>02</span> Verified delivery evidence</li>
             <li><span>03</span> Auditable credit settlement</li>
           </ul>

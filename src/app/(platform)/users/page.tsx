@@ -19,12 +19,12 @@ export default async function UsersPage() {
     <PageHeading
       eyebrow="Identity and access"
       title="Users"
-      description="Invite approved owners, manage account permissions, and monitor recent portal sessions."
+      description="Invite platform administrators or registered viewers, control account status, and monitor recent sessions."
       actions={<span className={`data-source data-source-${data.source === "live" ? "supabase" : "setup"}`}><ShieldCheck size={15} /> {data.source === "live" ? "Access controls live" : "Setup required"}</span>}
     />
     <section className="mini-metric-grid">
       <div><span>Total users</span><strong>{data.users.length}</strong><small>Administrator-controlled accounts</small></div>
-      <div><span>Active access</span><strong className="success-text">{activeUsers}</strong><small>Allowed to enter a workspace</small></div>
+      <div><span>Active accounts</span><strong className="success-text">{activeUsers}</strong><small>Administrators or registered viewers</small></div>
       <div><span>Live now</span><strong className="success-text">{liveUsers}</strong><small><Activity size={12} /> Seen in the last five minutes</small></div>
       <div><span>Suspended</span><strong className="danger-text">{suspendedUsers}</strong><small>Authentication and sessions blocked</small></div>
     </section>

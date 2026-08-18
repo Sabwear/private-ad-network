@@ -8,61 +8,48 @@ The product sells verified broadcasting time and completed plays. It does not cl
 
 ## Primary users
 
-### Business owner
+### Platform administrator
 
-Manages branches, media, campaigns, screens, wallet, reports, and disputes.
+Manages the complete platform: businesses, branches, media, campaigns, screens, channels, stream operations, viewers, wallets, reports, and controlled financial settings. All privileged actions are authenticated and audited.
 
-### Business staff
+### Registered viewer
 
-Can view health and reporting with limited campaign or device actions.
+An administrator-approved account used only when a stream viewer chooses identified viewing. It has no dashboard or business-management access.
 
-### Content moderator
+### Anonymous viewer
 
-Approves or rejects media and records the reason and rights confirmation. Cannot adjust wallets.
-
-### Operations agent
-
-Manages devices, incidents, and playback review. Cannot issue unrestricted financial adjustments.
-
-### Finance administrator
-
-Handles purchases, invoices, refunds, reconciliation, and controlled adjustments.
-
-### Super administrator
-
-Has full access with MFA and complete audit logging.
+Watches a valid private channel link without registering or signing in. Only anonymous operational session evidence is recorded.
 
 ## Core workflows
 
 ### Business onboarding
 
-1. A platform administrator verifies the prospective business owner offline and sends an account invitation.
-2. The invited owner uses the one-time link to verify the email and choose a password.
-3. The account remains outside every business workspace until the administrator creates its organization and assigns the verified account as owner.
-4. The owner registers locations, operating hours, and staff after assignment.
-5. A pilot credit allocation prevents an empty campaign loop.
+1. A platform administrator verifies a prospective business offline.
+2. The administrator creates the business record, schedules, locations, screens, branding, stream access, and credit rules.
+3. If identified viewing is needed, the administrator separately invites a viewer account.
+4. A pilot credit allocation prevents an empty campaign loop.
 
-Public signup is disabled. Business users cannot create accounts, organizations, or grant themselves tenant access.
+Public signup is disabled. Businesses do not receive accounts or dashboard ownership.
 
 ### Screen activation
 
 1. Unpaired TV displays a short-lived activation code.
-2. Owner selects the location and enters the code in the portal.
+2. An administrator selects the location and enters the code in the portal.
 3. Device creates a key pair and registers the public fingerprint.
 4. Backend issues short-lived credentials and the initial signed manifest.
 5. Screen appears online after its first valid heartbeat.
 
 ### Media approval
 
-1. Owner creates an asset and receives a direct upload URL.
+1. An administrator selects the advertiser business and receives a direct upload URL.
 2. Worker validates malware, format, duration, dimensions, codec, checksum, and audio.
 3. Worker transcodes to the pilot format and creates a thumbnail.
-4. Moderator approves or rejects with a documented reason.
+4. A valid administrator upload approves directly; technical failures remain visible for correction.
 5. Approved media becomes eligible for campaigns.
 
 ### Campaign delivery
 
-1. Owner selects approved media, dates, budget, target zones/categories, and frequency cap.
+1. An administrator selects the advertiser, approved media, dates, budget, locations, targeting rules, and frequency cap.
 2. Platform reserves campaign credits.
 3. Scheduler selects eligible campaigns using weighted round-robin.
 4. Device receives a versioned, signed manifest and downloads missing assets.
@@ -79,12 +66,12 @@ Public signup is disabled. Business users cannot create accounts, organizations,
 
 ### Private web streaming
 
-1. A business opens an assigned private channel link and enters the unique six-digit code shown in its profile.
-2. The viewer chooses anonymous access or signs in with an email-verified account approved by the current platform administrator. Public self-registration remains disabled.
-3. Successful validation starts a 12-hour browser session and requests fullscreen playback.
+1. A viewer opens a valid private channel link and playback starts anonymously without a code or login wall.
+2. The viewer may open the login control and identify with an email-verified account approved by the current platform administrator. Registered validation may use the six-digit business code; public self-registration remains disabled.
+3. The viewer session continues normally whether or not the viewer signs in, and fullscreen remains user-controlled.
 4. Visible, active playback sends rate-limited verification heartbeats with position and timing evidence. The advertiser consumes its configured credits per verified minute whenever its eligible ad is playing.
 5. The host business earns its configured per-minute rate only when its earning toggle is enabled and the advertiser has enough spendable credit. Every movement is posted as an idempotent, balanced ledger transaction; wallets cannot be driven negative.
-6. Business profiles and owner assignments can only be created by platform administrators. Registered viewers never receive a business profile automatically.
+6. Business profiles are managed only by platform administrators and are never assigned to registered viewers.
 7. Platform administrators monitor live audience, coarse viewer geography, channel uptime, playback validation, credit velocity, access failures, and application/database readiness from the Stream Monitor. Channel pause/resume/restart and viewer termination require a recorded reason and produce an audit event.
 
 ## Pilot product policy
@@ -97,7 +84,7 @@ Public signup is disabled. Business users cannot create accounts, organizations,
 | Checkpoints | 25%, 50%, and 75% |
 | Heartbeat | Every 45 seconds while playing |
 | Offline earning | Up to 6 hours with a valid signed manifest |
-| Media | 15/30/60 sec, 1080p landscape, MP4 H.264/AAC |
+| Media | Playable landscape MP4; duration is not limited to fixed presets |
 | Self-display | Disabled by default |
 | Cash redemption | Not available |
 | Audience sensing | Not collected |

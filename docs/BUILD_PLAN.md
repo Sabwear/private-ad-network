@@ -26,17 +26,16 @@ Outcome: real users, organizations, locations, and devices stored in PostgreSQL.
 - [x] Deploy versioned migrations to the hosted database
 - [ ] Link the local CLI and reconcile hosted migration history
 - [x] Add authentication and cookie-based session handling
-- [x] Disable public signup and add administrator-created owner invitations
+- [x] Disable public signup and add administrator-created admin/viewer invitations
 - [x] Add user permission controls, account suspension, and observed live-session activity
-- [x] Load organization membership and enforce initial portal roles
-- [x] Define separate platform-administrator authority and pending-account isolation
+- [x] Remove organization membership from dashboard authority and enforce administrator-only portal access
+- [x] Define administrator and stream-viewer account types
 - [ ] Enforce admin MFA for privileged operations
-- [x] Implement admin-only organization creation and owner assignment
+- [x] Implement admin-only business creation with no user assignment
 - [x] Implement initial location creation, operating hours, categories, zones, and traffic bands
 - [x] Add administrator organization editing and suspension
 - [x] Add business contact/profile editing and advertiser-logo management
 - [x] Add location editing, suspension, and category exclusions
-- [ ] Extend administrator invitations from owners to business staff
 - [x] Implement short-lived device activation codes, key registration, hashed credentials, heartbeat telemetry, and suspension
 - [ ] Add automatic device credential rotation and refresh credentials
 - [x] Replace operational dashboard data with server-side repository queries and explicit empty states
@@ -44,15 +43,15 @@ Outcome: real users, organizations, locations, and devices stored in PostgreSQL.
 - [ ] Add an administrator audit-log viewer
 - [ ] Add Docker development environment for PostgreSQL, Redis, and object storage
 
-Acceptance: an administrator can create an organization and assign its owner; that owner can sign in, create a location, pair a simulated device, and see its heartbeat.
+Acceptance: an administrator can create and manage every business, location, screen, account, and operational setting; viewer accounts cannot enter the dashboard.
 
 ## Phase 2 - Media and first playback (weeks 4-5)
 
 Outcome: one approved file is delivered and played locally on a reference device.
 
-- [x] Create tenant-scoped direct upload flow to a private object-storage bucket
-- [x] Add browser playback preflight, duration/dimension rules, and SHA-256 integrity checksum
-- [x] Add rights declaration, submission, administrator moderation, rejection reasons, and audit records
+- [x] Create administrator-controlled direct upload flow to a private object-storage bucket
+- [x] Add browser playback preflight, flexible duration/dimension validation, and SHA-256 integrity checksum
+- [x] Add rights declaration, direct administrator approval, rejection diagnostics, and audit records
 - [x] Keep storage-specific reads behind a replaceable media storage adapter
 - [x] Add a durable FFmpeg worker for server validation, checksum verification, normalized MP4 output, thumbnails, retries, and stale-job recovery
 - [x] Add resumable, retryable uploads with progress for pilot media files
@@ -66,7 +65,6 @@ Outcome: one approved file is delivered and played locally on a reference device
 - [x] Add an administrator-only in-player settings menu
 - [x] Synchronize browser viewers to one persistent server-clock channel loop with standby/resume controls and drift recovery
 - [x] Accept business-scoped YouTube URLs alongside private MP4 uploads and play both through the synchronized channel timeline
-- [ ] Implement a dedicated non-admin moderator role and queue
 - [ ] Create Android TV project using Kotlin, Compose for TV, Media3, Room, and OkHttp
 - [ ] Implement activation, signed channel/manifest fetch, asset download, checksum, cache, and fallback media on Android TV
 - [ ] Keep approved advertising assets cached locally for uninterrupted venue playback when connectivity is degraded
@@ -78,9 +76,9 @@ Acceptance: an approved asset is uploaded in the portal, moderated, downloaded b
 
 Outcome: campaign rules produce a deterministic signed device playlist.
 
-- [x] Persist secure campaign drafts, selected business targets, dates, total/daily budgets, and frequency caps
-- [x] Add controlled campaign draft editing and deletion
-- [ ] Add reviewed activation, pause, resume, completion, and cancellation transitions
+- [x] Persist secure campaigns with selected businesses, locations, targeting, dates, total/daily budgets, and frequency caps
+- [x] Add responsive administrator campaign creation, editing, deletion, and direct publishing
+- [ ] Add pause, resume, automatic completion, and cancellation transitions
 - [ ] Implement credit holds before campaign activation
 - [ ] Implement eligibility filters and self-display exclusion
 - [ ] Implement weighted round-robin and under-delivery weighting

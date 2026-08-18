@@ -32,9 +32,9 @@ SUPABASE_SECRET_KEY=sb_secret_your_server_key
 
 Email/password sign-up, confirmation, sign-in, password recovery, and secure sign-out use Supabase Auth with cookie-based SSR sessions. In Supabase Authentication URL Configuration, set the Site URL to the deployed app and allow `<site-url>/auth/callback` as a redirect URL. Configure custom SMTP before a production pilot; Supabase's default mailer is intended only for initial testing and is heavily rate-limited.
 
-The portal loads the signed-in user's organization membership through a server-only workspace data layer and uses it for role-aware navigation. The limited-beta operational pages read tenant-scoped data from the database. Administrators can edit business profiles, upload advertiser logos, assign approved ads to channels, and configure the information layers rendered over each stream. Business users can save campaign drafts with approved media, business targets, dates, and delivery limits; activation remains locked until atomic credit holds are implemented. Finance, proof, and reporting remain explicitly disabled until their backend services and acceptance tests are implemented.
+The dashboard is a single centrally administered platform. Only active platform administrators can enter it or mutate businesses, campaigns, media, locations, screens, channels, stream operations, users, wallets, and credit settings. Businesses are managed records and are never assigned to users. Non-admin accounts are approved viewers used only for optional registered stream identity; anonymous playback remains available from valid stream links.
 
-Verified accounts do not automatically receive business access. A platform administrator creates each organization manually and assigns one pending account as owner. Until assignment, the account sees a dedicated waiting screen and cannot enter the workspace.
+Administrators create and publish campaigns with approved media, business targets, locations, dates, budgets, delivery limits, and targeting rules. Finance settlement and verified physical-device proof remain gated until their backend services and acceptance tests are complete.
 
 ## Database migrations
 
@@ -59,7 +59,7 @@ docker build -f workers/media-processor/Dockerfile -t loopline-media-processor .
 
 The worker requires `SUPABASE_URL` and the server-only `SUPABASE_SECRET_KEY`. FFmpeg and FFprobe are included in the container; the secret must be stored in the worker host's protected environment settings.
 
-Uploaded media jobs also generate adaptive 720p and 480p HLS renditions. The media library accepts either a private MP4 upload or a supported YouTube URL. Both sources require a rights declaration, exact duration, and platform moderation before they can enter a channel. Platform administrators manage continuous streams from `/channels`, assign businesses, add approved media, and copy the protected viewer URL. Each browser channel maintains one server-clock timeline, so every viewer joins the current point in the loop instead of restarting media on page load; an administrator can place that timeline on standby from the channel or in-player settings. The first seeded stream is `Primary Network Channel`; the schema and interface support additional channels without changing the player contract.
+Uploaded media jobs also generate adaptive 720p and 480p HLS renditions. The media library accepts either a private MP4 upload or a supported YouTube URL. Administrator submissions require a rights declaration and technical validation, then approve directly without a second review queue. Platform administrators manage continuous streams from `/operations`, target businesses, add approved media, and copy or change the protected viewer URL. Each browser channel maintains one server-clock timeline, so every viewer joins the current point in the loop instead of restarting media on page load; an administrator can place that timeline on standby from channel handling or in-player settings. The first seeded stream is `Primary Network Channel`; the schema and interface support additional channels without changing the player contract.
 
 ## Operations
 

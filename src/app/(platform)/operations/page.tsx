@@ -16,7 +16,7 @@ function monitorRange(value: string | undefined): MonitorRange {
 
 export default async function OperationsPage({ searchParams }: { searchParams: Promise<{ range?: string }> }) {
   const workspace = await getWorkspaceContext();
-  if (workspace.membership.role !== "admin" || !workspace.permissions.canAccessAdmin) return <AccessDenied />;
+  if (workspace.account.role !== "admin" || !workspace.permissions.canAccessAdmin) return <AccessDenied />;
   const params = await searchParams;
   const [channels, monitor] = await Promise.all([
     getChannelManagementData(),

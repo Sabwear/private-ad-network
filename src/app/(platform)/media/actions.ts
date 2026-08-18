@@ -18,7 +18,7 @@ export type CancelMediaUploadResult = { ok: true } | { ok: false; error: string 
 export type DeleteMediaState = { status: "idle" | "error" | "success"; message: string };
 
 const prepareSchema = z.object({
-  organizationId: z.number().int().positive().optional(),
+  organizationId: z.number().int().positive(),
   name: z.string().trim().min(2).max(120),
   originalFilename: z.string().trim().min(1).max(255),
   mimeType: z.string().refine((value) => MEDIA_ALLOWED_MIME_TYPES.has(value)),
@@ -55,9 +55,7 @@ export async function createYouTubeMedia(
   formData: FormData,
 ): Promise<MediaActionState> {
   const workspace = await getWorkspaceContext();
-  if (!workspace.permissions.canUploadMedia && !workspace.permissions.canAccessAdmin) {
-    return { status: "error", message: "An active business workspace is required to add media." };
-  }
+  if (!workspace.permissions.canAccessAdmin) return { status: "error", message: "Platform administrator access is required." };
 
   const parsed = youtubeSchema.safeParse({
     organizationId: formData.get("organizationId"),
@@ -70,8 +68,7 @@ export async function createYouTubeMedia(
   const videoId = parseYouTubeVideoId(parsed.data.url);
   if (!videoId) return { status: "error", message: "Enter a supported YouTube watch, Shorts, embed, or youtu.be URL." };
 
-  const organizationId = workspace.permissions.canAccessAdmin ? parsed.data.organizationId : workspace.organization.id;
-  if (!organizationId) return { status: "error", message: "Select the advertiser business for this video." };
+  const organizationId = parsed.data.organizationId;
   const supabase = await createClient();
   const { data: assetPublicId, error } = await supabase.rpc("create_youtube_media", {
     p_organization_id: organizationId,
@@ -84,7 +81,7 @@ export async function createYouTubeMedia(
     return { status: "error", message: duplicate ? "This YouTube video is already in the media library." : "The YouTube video could not be submitted." };
   }
 
-  if (workspace.permissions.canAccessAdmin && assetPublicId) {
+  if (assetPublicId) {
     const { error: approvalError } = await supabase.rpc("moderate_media_asset", {
       p_asset_public_id: assetPublicId,
       p_decision: "approved",
@@ -97,19 +94,16 @@ export async function createYouTubeMedia(
   }
 
   revalidatePath("/media");
-  return { status: "success", message: workspace.permissions.canAccessAdmin ? "YouTube video added and ready to use." : "YouTube video submitted for platform review." };
+  return { status: "success", message: "YouTube video added and ready to use." };
 }
 
 export async function prepareMediaUpload(input: unknown): Promise<PrepareMediaUploadResult> {
   const workspace = await getWorkspaceContext();
-  if (!workspace.permissions.canUploadMedia && !workspace.permissions.canAccessAdmin) {
-    return { ok: false, error: "An active business workspace is required to upload media." };
-  }
+  if (!workspace.permissions.canAccessAdmin) return { ok: false, error: "Platform administrator access is required." };
 
   const parsed = prepareSchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: "Check the media name, file type, size, and rights declaration." };
-  const organizationId = workspace.permissions.canAccessAdmin ? parsed.data.organizationId : workspace.organization.id;
-  if (!organizationId) return { ok: false, error: "Select the advertiser business for this video." };
+  const organizationId = parsed.data.organizationId;
 
   const supabase = await createClient();
   const { data, error } = await supabase.rpc("create_media_upload", {
@@ -129,7 +123,7 @@ export async function prepareMediaUpload(input: unknown): Promise<PrepareMediaUp
 
 export async function submitMediaUpload(input: unknown): Promise<MediaActionState> {
   const workspace = await getWorkspaceContext();
-  if (!workspace.permissions.canUploadMedia && !workspace.permissions.canAccessAdmin) return { status: "error", message: "You do not have media submission access." };
+  if (!workspace.permissions.canAccessAdmin) return { status: "error", message: "Platform administrator access is required." };
 
   const parsed = submissionSchema.safeParse(input);
   if (!parsed.success) return { status: "error", message: "The uploaded video metadata is invalid." };
@@ -171,21 +165,17 @@ export async function submitMediaUpload(input: unknown): Promise<MediaActionStat
     console.error("media_upload_finalization_failed", { code: submissionError.code });
     return {
       status: "error",
-      message: workspace.permissions.canAccessAdmin
-        ? "The upload finished, but automatic activation failed. Refresh and retry finalizing the same upload."
-        : "The upload finished, but it could not enter processing.",
+      message: "The upload finished, but automatic activation failed. Refresh and retry finalizing the same upload.",
     };
   }
 
   revalidatePath("/media");
-  return { status: "success", message: workspace.permissions.canAccessAdmin ? "Upload complete. The video is approved and ready to use." : "Upload complete. The video is now waiting for moderation." };
+  return { status: "success", message: "Upload complete. The video is approved and ready to use." };
 }
 
 export async function cancelMediaUpload(assetPublicId: string): Promise<CancelMediaUploadResult> {
   const workspace = await getWorkspaceContext();
-  if (!workspace.permissions.canUploadMedia && !workspace.permissions.canAccessAdmin) {
-    return { ok: false, error: "You do not have media upload access." };
-  }
+  if (!workspace.permissions.canAccessAdmin) return { ok: false, error: "Platform administrator access is required." };
   const parsed = z.string().uuid().safeParse(assetPublicId);
   if (!parsed.success) return { ok: false, error: "The upload reference is invalid." };
 

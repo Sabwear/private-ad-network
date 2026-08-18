@@ -11,7 +11,7 @@ export const metadata = { title: "Media" };
 
 export default async function MediaPage() {
   const [result, workspace] = await Promise.all([getMediaLibrary(), getWorkspaceContext()]);
-  const canUpload = (workspace.permissions.canUploadMedia || workspace.permissions.canAccessAdmin) && result.source === "supabase";
+  const canUpload = workspace.permissions.canAccessAdmin && result.source === "supabase";
   const canModerate = workspace.permissions.canModerateMedia && result.source === "supabase";
   const sourceLabel = result.source === "supabase" ? "Live library" : result.source === "setup" ? "Setup required" : "Preview data";
 
@@ -19,22 +19,22 @@ export default async function MediaPage() {
     <PageHeading
       eyebrow="Creative library"
       title="Media"
-      description={workspace.permissions.canAccessAdmin ? "Add advertising media, track technical processing, and manage what is available to campaigns and channels." : canModerate ? "Review submitted advertising, record decisions, and keep unapproved media out of campaigns." : "Upload compliant video, complete technical preflight, and follow platform moderation."}
+      description="Administrators upload advertising media for any business and control what is available to campaigns and channels."
       actions={<><span className={`data-source data-source-${result.source}`}>{sourceLabel}</span>{canUpload ? <Link className="button button-primary" href="#media-upload"><Upload size={17} /> Add media</Link> : null}</>}
     />
 
     <section className="mini-metric-grid media-metrics">
-      <div><span>Total creatives</span><strong>{result.summary.total}</strong><small>Visible to this workspace</small></div>
-      <div><span>{workspace.permissions.canAccessAdmin ? "Processing / pending" : "Waiting for review"}</span><strong>{result.summary.inReview}</strong><small>{workspace.permissions.canAccessAdmin ? "Becomes available automatically" : "Needs a platform decision"}</small></div>
+      <div><span>Total creatives</span><strong>{result.summary.total}</strong><small>Across every managed business</small></div>
+      <div><span>Processing / pending</span><strong>{result.summary.inReview}</strong><small>Becomes available automatically</small></div>
       <div><span>Approved</span><strong className="success-text">{result.summary.approved}</strong><small>Eligible for campaigns</small></div>
       <div><span>Rejected</span><strong className="danger-text">{result.summary.rejected}</strong><small>Reason recorded</small></div>
     </section>
 
     {canUpload ? <div id="media-upload" className="media-upload-wrap"><MediaUploadPanel organizations={result.organizations} autoApproves={workspace.permissions.canAccessAdmin} /></div> : null}
 
-    {!canUpload && !canModerate ? <section className="upload-banner"><span className="upload-icon"><Film size={25} /></span><div><h2>{result.source === "setup" ? "Workspace setup required" : "Media library access"}</h2><p>{result.source === "setup" ? "An administrator must complete your business workspace before media can be uploaded." : "Owners and staff can submit media. Approved reviewers manage moderation."}</p></div></section> : null}
+    {!canUpload && !canModerate ? <section className="upload-banner"><span className="upload-icon"><Film size={25} /></span><div><h2>Media setup required</h2><p>The administrator media service is not available until database setup is complete.</p></div></section> : null}
 
-    {result.assets.length === 0 ? <section className="empty-state"><Film size={28} /><h2>No media uploaded yet</h2><p>{workspace.permissions.canAccessAdmin ? "Add the first MP4 or YouTube creative above." : canModerate ? "Submitted business creatives will appear here for review." : canUpload ? "Upload the first MP4 creative above to begin moderation." : "Media will appear after a business submits its first creative."}</p></section> : <section className="media-grid">{result.assets.map((asset, index) => <article className="media-card" key={asset.id}>
+    {result.assets.length === 0 ? <section className="empty-state"><Film size={28} /><h2>No media uploaded yet</h2><p>Add the first MP4 or YouTube creative above.</p></section> : <section className="media-grid">{result.assets.map((asset, index) => <article className="media-card" key={asset.id}>
       <div className={`media-preview preview-${["teal", "orange", "blue", "purple"][index % 4]}`}>
         {asset.youtubeVideoId ? <MediaPreviewControls source={youtubeEmbedUrl(asset.youtubeVideoId)} title={asset.name} youtube /> : asset.previewUrl ? <MediaPreviewControls source={asset.previewUrl} title={asset.name} /> : <><span className="preview-noise" /><span className="media-preview-placeholder"><Play size={22} fill="currentColor" /></span></>}
         <small>{asset.duration}</small>

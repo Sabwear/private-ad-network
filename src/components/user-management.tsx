@@ -3,19 +3,11 @@
 import { Activity, KeyRound, Laptop, LoaderCircle, LockKeyhole, MailPlus, MapPin, Settings2, ShieldAlert, ShieldCheck, UserRoundPlus } from "lucide-react";
 import { useActionState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { inviteOwnerAccount, updateUserAccess, type UserActionState } from "@/app/(platform)/users/actions";
+import { invitePlatformAccount, updateUserAccess, type UserActionState } from "@/app/(platform)/users/actions";
 import { StatusPill } from "@/components/status-pill";
 import type { UserAdminData, UserAdminRow } from "@/lib/repositories/users";
 
 const initialState: UserActionState = { status: "idle", message: "" };
-const roles = [
-  ["owner", "Business owner"],
-  ["staff", "Team member"],
-  ["moderator", "Content moderator"],
-  ["operations", "Network operations"],
-  ["finance", "Finance operator"],
-] as const;
-
 function formatDate(value: string | null) {
   if (!value) return "Never";
   return new Intl.DateTimeFormat("en-GB", {
@@ -44,17 +36,13 @@ function UserAccessEditor({ user }: { user: UserAdminRow }) {
   const [state, action, pending] = useActionState(updateUserAccess, initialState);
   if (user.platformRole === "admin") return <span className="user-admin-lock"><LockKeyhole size={13} /> Protected</span>;
 
-  const hasMembership = user.organizationId !== null;
   return <details className="management-editor user-access-editor">
     <summary><Settings2 size={14} /> Manage</summary>
     <form action={action} className="management-inline-form" noValidate>
       <input type="hidden" name="userId" value={user.id} />
       <header><strong>{user.name}</strong><small>{user.email}</small></header>
       <FormMessage state={state} />
-      <div className="management-field-grid">
-        <label><span>Account access</span><select name="accountStatus" defaultValue={user.accountStatus}>{hasMembership ? <><option value="active">Active</option><option value="suspended">Suspended</option></> : <><option value="pending">Pending approval</option><option value="active">Approved viewer</option><option value="suspended">Suspended</option></>}</select><FieldError message={state.fieldErrors?.accountStatus} /></label>
-        {hasMembership ? <label><span>Organization role</span><select name="membershipRole" defaultValue={user.membershipRole ?? "staff"}>{roles.map(([value, label]) => <option value={value} key={value}>{label}</option>)}</select><FieldError message={state.fieldErrors?.membershipRole} /></label> : <input type="hidden" name="membershipRole" value="" />}
-      </div>
+      <label><span>Viewer account access</span><select name="accountStatus" defaultValue={user.accountStatus}><option value="pending">Pending approval</option><option value="active">Approved viewer</option><option value="suspended">Suspended</option></select><FieldError message={state.fieldErrors?.accountStatus} /></label>
       <label><span>Administrative reason</span><textarea name="reason" rows={2} maxLength={300} required placeholder="Document the approval, role change, or suspension reason." aria-invalid={Boolean(state.fieldErrors?.reason)} /><FieldError message={state.fieldErrors?.reason} /></label>
       <button className="button button-primary" type="submit" disabled={pending}>{pending ? <LoaderCircle className="auth-spinner" size={16} /> : <ShieldCheck size={16} />}{pending ? "Saving..." : "Save access"}</button>
     </form>
@@ -62,7 +50,7 @@ function UserAccessEditor({ user }: { user: UserAdminRow }) {
 }
 
 export function UserManagement({ data }: { data: UserAdminData }) {
-  const [inviteState, inviteAction, invitePending] = useActionState(inviteOwnerAccount, initialState);
+  const [inviteState, inviteAction, invitePending] = useActionState(invitePlatformAccount, initialState);
   const router = useRouter();
 
   useEffect(() => {
@@ -73,14 +61,14 @@ export function UserManagement({ data }: { data: UserAdminData }) {
   return <>
     <section className="user-control-grid">
       <form className="panel management-form user-invite-form" action={inviteAction} noValidate>
-        <div className="panel-header"><div><h2><UserRoundPlus size={18} /> Invite approved user</h2><p>Create either a registered viewer or a future business owner.</p></div></div>
+        <div className="panel-header"><div><h2><UserRoundPlus size={18} /> Invite account</h2><p>Create a platform administrator or a registered stream viewer.</p></div></div>
         <div className="management-form-body">
           <FormMessage state={inviteState} />
           {!data.accountCreationReady ? <div className="management-setup"><KeyRound size={18} /><span><strong>Server administrator key required</strong><small>Add the server-only key to this deployment&apos;s protected environment settings before sending invitations.</small></span></div> : null}
           <label><span>User full name</span><input name="name" maxLength={100} required placeholder="Approved account holder" aria-invalid={Boolean(inviteState.fieldErrors?.name)} /><FieldError message={inviteState.fieldErrors?.name} /></label>
           <label><span>Email address</span><input name="email" type="email" maxLength={254} required placeholder="viewer@example.com" aria-invalid={Boolean(inviteState.fieldErrors?.email)} /><FieldError message={inviteState.fieldErrors?.email} /></label>
-          <label><span>Account purpose</span><select name="accountPurpose" defaultValue="viewer"><option value="viewer">Registered stream viewer</option><option value="business-owner">Future business owner</option></select><FieldError message={inviteState.fieldErrors?.accountPurpose} /></label>
-          <label><span>Administrative reason</span><textarea name="reason" rows={3} maxLength={300} required placeholder="Approved business owner for the pilot." aria-invalid={Boolean(inviteState.fieldErrors?.reason)} /><FieldError message={inviteState.fieldErrors?.reason} /></label>
+          <label><span>Account type</span><select name="accountType" defaultValue="viewer"><option value="viewer">Registered stream viewer</option><option value="admin">Platform administrator</option></select><FieldError message={inviteState.fieldErrors?.accountType} /></label>
+          <label><span>Administrative reason</span><textarea name="reason" rows={3} maxLength={300} required placeholder="Approved for platform administration or registered viewing." aria-invalid={Boolean(inviteState.fieldErrors?.reason)} /><FieldError message={inviteState.fieldErrors?.reason} /></label>
           <button className="button button-primary management-submit" type="submit" disabled={invitePending || !data.accountCreationReady}>{invitePending ? <LoaderCircle className="auth-spinner" size={17} /> : <MailPlus size={17} />}{invitePending ? "Sending invitation..." : "Create and invite user"}</button>
         </div>
       </form>
@@ -89,17 +77,17 @@ export function UserManagement({ data }: { data: UserAdminData }) {
         <div className="panel-header"><div><h2><ShieldAlert size={18} /> Controlled access policy</h2><p>Public registration is disabled at the application boundary.</p></div></div>
         <div className="user-policy-list">
           <div><span>1</span><p><strong>Administrator creates access</strong><small>Only an approved email can receive an invitation.</small></p></div>
-          <div><span>2</span><p><strong>Owner sets the password</strong><small>The one-time link opens the secure password setup flow.</small></p></div>
-          <div><span>3</span><p><strong>Purpose is enforced</strong><small>Viewers receive no business profile; future owners remain pending until an admin creates one.</small></p></div>
+          <div><span>2</span><p><strong>User sets the password</strong><small>The one-time link opens the secure password setup flow.</small></p></div>
+          <div><span>3</span><p><strong>Account type is enforced</strong><small>Administrators manage everything; viewers can only identify themselves while watching.</small></p></div>
           <div><span>4</span><p><strong>Every session is observed</strong><small>IP, device, route, location, and recent activity remain visible here.</small></p></div>
         </div>
       </article>
     </section>
 
     <section className="management-section" aria-labelledby="user-registry-title">
-      <div className="section-heading"><div><p className="eyebrow">Access registry</p><h2 id="user-registry-title">Users and permissions</h2><p>Account status and organization roles are enforced on every protected workspace request.</p></div><span className="management-count"><ShieldCheck size={16} /> {data.users.length} controlled accounts</span></div>
+      <div className="section-heading"><div><p className="eyebrow">Access registry</p><h2 id="user-registry-title">Administrators and viewers</h2><p>Only administrators enter the dashboard. Viewers remain separate from all business records.</p></div><span className="management-count"><ShieldCheck size={16} /> {data.users.length} controlled accounts</span></div>
       <article className="panel management-registry user-registry">
-        {data.users.length === 0 ? <div className="management-empty"><UserRoundPlus size={23} /><strong>No users found</strong><p>Invite an approved viewer or future business owner above.</p></div> : <div className="table-scroll"><table><thead><tr><th>User</th><th>Business</th><th>Permission</th><th>Status</th><th>Sessions</th><th>Last activity</th><th>Controls</th></tr></thead><tbody>{data.users.map((user) => <tr key={user.id}><td><strong>{user.name}</strong><small>{user.email}</small></td><td>{user.platformRole === "admin" ? "Platform" : user.organizationName}</td><td>{user.platformRole === "admin" ? "Platform administrator" : user.membershipRole?.replaceAll("-", " ") ?? (user.accountStatus === "active" ? "Registered viewer" : "Owner invitation")}</td><td><StatusPill tone={accountTone(user.accountStatus)}>{user.accountStatus}</StatusPill>{!user.emailVerifiedAt ? <small>Email setup pending</small> : null}</td><td><strong>{user.liveSessionCount > 0 ? `${user.liveSessionCount} live` : `${user.sessionCount} recorded`}</strong></td><td>{formatDate(user.lastSeenAt)}</td><td><UserAccessEditor user={user} /></td></tr>)}</tbody></table></div>}
+        {data.users.length === 0 ? <div className="management-empty"><UserRoundPlus size={23} /><strong>No users found</strong><p>Invite an administrator or approved viewer above.</p></div> : <div className="table-scroll"><table><thead><tr><th>User</th><th>Account type</th><th>Status</th><th>Sessions</th><th>Last activity</th><th>Controls</th></tr></thead><tbody>{data.users.map((user) => <tr key={user.id}><td><strong>{user.name}</strong><small>{user.email}</small></td><td>{user.platformRole === "admin" ? "Platform administrator" : "Registered viewer"}</td><td><StatusPill tone={accountTone(user.accountStatus)}>{user.accountStatus}</StatusPill>{!user.emailVerifiedAt ? <small>Email setup pending</small> : null}</td><td><strong>{user.liveSessionCount > 0 ? `${user.liveSessionCount} live` : `${user.sessionCount} recorded`}</strong></td><td>{formatDate(user.lastSeenAt)}</td><td><UserAccessEditor user={user} /></td></tr>)}</tbody></table></div>}
       </article>
     </section>
 

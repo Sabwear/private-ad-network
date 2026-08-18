@@ -2,7 +2,7 @@
 
 ## Assets to protect
 
-- Organization accounts and roles
+- Administrator and approved-viewer accounts
 - Device identity and signing keys
 - Approved media and signed manifests
 - Playback evidence and decision history
@@ -11,14 +11,14 @@
 
 ## Trust boundaries
 
-The TV device and venue network are untrusted environments. A device event is evidence, not truth, until server validation. Portal users are authenticated but still limited by organization scope and role. Privileged administrative actions require explicit reason and audit.
+The TV device and venue network are untrusted environments. A device event is evidence, not truth, until server validation. Only active administrators enter the portal; approved viewers authenticate only when they choose registered stream identity. Privileged administrative actions require explicit reason and audit.
 
 ## Device controls
 
 - Ten-minute, single-use pairing codes are stored only as hashes
 - Device credentials are generated with cryptographic randomness, stored only as hashes, and revoked on suspension
 - The web-player simulator creates a P-256 key pair and stores the private key as a non-extractable browser credential
-- Pairing claims require an active location and an authorized administrator, owner, staff, or operations role
+- Pairing claims require an active location and an authorized platform administrator
 - Heartbeats accept only active device credentials; the server derives IP/country/edge context from the request
 - Per-device asymmetric key in Android Keystore
 - Short-lived access token and independently revocable refresh credential
@@ -45,32 +45,32 @@ No single weak hardware signal should automatically accuse a venue of fraud. Sto
 ## Portal controls
 
 - Strong password/session security and admin MFA
-- Role-based access with organization tenancy enforcement
+- Administrator-only dashboard access enforced at the layout, action, repository, database-function, and RLS boundaries
 - Separate platform-administrator authority that is not stored in user-editable authentication metadata
-- Administrator-only organization creation with atomic owner assignment and wallet initialization
+- Administrator-only business creation with atomic wallet initialization and no user assignment
 - Invitation-only account creation controlled by the platform administrator
-- Verified but unassigned accounts remain outside the workspace
-- Administrator-controlled account suspension and organization roles, with a last-active-owner safeguard
+- Viewer accounts remain outside the dashboard and can identify only registered stream sessions
+- Administrator-controlled viewer suspension; administrator account access is protected from the ordinary user editor
 - Portal sessions record server-observed IP, device/browser/OS, edge location, route, and recent activity
-- Suspended accounts and revoked observed sessions are rejected at the portal boundary; tenant RLS also requires an active profile
+- Suspended accounts and revoked observed sessions are rejected at the portal boundary; administrator RLS also requires an active admin profile
 - Separation of content, operations, and finance duties
 - Reauthentication for sensitive policy, adjustment, or credential actions
 - CSRF-safe mutations, validation, encoding, secure cookies, and rate limits
 - Short-lived, type/size-restricted direct upload URLs
-- Malware and media validation before moderation
-- Private media objects are scoped to an existing tenant asset and served through short-lived authorized URLs
+- Malware and media validation before direct administrator approval
+- Private media objects are scoped to an existing business asset and served to administrators or authorized players through short-lived URLs
 - Business logos are intentionally public presentation assets, but upload, replacement, deletion, and organization association require platform-administrator authorization
 - Public stream viewers receive only the resolved logo URL and display settings; the in-player settings mutation control is rendered only after a separate administrator session check
-- Private web streams require both the channel bearer URL and a non-expired, rate-limited six-digit business code; rotating the code terminates existing viewer sessions
+- Anonymous web streams require only the valid channel bearer URL. Registered identity may additionally validate the non-expired, rate-limited six-digit business code; rotating the code terminates affected identified sessions
 - Network identifiers used for stream rate limiting are HMAC-peppered with a server-only secret; raw IP addresses are never stored
 - Anonymous viewers never provide identity. Identified viewers must use an active, email-verified account created or approved by the current platform administrator
 - Stream cookies are HTTP-only, SameSite strict, time-limited, stored only as token hashes, and independently terminable from the player
 - Playback heartbeats are idempotent and validate server timing, client clock, foreground visibility, playing state, asset membership, and playback position before credit movement
 - Stream operations telemetry and handling controls are restricted to the active platform administrator role; operational mutations require a reason and write an audit record
-- Pilot uploads accept MP4 only, enforce a 100 MB bucket limit, compute a browser SHA-256 checksum, and require 16:9 video at an approved duration
+- Pilot uploads accept MP4 only, enforce a 100 MB bucket limit, compute a browser SHA-256 checksum, and require valid playable media; fixed 15/30/60-second duration limits are removed
 - External media accepts only recognized HTTPS YouTube URL shapes, stores the canonical video ID, uses the privacy-enhanced embed domain, and never permits arbitrary iframe origins
-- Both uploaded and YouTube media require a business selection, rights declaration, and platform moderation before channel assignment
-- Business roles can prepare and submit media but cannot directly update approval status; only the protected moderation function can approve or reject
+- Both uploaded and YouTube media require a business selection, rights declaration, and administrator validation before channel assignment
+- Administrator submissions approve directly; no business role or redundant review queue exists
 - Browser preflight is backed by the server-side FFmpeg media processor; malware scanning remains required before the scope expands beyond controlled beta media
 
 ## Ledger controls
@@ -91,7 +91,7 @@ No single weak hardware signal should automatically accuse a venue of fraud. Sto
 - Registered viewing stores the administrator-approved account ID plus a name/email snapshot for business reporting after explicit viewer choice
 - Operational telemetry currently includes server-observed IP, device/browser/OS type, locale, timezone, screen capabilities, connection hints, app version, and heartbeat time
 - Portal security telemetry includes user session ID, server-observed IP, user agent, coarse edge location, last route, and activity timestamps
-- Exact IP observations are visible only to authorized tenant users and platform administrators under RLS
+- Exact IP observations are visible only to platform administrators under RLS
 - No cameras, microphones, facial recognition, or demographic inference in MVP
 - Use registered venue/zone rather than continuous personal geolocation
 - Limit raw evidence retention to settlement, fraud, and dispute needs

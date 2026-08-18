@@ -15,9 +15,7 @@ const campaignSchema = z.object({
   startsOn: z.string().regex(datePattern),
   endsOn: z.string().regex(datePattern),
   budgetCredits: z.coerce.number().min(1).max(1_000_000_000),
-  dailyCapCredits: z.union([z.literal(""), z.coerce.number().min(1).max(1_000_000_000)]),
-  frequencyCapPerDay: z.union([z.literal(""), z.coerce.number().int().min(1).max(100)]),
-  targetOrganizationIds: z.array(z.coerce.number().int().positive()).min(1).max(50),
+  targetLocationIds: z.array(z.coerce.number().int().positive()).min(1).max(100),
 });
 
 function value(formData: FormData, key: string) {
@@ -25,59 +23,46 @@ function value(formData: FormData, key: string) {
   return typeof candidate === "string" ? candidate : "";
 }
 
-export async function createCampaignDraft(_state: CampaignActionState, formData: FormData): Promise<CampaignActionState> {
+export async function publishCampaign(_state: CampaignActionState, formData: FormData): Promise<CampaignActionState> {
   const workspace = await getWorkspaceContext();
-  const canManageOwnBusiness = workspace.organization.id !== null && ["owner", "staff"].includes(workspace.membership.role);
-  if (workspace.mode !== "active" || (!workspace.permissions.canAccessAdmin && !canManageOwnBusiness)) {
-    return { status: "error", message: "Campaign management access is required." };
-  }
+  if (workspace.mode !== "active" || !workspace.permissions.canAccessAdmin) return { status: "error", message: "Platform administrator access is required." };
 
   const parsed = campaignSchema.safeParse({
-    organizationId: workspace.permissions.canAccessAdmin ? value(formData, "organizationId") : workspace.organization.id,
+    organizationId: value(formData, "organizationId"),
     name: value(formData, "name"),
     mediaAssetId: value(formData, "mediaAssetId"),
     startsOn: value(formData, "startsOn"),
     endsOn: value(formData, "endsOn"),
     budgetCredits: value(formData, "budgetCredits"),
-    dailyCapCredits: value(formData, "dailyCapCredits"),
-    frequencyCapPerDay: value(formData, "frequencyCapPerDay"),
-    targetOrganizationIds: formData.getAll("targetOrganizationIds"),
+    targetLocationIds: formData.getAll("targetLocationIds"),
   });
-  if (!parsed.success) return { status: "error", message: "Review the campaign name, approved media, dates, limits, and at least one target business." };
+  if (!parsed.success) return { status: "error", message: "Add a campaign name, approved media, valid dates, budget, and at least one delivery location." };
 
   const startsAt = new Date(`${parsed.data.startsOn}T00:00:00.000Z`);
   const endsAt = new Date(`${parsed.data.endsOn}T23:59:59.999Z`);
   const today = new Date();
   today.setUTCHours(0, 0, 0, 0);
   if (startsAt < today || endsAt <= startsAt) return { status: "error", message: "Choose a start date from today onward and an end date after it." };
-  const dailyCap = parsed.data.dailyCapCredits === "" ? null : parsed.data.dailyCapCredits;
-  if (dailyCap !== null && dailyCap > parsed.data.budgetCredits) return { status: "error", message: "The daily cap cannot exceed the total budget." };
-
   const supabase = await createClient();
-  const { error } = await supabase.rpc("create_campaign_draft_for_organization", {
+  const { error } = await supabase.rpc("create_and_publish_campaign", {
     p_organization_id: parsed.data.organizationId,
     p_name: parsed.data.name,
     p_media_asset_id: parsed.data.mediaAssetId,
     p_starts_at: startsAt.toISOString(),
     p_ends_at: endsAt.toISOString(),
     p_budget_credits: parsed.data.budgetCredits,
-    p_daily_cap_credits: dailyCap,
-    p_frequency_cap_per_day: parsed.data.frequencyCapPerDay === "" ? null : parsed.data.frequencyCapPerDay,
-    p_target_organization_ids: [...new Set(parsed.data.targetOrganizationIds)],
+    p_target_location_ids: [...new Set(parsed.data.targetLocationIds)],
   });
-  if (error) return { status: "error", message: "The draft could not be created. Confirm that the media is approved and each target business is active." };
+  if (error) return { status: "error", message: error.message || "The campaign could not be published." };
 
   revalidatePath("/campaigns");
   revalidatePath("/overview");
-  return { status: "success", message: "Campaign draft created. Activation stays locked until credit holds are enabled." };
+  return { status: "success", message: "Campaign published and ready for delivery." };
 }
 
-export async function updateCampaignDraft(_state: CampaignActionState, formData: FormData): Promise<CampaignActionState> {
+export async function updateAndPublishCampaign(_state: CampaignActionState, formData: FormData): Promise<CampaignActionState> {
   const workspace = await getWorkspaceContext();
-  const canManageOwnBusiness = workspace.organization.id !== null && ["owner", "staff"].includes(workspace.membership.role);
-  if (workspace.mode !== "active" || (!workspace.permissions.canAccessAdmin && !canManageOwnBusiness)) {
-    return { status: "error", message: "Campaign management access is required." };
-  }
+  if (workspace.mode !== "active" || !workspace.permissions.canAccessAdmin) return { status: "error", message: "Platform administrator access is required." };
 
   const publicId = z.string().uuid().safeParse(value(formData, "campaignPublicId"));
   const parsed = campaignSchema.safeParse({
@@ -87,46 +72,35 @@ export async function updateCampaignDraft(_state: CampaignActionState, formData:
     startsOn: value(formData, "startsOn"),
     endsOn: value(formData, "endsOn"),
     budgetCredits: value(formData, "budgetCredits"),
-    dailyCapCredits: value(formData, "dailyCapCredits"),
-    frequencyCapPerDay: value(formData, "frequencyCapPerDay"),
-    targetOrganizationIds: formData.getAll("targetOrganizationIds"),
+    targetLocationIds: formData.getAll("targetLocationIds"),
   });
-  if (!publicId.success || !parsed.success) return { status: "error", message: "Review the campaign name, approved media, dates, limits, and at least one target business." };
-  if (!workspace.permissions.canAccessAdmin && parsed.data.organizationId !== workspace.organization.id) {
-    return { status: "error", message: "You can edit campaigns only for your own business." };
-  }
+  if (!publicId.success || !parsed.success) return { status: "error", message: "Add a campaign name, approved media, valid dates, budget, and at least one delivery location." };
 
   const startsAt = new Date(`${parsed.data.startsOn}T00:00:00.000Z`);
   const endsAt = new Date(`${parsed.data.endsOn}T23:59:59.999Z`);
   const today = new Date();
   today.setUTCHours(0, 0, 0, 0);
   if (startsAt < today || endsAt <= startsAt) return { status: "error", message: "Choose a start date from today onward and an end date after it." };
-  const dailyCap = parsed.data.dailyCapCredits === "" ? null : parsed.data.dailyCapCredits;
-  if (dailyCap !== null && dailyCap > parsed.data.budgetCredits) return { status: "error", message: "The daily cap cannot exceed the total budget." };
-
   const supabase = await createClient();
-  const { error } = await supabase.rpc("update_campaign_draft", {
+  const { error } = await supabase.rpc("update_and_publish_campaign", {
     p_campaign_public_id: publicId.data,
     p_name: parsed.data.name,
     p_media_asset_id: parsed.data.mediaAssetId,
     p_starts_at: startsAt.toISOString(),
     p_ends_at: endsAt.toISOString(),
     p_budget_credits: parsed.data.budgetCredits,
-    p_daily_cap_credits: dailyCap,
-    p_frequency_cap_per_day: parsed.data.frequencyCapPerDay === "" ? null : parsed.data.frequencyCapPerDay,
-    p_target_organization_ids: [...new Set(parsed.data.targetOrganizationIds)],
+    p_target_location_ids: [...new Set(parsed.data.targetLocationIds)],
   });
-  if (error) return { status: "error", message: "The draft could not be updated. Confirm the advertiser, approved media, and active target businesses." };
+  if (error) return { status: "error", message: error.message || "The campaign could not be published." };
 
   revalidatePath("/campaigns");
   revalidatePath("/overview");
-  return { status: "success", message: "Campaign draft updated." };
+  return { status: "success", message: "Campaign published and ready for delivery." };
 }
 
 export async function deleteCampaignDraft(formData: FormData) {
   const workspace = await getWorkspaceContext();
-  const canManageOwnBusiness = workspace.organization.id !== null && ["owner", "staff"].includes(workspace.membership.role);
-  if (!workspace.permissions.canAccessAdmin && !canManageOwnBusiness) return;
+  if (!workspace.permissions.canAccessAdmin) return;
   const publicId = z.string().uuid().safeParse(value(formData, "campaignPublicId"));
   if (!publicId.success) return;
   const supabase = await createClient();

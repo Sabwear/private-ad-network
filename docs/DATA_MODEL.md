@@ -1,6 +1,6 @@
 # Domain and Data Model
 
-## Identity and tenancy
+## Identity and platform authority
 
 ### organizations
 
@@ -10,9 +10,13 @@
 
 `id`, `email`, authentication state, MFA state, timestamps
 
-### memberships
+### profiles
 
-`user_id`, `organization_id`, `role`, status, invitation metadata
+`id`, `email`, `full_name`, `platform_role` (`admin` or `viewer`), `account_status`, timestamps. Only active administrators may enter the dashboard. Viewers are optional registered stream identities and have no business assignment or management permission.
+
+### organization_memberships (legacy disabled table)
+
+Retained only for migration compatibility. All rows were removed, authenticated access was revoked, and membership predicates always return false. New application code must not depend on this table.
 
 ### locations
 
@@ -34,7 +38,7 @@ Private table containing a per-device credential hash, issue/use/revocation time
 
 ### device_observations
 
-Tenant-scoped operational observations recorded at heartbeat time: server-derived IP address and network edge, user agent, detected device/browser/OS type, locale, timezone, display capabilities, connection hints, app version, and observation timestamp. This data is for security, support, and playback reliability; it does not contain audience identity, camera, or microphone data.
+Administrator-visible operational observations recorded at heartbeat time: server-derived IP address and network edge, user agent, detected device/browser/OS type, locale, timezone, display capabilities, connection hints, app version, and observation timestamp. This data is for security, support, and playback reliability; it does not contain audience identity, camera, or microphone data.
 
 ### device_commands
 
@@ -44,9 +48,9 @@ Command type, parameters, issued/acknowledged/completed timestamps, result
 
 ### media_assets
 
-Owner, source type (`upload` or `youtube`), external provider/ID/URL when applicable, original/normalized/thumbnail storage keys, original filename, MIME type, file size, duration, dimensions, codec, SHA-256 checksum, technical metadata, moderation state, rights declaration, rejection reason, submit/moderate timestamps, moderator, and creator.
+Business, source type (`upload` or `youtube`), external provider/ID/URL when applicable, original/normalized/thumbnail storage keys, original filename, MIME type, file size, duration, dimensions, codec, SHA-256 checksum, technical metadata, approval state, rights declaration, rejection reason, submit/approve timestamps, administrator, and creator.
 
-Uploaded objects use `<organization-public-id>/<asset-public-id>/original.mp4`. The bucket is private; tenant members and platform administrators receive only short-lived authorized preview URLs. YouTube rows store a canonical video ID and source URL rather than copying third-party bytes. Business users cannot directly set approval state for either source.
+Uploaded objects use `<organization-public-id>/<asset-public-id>/original.mp4`. The bucket is private; platform administrators receive short-lived authorized preview URLs. YouTube rows store a canonical video ID and source URL rather than copying third-party bytes. Administrator submissions auto-approve after required validation.
 
 ### campaigns
 
@@ -58,13 +62,13 @@ Public ID, independent bearer access key, name, description, availability status
 
 ### streaming_channel_organizations
 
-Channel-to-business assignment. Assigned organizations can discover and consume only their permitted channel through tenant-aware policies.
+Channel-to-business targeting. Administrators control which managed businesses and screens use each channel; this relationship grants no dashboard access.
 
 ### streaming_channel_items
 
 Channel, approved/ready media asset, deterministic position, status, and creator. The database requires uploads to have a normalized object and YouTube sources to have constrained provider metadata before either source can be assigned.
 
-Business ad assignment reuses this ordered channel-item model; ownership is validated before an administrator can add or remove the asset.
+Business ad selection reuses this ordered channel-item model; business association is validated before an administrator can add or remove the asset.
 
 ### stream_viewer_sessions
 

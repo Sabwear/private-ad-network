@@ -29,15 +29,15 @@ export function AppShell({ children, workspace, header, signOutAction }: { child
   const searchItems = useMemo(() => {
     const items = [
       { href: "/overview", label: "Overview", description: "Network performance and status", icon: LayoutDashboard },
-      ...(workspace.permissions.canProvisionOrganizations ? [{ href: "/business", label: "Business", description: "Business profiles, logos, and channel ads", icon: Building2 }] : []),
+      { href: "/business", label: "Business", description: "Business profiles, logos, and channel ads", icon: Building2 },
       ...flowNav,
-      ...(workspace.permissions.canProvisionOrganizations ? [{ href: "/users", label: "Users", description: "Accounts, permissions, and sessions", icon: UsersRound }] : []),
-      ...(workspace.membership.role === "admin" ? [{ href: "/operations", label: "Operations", description: "Channels, stream links, viewers, health, and incidents", icon: Activity }] : []),
-      ...(workspace.permissions.canAccessAdmin ? [{ href: "/admin", label: "Admin control", description: "Platform operations and audit controls", icon: Settings }] : []),
+      { href: "/users", label: "Users", description: "Administrators, viewers, and sessions", icon: UsersRound },
+      { href: "/operations", label: "Operations", description: "Channels, stream links, viewers, health, and incidents", icon: Activity },
+      { href: "/admin", label: "Admin control", description: "Platform operations and audit controls", icon: Settings },
     ];
     const term = search.trim().toLowerCase();
     return term ? items.filter((item) => `${item.label} ${item.description}`.toLowerCase().includes(term)).slice(0, 7) : items.slice(0, 7);
-  }, [search, workspace.membership.role, workspace.permissions.canAccessAdmin, workspace.permissions.canProvisionOrganizations]);
+  }, [search]);
 
   function togglePanel(next: Exclude<HeaderPanel, null>) {
     setSearchOpen(false);
@@ -66,18 +66,18 @@ export function AppShell({ children, workspace, header, signOutAction }: { child
         <nav className="primary-nav" aria-label="Primary navigation">
           <span className="nav-label">Workspace</span>
           <Link href="/overview" className={pathname === "/overview" ? "nav-link active" : "nav-link"} onClick={() => setOpen(false)}><LayoutDashboard size={19} strokeWidth={1.9} /><span>Overview</span></Link>
-          {workspace.permissions.canProvisionOrganizations ? <Link href="/business" className={pathname === "/business" ? "nav-link active" : "nav-link"} onClick={() => setOpen(false)}><Building2 size={19} strokeWidth={1.9} /><span>Business</span></Link> : null}
+          <Link href="/business" className={pathname === "/business" ? "nav-link active" : "nav-link"} onClick={() => setOpen(false)}><Building2 size={19} strokeWidth={1.9} /><span>Business</span></Link>
           {flowNav.map(({ href, label, icon: Icon }) => <Link key={href} href={href} className={pathname === href ? "nav-link active" : "nav-link"} onClick={() => setOpen(false)}><Icon size={19} strokeWidth={1.9} /><span>{label}</span></Link>)}
           <span className="nav-label nav-label-spaced">Operations</span>
-          {workspace.membership.role === "admin" ? <Link href="/operations" className={pathname === "/operations" ? "nav-link active" : "nav-link"} onClick={() => setOpen(false)}><Activity size={19} strokeWidth={1.9} /><span>Operations</span></Link> : null}
-          {workspace.permissions.canProvisionOrganizations ? <Link href="/users" className={pathname === "/users" ? "nav-link active" : "nav-link"} onClick={() => setOpen(false)}><UsersRound size={19} strokeWidth={1.9} /><span>Users</span></Link> : null}
-          {workspace.permissions.canAccessAdmin ? <Link href="/admin" className={pathname === "/admin" ? "nav-link active" : "nav-link"} onClick={() => setOpen(false)}><Settings size={19} strokeWidth={1.9} /><span>Admin control</span></Link> : null}
+          <Link href="/operations" className={pathname === "/operations" ? "nav-link active" : "nav-link"} onClick={() => setOpen(false)}><Activity size={19} strokeWidth={1.9} /><span>Operations</span></Link>
+          <Link href="/users" className={pathname === "/users" ? "nav-link active" : "nav-link"} onClick={() => setOpen(false)}><UsersRound size={19} strokeWidth={1.9} /><span>Users</span></Link>
+          <Link href="/admin" className={pathname === "/admin" ? "nav-link active" : "nav-link"} onClick={() => setOpen(false)}><Settings size={19} strokeWidth={1.9} /><span>Admin control</span></Link>
           <span className="nav-link nav-link-disabled" aria-disabled="true"><ReceiptText size={19} strokeWidth={1.9} /><span>Reports</span><span className="nav-badge">Later</span></span>
         </nav>
         <div className="pilot-card"><div className="pilot-card-icon"><Orbit size={18} /></div><div><strong>Limited beta</strong><p>Controlled testers only</p></div><div className="pilot-progress"><span /></div></div>
         <div className="account-wrap">
-          <button className="sidebar-user" type="button" aria-expanded={accountOpen} onClick={() => setAccountOpen((current) => !current)}><span className="avatar">{workspace.user.initials}</span><span><strong>{workspace.organization.name}</strong><small>{workspace.membership.label}</small></span><ChevronDown size={17} /></button>
-          {accountOpen ? <div className="account-menu"><div><Mail size={14} /><span><small>Signed in as</small><strong>{workspace.user.email}</strong></span></div>{workspace.organization.id ? <Link href="/profile" onClick={() => setAccountOpen(false)}><Building2 size={15} /> Business profile</Link> : null}<form action={signOutAction}><button type="submit"><LogOut size={15} /> Sign out</button></form></div> : null}
+          <button className="sidebar-user" type="button" aria-expanded={accountOpen} onClick={() => setAccountOpen((current) => !current)}><span className="avatar">{workspace.user.initials}</span><span><strong>{workspace.organization.name}</strong><small>{workspace.account.label}</small></span><ChevronDown size={17} /></button>
+          {accountOpen ? <div className="account-menu"><div><Mail size={14} /><span><small>Signed in as</small><strong>{workspace.user.email}</strong></span></div><form action={signOutAction}><button type="submit"><LogOut size={15} /> Sign out</button></form></div> : null}
         </div>
       </aside>
       {open ? <button className="sidebar-scrim" onClick={() => setOpen(false)} aria-label="Close navigation" /> : null}
@@ -99,7 +99,7 @@ export function AppShell({ children, workspace, header, signOutAction }: { child
               <button className="header-guide-button" type="button" aria-label="Open platform guide" aria-expanded={panel === "guide"} onClick={() => togglePanel("guide")}><CircleHelp size={18} /><span>Guide</span></button>
               {panel === "guide" ? <div className="header-popover action-popover" aria-label="Platform guide">
                 <div className="header-popover-title"><strong>Platform guide</strong><small>Recommended operating flow</small></div>
-                <Link href="/business" onClick={() => setPanel(null)}><span className="header-step">1</span><span><strong>Create the business</strong><small>Add its profile, owner, and logo.</small></span></Link>
+                <Link href="/business" onClick={() => setPanel(null)}><span className="header-step">1</span><span><strong>Create the business</strong><small>Add its profile, schedule, credit rules, and logo.</small></span></Link>
                 <Link href="/business#screens" onClick={() => setPanel(null)}><span className="header-step">2</span><span><strong>Pair the screens</strong><small>Connect devices inside the business network.</small></span></Link>
                 <Link href="/media" onClick={() => setPanel(null)}><span className="header-step">3</span><span><strong>Approve the media</strong><small>Prepare ads for channel playback.</small></span></Link>
                 <Link href="/operations#channels" onClick={() => setPanel(null)}><span className="header-step">4</span><span><strong>Publish the channel</strong><small>Assign ads and configure the stream.</small></span></Link>

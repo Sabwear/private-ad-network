@@ -9,10 +9,6 @@ export type UserAdminRow = {
   name: string;
   accountStatus: string;
   platformRole: string;
-  organizationId: number | null;
-  organizationName: string;
-  membershipRole: string | null;
-  membershipStatus: string | null;
   emailVerifiedAt: string | null;
   createdAt: string;
   lastSeenAt: string | null;
@@ -57,14 +53,12 @@ function clientDescription(userAgent: string | null) {
 
 export async function getUserAdminData(): Promise<UserAdminData> {
   const supabase = await createClient();
-  const [profilesResult, membershipsResult, organizationsResult, sessionsResult] = await Promise.all([
+  const [profilesResult, sessionsResult] = await Promise.all([
     supabase.from("profiles").select("id,email,full_name,email_verified_at,account_status,platform_role,created_at").order("created_at", { ascending: false }),
-    supabase.from("organization_memberships").select("organization_id,user_id,role,status,created_at").order("created_at", { ascending: true }),
-    supabase.from("organizations").select("id,display_name"),
     supabase.from("user_activity_sessions").select("session_id,user_id,first_seen_at,last_seen_at,last_path,ip_address,user_agent,country_code,edge_colo,revoked_at").order("last_seen_at", { ascending: false }).limit(200),
   ]);
 
-  const coreError = profilesResult.error ?? membershipsResult.error ?? organizationsResult.error;
+  const coreError = profilesResult.error;
   if (coreError) {
     if (setupErrorCodes.has(coreError.code)) return { source: "setup", accountCreationReady: hasSupabaseAdminEnv(), users: [], sessions: [] };
     throw new Error(`Unable to load user administration: ${coreError.message}`);
@@ -77,13 +71,7 @@ export async function getUserAdminData(): Promise<UserAdminData> {
 
   const now = Date.now();
   const profiles = profilesResult.data ?? [];
-  const memberships = membershipsResult.data ?? [];
   const profileById = new Map(profiles.map((profile) => [profile.id, profile]));
-  const organizationById = new Map((organizationsResult.data ?? []).map((organization) => [organization.id, organization.display_name]));
-  const membershipByUser = new Map<string, (typeof memberships)[number]>();
-  for (const membership of memberships) {
-    if (!membershipByUser.has(membership.user_id)) membershipByUser.set(membership.user_id, membership);
-  }
 
   const sessionCounts = new Map<string, { total: number; live: number; lastSeenAt: string | null }>();
   const sessions: UserSessionRow[] = (sessionsResult.data ?? []).map((session) => {
@@ -115,7 +103,6 @@ export async function getUserAdminData(): Promise<UserAdminData> {
     source: sessionsAvailable ? "live" : "setup",
     accountCreationReady: hasSupabaseAdminEnv(),
     users: profiles.map((profile) => {
-      const membership = membershipByUser.get(profile.id);
       const counts = sessionCounts.get(profile.id);
       return {
         id: profile.id,
@@ -123,10 +110,6 @@ export async function getUserAdminData(): Promise<UserAdminData> {
         name: profile.full_name ?? "Account holder",
         accountStatus: profile.account_status,
         platformRole: profile.platform_role,
-        organizationId: membership?.organization_id ?? null,
-        organizationName: membership ? organizationById.get(membership.organization_id) ?? "Unknown business" : profile.account_status === "active" ? "Viewer only" : "Not assigned",
-        membershipRole: membership?.role ?? null,
-        membershipStatus: membership?.status ?? null,
         emailVerifiedAt: profile.email_verified_at,
         createdAt: profile.created_at,
         lastSeenAt: counts?.lastSeenAt ?? null,

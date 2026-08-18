@@ -34,7 +34,7 @@ export async function claimScreen(
 ): Promise<ScreenActionState> {
   const workspace = await getWorkspaceContext();
   if (!workspace.permissions.canManageDevices) {
-    return { status: "error", message: "You do not have permission to pair screens." };
+    return { status: "error", message: "Platform administrator access is required." };
   }
 
   const parsed = claimSchema.safeParse({
@@ -53,18 +53,6 @@ export async function claimScreen(
       }
     }
     return { status: "error", message: "Check the pairing details and try again.", fieldErrors };
-  }
-
-  if (workspace.organization.id !== null) {
-    const supabase = await createClient();
-    const { data: location } = await supabase
-      .from("locations")
-      .select("organization_id")
-      .eq("id", parsed.data.locationId)
-      .maybeSingle();
-    if (!location || location.organization_id !== workspace.organization.id) {
-      return { status: "error", message: "You can only pair screens to your own active locations." };
-    }
   }
 
   const supabase = await createClient();
@@ -97,7 +85,7 @@ export async function suspendScreen(
 ): Promise<ScreenActionState> {
   const workspace = await getWorkspaceContext();
   if (!workspace.permissions.canManageDevices) {
-    return { status: "error", message: "You do not have permission to suspend screens." };
+    return { status: "error", message: "Platform administrator access is required." };
   }
 
   const parsed = suspensionSchema.safeParse({

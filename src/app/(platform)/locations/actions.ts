@@ -62,7 +62,7 @@ export async function createLocation(
 ): Promise<LocationActionState> {
   const workspace = await getWorkspaceContext();
   if (!workspace.permissions.canManageLocations) {
-    return { status: "error", message: "You do not have permission to manage locations." };
+    return { status: "error", message: "Platform administrator access is required." };
   }
 
   const parsed = locationSchema.safeParse({
@@ -79,10 +79,6 @@ export async function createLocation(
 
   if (!parsed.success) {
     return { status: "error", message: "Check the highlighted fields and try again.", fieldErrors: errorsFrom(parsed.error) };
-  }
-
-  if (workspace.organization.id !== null && parsed.data.organizationId !== workspace.organization.id) {
-    return { status: "error", message: "You can only add locations to your own organization." };
   }
 
   const supabase = await createClient();
@@ -123,7 +119,7 @@ export async function updateLocation(
 ): Promise<LocationUpdateActionState> {
   const workspace = await getWorkspaceContext();
   if (!workspace.permissions.canManageLocations) {
-    return { status: "error", message: "You do not have permission to manage locations." };
+    return { status: "error", message: "Platform administrator access is required." };
   }
 
   const parsed = locationUpdateSchema.safeParse({
@@ -151,10 +147,6 @@ export async function updateLocation(
       }
     }
     return { status: "error", message: "Check the highlighted fields and try again.", fieldErrors: errors };
-  }
-
-  if (workspace.organization.id !== null && parsed.data.organizationId !== workspace.organization.id) {
-    return { status: "error", message: "You can only update locations in your own organization." };
   }
 
   const supabase = await createClient();

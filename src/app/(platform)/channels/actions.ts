@@ -31,7 +31,7 @@ const channelDisplaySchema = z.object({
 
 async function requireAdmin() {
   const workspace = await getWorkspaceContext();
-  return workspace.permissions.canAccessAdmin && workspace.membership.role === "admin";
+  return workspace.permissions.canAccessAdmin && workspace.account.role === "admin";
 }
 
 function value(formData: FormData, key: string) {

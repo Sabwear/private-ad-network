@@ -10,13 +10,13 @@ test("health endpoint reports the running service without caching", async ({ req
 test("protected pages require a successful session", async ({ page }) => {
   await page.goto("/overview");
   await expect(page).toHaveURL(/\/login\?.*next=%2Foverview/);
-  await expect(page.getByRole("heading", { name: "Sign in to your workspace" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Sign in to the platform" })).toBeVisible();
 });
 
-test("the ad-media upload surface requires an authenticated workspace", async ({ page }) => {
+test("the ad-media upload surface requires an authenticated administrator", async ({ page }) => {
   await page.goto("/media");
   await expect(page).toHaveURL(/\/login\?.*next=%2Fmedia/);
-  await expect(page.getByRole("heading", { name: "Sign in to your workspace" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Sign in to the platform" })).toBeVisible();
 });
 
 test("stream monitor requires an authenticated administrator", async ({ page }) => {

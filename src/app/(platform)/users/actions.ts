@@ -11,20 +11,19 @@ import { createClient } from "@/lib/supabase/server";
 export type UserActionState = {
   status: "idle" | "error" | "success";
   message: string;
-  fieldErrors?: Partial<Record<"name" | "email" | "accountPurpose" | "accountStatus" | "membershipRole" | "reason", string>>;
+  fieldErrors?: Partial<Record<"name" | "email" | "accountType" | "accountStatus" | "reason", string>>;
 };
 
 const inviteSchema = z.object({
   name: z.string().trim().min(2, "Enter the user's full name.").max(100),
   email: z.string().trim().max(254).email("Enter a valid email address."),
-  accountPurpose: z.enum(["viewer", "business-owner"]),
+  accountType: z.enum(["viewer", "admin"]),
   reason: z.string().trim().min(5, "Record why access is being created.").max(300),
 });
 
 const accessSchema = z.object({
   userId: z.string().uuid(),
   accountStatus: z.enum(["pending", "active", "suspended"]),
-  membershipRole: z.enum(["owner", "staff", "moderator", "operations", "finance"]).nullable(),
   reason: z.string().trim().min(5, "Record why access is changing.").max(300),
 });
 
@@ -49,12 +48,12 @@ async function requirePlatformAdministrator() {
   return workspace.permissions.canProvisionOrganizations;
 }
 
-export async function inviteOwnerAccount(_state: UserActionState, formData: FormData): Promise<UserActionState> {
+export async function invitePlatformAccount(_state: UserActionState, formData: FormData): Promise<UserActionState> {
   if (!await requirePlatformAdministrator()) return { status: "error", message: "Platform administrator access is required." };
   const parsed = inviteSchema.safeParse({
     name: stringField(formData, "name"),
     email: stringField(formData, "email"),
-    accountPurpose: stringField(formData, "accountPurpose"),
+    accountType: stringField(formData, "accountType"),
     reason: stringField(formData, "reason"),
   });
   if (!parsed.success) return { status: "error", message: "Check the highlighted fields and try again.", fieldErrors: errorsFrom(parsed.error) };
@@ -64,7 +63,7 @@ export async function inviteOwnerAccount(_state: UserActionState, formData: Form
   const admin = createAdminClient();
   const { data, error } = await admin.auth.admin.inviteUserByEmail(parsed.data.email, {
     redirectTo: `${origin}/auth/callback?next=/reset-password&flow=invite`,
-    data: { full_name: parsed.data.name, access_source: "administrator_invite", account_purpose: parsed.data.accountPurpose },
+    data: { full_name: parsed.data.name, access_source: "administrator_invite", account_type: parsed.data.accountType },
   });
   if (error || !data.user) {
     const duplicate = error?.message.toLowerCase().includes("already") || error?.status === 422;
@@ -72,9 +71,10 @@ export async function inviteOwnerAccount(_state: UserActionState, formData: Form
   }
 
   const supabase = await createClient();
-  const { error: finalizeError } = await supabase.rpc("admin_finalize_user_invite", {
+  const { error: finalizeError } = await supabase.rpc("admin_finalize_platform_invite", {
     p_user_id: data.user.id,
     p_full_name: parsed.data.name,
+    p_platform_role: parsed.data.accountType,
     p_reason: parsed.data.reason,
   });
   if (finalizeError) {
@@ -82,31 +82,15 @@ export async function inviteOwnerAccount(_state: UserActionState, formData: Form
     return { status: "error", message: "The account was not finalized. Deploy the latest database migration and try again." };
   }
 
-  if (parsed.data.accountPurpose === "viewer") {
-    const { error: approvalError } = await supabase.rpc("admin_update_user_access", {
-      p_user_id: data.user.id,
-      p_account_status: "active",
-      p_membership_role: null,
-      p_reason: parsed.data.reason,
-    });
-    if (approvalError) {
-      await admin.auth.admin.deleteUser(data.user.id);
-      return { status: "error", message: "The approved viewer account could not be activated." };
-    }
-  }
-
   revalidatePath("/users");
-  revalidatePath("/business");
-  return { status: "success", message: `Invitation sent to ${parsed.data.email}. ${parsed.data.accountPurpose === "viewer" ? "The approved viewer can register stream activity after email setup." : "The owner remains pending until an administrator creates and assigns the business."}` };
+  return { status: "success", message: `Invitation sent to ${parsed.data.email}. ${parsed.data.accountType === "admin" ? "This account will manage the full platform after email setup." : "This account can identify itself while watching streams but cannot open the dashboard."}` };
 }
 
 export async function updateUserAccess(_state: UserActionState, formData: FormData): Promise<UserActionState> {
   if (!await requirePlatformAdministrator()) return { status: "error", message: "Platform administrator access is required." };
-  const roleValue = stringField(formData, "membershipRole");
   const parsed = accessSchema.safeParse({
     userId: stringField(formData, "userId"),
     accountStatus: stringField(formData, "accountStatus"),
-    membershipRole: roleValue || null,
     reason: stringField(formData, "reason"),
   });
   if (!parsed.success) return { status: "error", message: "Check the highlighted fields and try again.", fieldErrors: errorsFrom(parsed.error) };
@@ -119,18 +103,16 @@ export async function updateUserAccess(_state: UserActionState, formData: FormDa
   if (authError) return { status: "error", message: "Authentication access could not be updated. Try again." };
 
   const supabase = await createClient();
-  const { error } = await supabase.rpc("admin_update_user_access", {
+  const { error } = await supabase.rpc("admin_update_platform_user_access", {
     p_user_id: parsed.data.userId,
     p_account_status: parsed.data.accountStatus,
-    p_membership_role: parsed.data.membershipRole,
     p_reason: parsed.data.reason,
   });
   if (error) {
     await admin.auth.admin.updateUserById(parsed.data.userId, { ban_duration: previousBanDuration });
-    const ownerGuard = error.message.toLowerCase().includes("another active owner");
-    return { status: "error", message: ownerGuard ? "Assign another active owner before changing this owner's access." : "The access change could not be completed. Refresh and try again." };
+    return { status: "error", message: "The access change could not be completed. Refresh and try again." };
   }
 
   revalidatePath("/users");
-  return { status: "success", message: parsed.data.accountStatus === "suspended" ? "User access suspended and observed sessions revoked." : "User access and permissions updated." };
+  return { status: "success", message: parsed.data.accountStatus === "suspended" ? "Viewer access suspended and observed sessions revoked." : "Viewer access updated." };
 }

@@ -9,13 +9,14 @@
 - A PostgreSQL 17 migration defines the initial domain schema
 - A second migration adds profiles, platform administrators, audited organization provisioning, and location creation
 - A third migration adds audited organization/location editing, suspension controls, and location category exclusions
-- A fourth migration adds private hashed device activation/credential storage, tenant-scoped operational observations, secure pairing, heartbeats, and revocation
-- A fifth migration hardens the private media bucket and adds controlled upload preparation, submission, integrity metadata, administrator moderation, and audit records
-- A sixth migration adds administrator-controlled user access, tenant-aware suspension enforcement, and portal session observations
+- A fourth migration adds private hashed device activation/credential storage, operational observations, secure pairing, heartbeats, and revocation
+- Later media migrations harden the private bucket and add controlled upload preparation, resumable submission, integrity metadata, direct administrator approval, deletion, and audit records
+- User-access migrations add administrator/viewer accounts, suspension enforcement, and portal session observations
+- `20260817231040_admin_only_platform_model.sql` removes business-user assignments, disables tenant predicates, and enforces administrator-only management functions and read policies
 - A seventh migration adds durable media-processing jobs, worker-only claim/complete/fail functions, derivative storage access, retries, and approval gating
 - Every public application table has RLS enabled
 - Data API privileges are explicit; the anonymous role receives no table access
-- Private media storage has tenant-aware select/insert/update policies
+- Private media storage has administrator-only mutation policies and authorized player delivery
 - Campaigns read from Supabase after configuration and otherwise show demonstration data
 
 ## Create the hosted starter project
@@ -32,7 +33,7 @@ SUPABASE_SECRET_KEY=sb_secret_your_server_key
 STREAM_VIEWER_HASH_SECRET=replace_with_at_least_32_random_bytes
 ```
 
-The secret key is required only by the server-side owner invitation and authentication-access controls. Never place a secret or service-role key in a `NEXT_PUBLIC_` variable. Add it through the deployment provider's protected environment-variable settings. For Vercel, configure it under Project Settings > Environment Variables for Production, Preview, and Development as appropriate.
+The secret key is required only by server-side account invitations and protected service operations. Never place a secret or service-role key in a `NEXT_PUBLIC_` variable. Add it through the deployment provider's protected environment-variable settings. For Vercel, configure it under Project Settings > Environment Variables for Production, Preview, and Development as appropriate.
 
 ## Link and apply the migration
 
@@ -50,7 +51,7 @@ Do not include the seed file when pushing to production. It intentionally contai
 
 ## Bootstrap the first platform administrator
 
-The first administrator is the only manual SQL bootstrap. After that, organizations and owners are provisioned from the dedicated Business workspace with audit records.
+The first administrator is the only manual SQL bootstrap. After that, administrators create businesses and invite administrator or viewer accounts from the dashboard with audit records.
 
 1. Create and verify the administrator account through the application.
 2. Apply all database migrations.
@@ -62,7 +63,7 @@ set platform_role = 'admin', account_status = 'active'
 where lower(email) = lower('ADMIN_EMAIL');
 ```
 
-Sign out and sign back in. The administrator can create an owner invitation in Users, then select the verified pending account in Business, create its organization, and assign the owner. Business users cannot perform this operation.
+Sign out and sign back in. The administrator can create businesses independently and invite either another administrator or an approved viewer. Businesses are never assigned to accounts.
 
 ## Authentication configuration
 
@@ -100,12 +101,12 @@ Review the output and replace the starter hand-maintained `database.types.ts` im
 
 - Public tables are not automatically exposed
 - `anon` has no application-table privileges
-- `authenticated` gets only the operations needed by business users
-- Evidence, devices, wallets, ledger entries, and audit logs are read-only to business users
+- `authenticated` table access is constrained by administrator-only policies; viewer accounts have no dashboard data access
+- Evidence, devices, wallets, ledger entries, and audit logs are administrator-controlled
 - Server/service operations create device evidence and ledger settlements
-- Authorization uses memberships stored in the database, never user-editable metadata
+- Authorization uses the protected profile platform role, never user-editable authentication metadata
 - Platform administrator authority is stored in protected profile data, never user-editable metadata
-- Organization creation and owner assignment run in one transaction and produce database audit records
+- Business creation and wallet initialization run in one protected operation and produce database audit records
 - Organization and location edits require explicit authorization and an audit reason
 - Media paths begin with the organization's public UUID
 - Storage replacement is covered by SELECT, INSERT, and UPDATE policies

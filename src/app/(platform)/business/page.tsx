@@ -13,8 +13,8 @@ import { getStreamMonitorData } from "@/lib/repositories/stream-monitor";
 export const metadata = { title: "Business" };
 
 const onboardingFlow = [
-  { step: "1", title: "Create business", detail: "Verify the client and assign its accountable owner.", href: "#business-onboarding", icon: Building2 },
-  { step: "2", title: "Add locations", detail: "Configure campaign delivery venues and exclusions.", href: "/campaigns#locations", icon: MapPinned },
+  { step: "1", title: "Create business", detail: "Add the client as an administrator-managed network record.", href: "#business-onboarding", icon: Building2 },
+  { step: "2", title: "Add locations", detail: "Configure campaign delivery venues and exclusions.", href: "/campaigns#create-campaign", icon: MapPinned },
   { step: "3", title: "Pair screens", detail: "Assign each physical device to an active location.", href: "#screens", icon: MonitorPlay },
   { step: "4", title: "Approve media", detail: "Review creatives before they can enter a campaign.", href: "/media", icon: Clapperboard },
 ] as const;
@@ -31,7 +31,7 @@ export default async function BusinessPage() {
     <PageHeading
       eyebrow="Client network"
       title="Business"
-      description="Manage each business together with its owners, access, screens, stream connections, and current viewers."
+      description="Administrators centrally manage every business, screen, stream connection, credit rule, and current viewer."
       actions={<><span className={`data-source data-source-${data.source === "live" ? "supabase" : "setup"}`}>{data.source === "live" ? "Live registry" : "Setup required"}</span><Link className="button button-primary" href="#business-onboarding"><Plus size={17} /> Add business</Link></>}
     />
 

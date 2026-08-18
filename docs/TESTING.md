@@ -18,6 +18,10 @@ The browser suite currently verifies:
 - Non-disclosure for malformed private stream credentials
 - Browser security headers
 - Login usability on a phone-sized viewport
+- Administrator authentication required for business creation, media upload, monitoring, and viewer CSV reporting
+- Anonymous stream access does not require a business code
+- Viewer access validation rejects malformed requests without exposing credentials
+- Stream heartbeat and termination require a validated viewer cookie
 
 The following authenticated smoke checks were completed manually for the current beta build and should be automated next:
 
@@ -37,22 +41,22 @@ The following authenticated smoke checks were completed manually for the current
 
 The hosted beta also contains a removable demo dataset for authenticated workflow testing. Verify the Overview, Business, Locations, Screens, Media, Campaigns, Channels, and public stream pages before clearing it. Demo cleanup must require the acknowledgement, exact phrase, final confirmation dialog, administrator session, and server-side demo marker.
 
-Database migrations must be reviewed against the linked hosted project before deployment. Authorization coverage must continue to verify that ordinary accounts cannot create organizations, pending accounts cannot enter a workspace, owners are limited to their organization, and platform administrators alone can provision audited tenants.
+Database migrations must be reviewed against the hosted project before deployment. Authorization coverage must continue to verify that viewer accounts cannot enter or mutate the dashboard, businesses grant no user authority, anonymous stream playback remains available, and only active platform administrators can perform management operations.
 
 ## Required next test layers
 
 ### Hosted integration
 
-- Administrator invitation, account suspension, and live-session revocation
-- Business, location, and role isolation under row-level security
+- Administrator/viewer invitation, viewer suspension, and live-session revocation
+- Administrator-only business, location, campaign, media, channel, wallet, and monitoring mutations under row-level security
 - Pairing-code single use, expiry, credential suspension, and heartbeat idempotency
-- Private upload lifecycle, moderation boundaries, and worker retry/recovery
-- YouTube URL variants, duplicate prevention, rights enforcement, moderation boundaries, embed availability, declared-duration drift, and removal/unavailability recovery
+- Private upload lifecycle, direct administrator approval, deletion, and worker retry/recovery
+- YouTube URL variants, duplicate prevention, rights enforcement, direct administrator approval, embed availability, duration drift, and removal/unavailability recovery
 - Channel assignment isolation and access-key rotation
 - Business-logo upload/delete authorization, file limits, and overlay placement
 - Channel-overlay persistence and administrator-only in-player controls
 - Shared-timeline late join across independent viewers, authorized clock synchronization, repeated-loop rollover, background-tab recovery, drift correction, standby/resume, and unavailable-source retry
-- Header live-channel resolution for administrators, assigned businesses, and users with no visible channel
+- Header live-channel resolution for administrators and viewer-dashboard exclusion
 
 ### Device endurance
 

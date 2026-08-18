@@ -16,7 +16,7 @@ Business portal / Admin console (Next.js)
                    | HTTPS + session/RBAC
                    v
 Modular API (TypeScript)
-  - Identity & organizations
+  - Administrator identity & managed businesses
   - Devices
   - Media library
   - Campaigns & playlists
@@ -71,16 +71,17 @@ tests                Playwright beta boundary tests
 
 ## Module boundaries
 
-- Identity owns users, organizations, memberships, roles, and invitations.
+- Identity owns administrator/viewer accounts, status, invitations, and sessions. It does not assign businesses to users.
+- Businesses owns centrally managed business records and their settings. A business relationship never grants dashboard authority.
 - Devices owns activation, credentials, capabilities, health, commands, and suspension.
-- Media owns technical validation, storage metadata, derivatives, moderation, and rights declarations.
+- Media owns technical validation, storage metadata, derivatives, administrator approval state, and rights declarations.
 - Channels owns named streams, ordered media, bearer viewing links, and business assignments.
 - Campaigns owns budget intent, targeting, eligibility, frequency, and status.
 - Playlist owns deterministic selection and signed manifest versions.
 - Evidence owns device sessions/events, validation decisions, confidence, and fraud reasons.
 - Ledger owns wallets, holds, balanced entries, purchases, reversals, and reconciliation.
 - Reporting reads immutable facts and projections; it does not mutate financial or evidence state.
-- Administration coordinates moderation/review and records all privileged actions in audit logs.
+- Administration coordinates protected management actions and records privileged changes in audit logs.
 
 Modules communicate through application services and durable database facts, never by editing another module's tables directly.
 

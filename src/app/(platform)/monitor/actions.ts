@@ -9,7 +9,7 @@ export type MonitorActionState = { status: "idle" | "error" | "success"; message
 
 async function isPlatformAdmin() {
   const workspace = await getWorkspaceContext();
-  return workspace.membership.role === "admin" && workspace.permissions.canProvisionOrganizations;
+  return workspace.account.role === "admin" && workspace.permissions.canProvisionOrganizations;
 }
 
 function formValue(formData: FormData, name: string) {

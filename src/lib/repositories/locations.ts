@@ -1,6 +1,5 @@
 import "server-only";
 
-import type { WorkspaceContext } from "@/lib/auth/workspace";
 import { createClient } from "@/lib/supabase/server";
 
 export type LocationOrganizationOption = { id: number; name: string };
@@ -49,18 +48,13 @@ function operatingHoursDetails(value: unknown) {
   };
 }
 
-export async function getLocationManagementData(workspace: WorkspaceContext): Promise<LocationManagementData> {
+export async function getLocationManagementData(): Promise<LocationManagementData> {
   const supabase = await createClient();
-  let organizationsQuery = supabase.from("organizations").select("id,display_name").eq("status", "active").order("display_name");
-  let locationsQuery = supabase
+  const organizationsQuery = supabase.from("organizations").select("id,display_name").eq("status", "active").order("display_name");
+  const locationsQuery = supabase
     .from("locations")
     .select("id,public_id,organization_id,name,address,zone,category,traffic_band,status,operating_hours,category_exclusions,updated_at")
     .order("created_at", { ascending: false });
-
-  if (workspace.organization.id !== null) {
-    organizationsQuery = organizationsQuery.eq("id", workspace.organization.id);
-    locationsQuery = locationsQuery.eq("organization_id", workspace.organization.id);
-  }
 
   const [organizationsResult, locationsResult] = await Promise.all([organizationsQuery, locationsQuery]);
   const error = organizationsResult.error ?? locationsResult.error;

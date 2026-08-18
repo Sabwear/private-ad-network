@@ -69,14 +69,14 @@ export function LoginForm({ configured, initialState = emptyState, nextPath = "/
   return (
     <form className="auth-form" action={formAction} noValidate>
       <AuthServiceStatus configured={configured} />
-      <header><p className="eyebrow">Welcome back</p><h2>Sign in to your workspace</h2><p>Use your verified business email to continue.</p></header>
+      <header><p className="eyebrow">Welcome back</p><h2>Sign in to the platform</h2><p>Administrators manage the platform; approved viewers use their account only for registered stream viewing.</p></header>
       <FormMessage state={state} />
       <input type="hidden" name="next" value={nextPath} />
       <label htmlFor="email"><span>Email address</span><input id="email" name="email" type="email" autoComplete="email" placeholder="you@business.com" maxLength={254} defaultValue={state.values?.email} required aria-invalid={Boolean(state.fieldErrors?.email)} /><FieldError message={state.fieldErrors?.email} /></label>
       <PasswordField name="password" label="Password" autoComplete="current-password" error={state.fieldErrors?.password} />
       <div className="auth-form-row"><span>Secure cookie-based session</span><Link href="/forgot-password">Forgot password?</Link></div>
       <SubmitButton pending={pending} configured={configured}>Sign in</SubmitButton>
-      <p className="auth-switch">Access is invitation-only. Contact your network administrator.</p>
+      <p className="auth-switch">Accounts are invitation-only and controlled by a platform administrator.</p>
     </form>
   );
 }

@@ -1,6 +1,6 @@
 # API Contract
 
-Implemented web-player endpoints use base path `/api/v1`. Future native-player endpoints may move behind a dedicated `/v1` gateway. Portal actions require an authenticated user and organization role.
+Implemented web-player endpoints use base path `/api/v1`. Future native-player endpoints may move behind a dedicated `/v1` gateway. Portal actions require an active authenticated platform administrator.
 
 ## Device activation and health
 
@@ -14,7 +14,7 @@ Polls the activation state using the activation ID and provisional credential. A
 
 ### Portal action: claim pairing code
 
-An authenticated platform administrator or authorized organization operator assigns the code to an active location. The operation creates the device, binds its public key, activates its credential, and writes an audit record atomically.
+An authenticated platform administrator assigns the code to an active location. The operation creates the device, binds its public key, activates its credential, and writes an audit record atomically.
 
 ### `POST /v1/devices/token/refresh`
 
@@ -72,11 +72,10 @@ Required event fields:
 
 ## Portal
 
-- Media preparation is currently an authenticated server action that creates a draft asset and returns its tenant-scoped storage path.
+- Media preparation is an administrator-only server action that creates an asset for the selected business and returns its private storage path.
 - The browser uploads the MP4 directly to private object storage, avoiding application-server request-size, memory, and timeout limits on every supported host.
-- Media submission is a second authenticated action that verifies the object exists, records browser preflight metadata and checksum, accepts the rights declaration, and moves the asset to `in_review`.
-- Platform moderation records `approved` or `rejected`, requires a reason, and writes an audit record. Direct client updates to moderation state are denied.
-- `GET /api/v1/media/{assetId}/playback` authenticates the portal user, relies on tenant RLS for asset authorization, and redirects to a five-minute signed private-storage URL. The application server never proxies video bytes, so storage/CDN range delivery remains available without tying playback to the web host.
+- Media finalization verifies the object, records browser preflight metadata and checksum, accepts the rights declaration, and approves a valid administrator upload directly.
+- `GET /api/v1/media/{assetId}/playback` authenticates the administrator, enforces administrator RLS, and redirects to a five-minute signed private-storage URL. The application server never proxies video bytes, so storage/CDN range delivery remains available without tying playback to the web host.
 - `POST /v1/campaigns`
 - `POST /v1/campaigns/{id}/pause`
 - `POST /v1/campaigns/{id}/resume`
@@ -86,8 +85,8 @@ Required event fields:
 
 ## Administration
 
-- The `/channels` workspace creates and deletes streams, assigns businesses, copies viewer links, manages ordered approved media, and configures all stream information layers.
-- The `/business` workspace edits business identity/contact data, manages the public presentation logo, configures its overlay placement, and assigns approved business ads to channels.
+- The `/operations` workspace creates and handles streams, targets businesses, manages viewer links, controls ordered approved media, monitors live behavior, and configures stream presentation.
+- The `/business` workspace edits centrally managed business identity, schedule, contacts, branding, stream access, and per-business credit rules.
 
 - `POST /v1/admin/media/{id}/decision`
 - `POST /v1/admin/playbacks/{id}/review`

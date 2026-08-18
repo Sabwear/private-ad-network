@@ -3,13 +3,6 @@ import "server-only";
 import { createClient } from "@/lib/supabase/server";
 import { BUSINESS_LOGO_BUCKET } from "@/lib/storage/business-logo";
 
-export type PendingAccount = {
-  id: string;
-  email: string;
-  name: string;
-  createdAt: string;
-};
-
 export type OrganizationAdminRow = {
   id: number;
   publicId: string;
@@ -34,7 +27,6 @@ export type OrganizationAdminRow = {
   operatingOpensAt: string;
   operatingClosesAt: string;
   operatingTimeZone: string;
-  owner: string;
   locationCount: number;
   createdAt: string;
   updatedAt: string;
@@ -46,7 +38,6 @@ export type OrganizationAdminRow = {
 
 export type OrganizationAdminData = {
   source: "live" | "setup";
-  pendingAccounts: PendingAccount[];
   organizations: OrganizationAdminRow[];
   channels: Array<{ id: number; name: string; status: string }>;
 };
@@ -55,10 +46,8 @@ const setupErrorCodes = new Set(["PGRST204", "PGRST205", "42501", "42703", "42P0
 
 export async function getOrganizationAdminData(): Promise<OrganizationAdminData> {
   const supabase = await createClient();
-  const [profilesResult, organizationsResult, membershipsResult, locationsResult, brandingResult, streamSettingsResult, scheduleResult, channelsResult, channelAssignmentsResult, channelItemsResult, mediaResult, rotationsResult] = await Promise.all([
-    supabase.from("profiles").select("id,email,full_name,email_verified_at,account_status,platform_role,created_at").order("created_at", { ascending: true }),
+  const [organizationsResult, locationsResult, brandingResult, streamSettingsResult, scheduleResult, channelsResult, channelAssignmentsResult, channelItemsResult, mediaResult, rotationsResult] = await Promise.all([
     supabase.from("organizations").select("id,public_id,display_name,legal_name,category,status,created_at,updated_at").order("created_at", { ascending: false }),
-    supabase.from("organization_memberships").select("organization_id,user_id,role,status").eq("role", "owner").eq("status", "active"),
     supabase.from("locations").select("id,organization_id"),
     supabase.from("organizations").select("id,website_url,contact_email,contact_phone,logo_storage_path,logo_position,logo_size_percent"),
     supabase.from("organizations").select("id,stream_access_code,stream_access_code_expires_at,stream_earning_enabled,stream_earning_rate,ad_consumption_rate"),
@@ -70,15 +59,12 @@ export async function getOrganizationAdminData(): Promise<OrganizationAdminData>
     supabase.from("stream_access_code_rotations").select("organization_id,rotated_at,expires_at").order("rotated_at", { ascending: false }).limit(500),
   ]);
 
-  const error = profilesResult.error ?? organizationsResult.error ?? membershipsResult.error ?? locationsResult.error;
+  const error = organizationsResult.error ?? locationsResult.error;
   if (error) {
-    if (setupErrorCodes.has(error.code)) return { source: "setup", pendingAccounts: [], organizations: [], channels: [] };
+    if (setupErrorCodes.has(error.code)) return { source: "setup", organizations: [], channels: [] };
     throw new Error(`Unable to load organization administration: ${error.message}`);
   }
 
-  const profiles = profilesResult.data ?? [];
-  const profileById = new Map(profiles.map((profile) => [profile.id, profile]));
-  const ownerByOrganization = new Map((membershipsResult.data ?? []).map((membership) => [membership.organization_id, membership.user_id]));
   const locationCounts = new Map<number, number>();
   for (const location of locationsResult.data ?? []) {
     locationCounts.set(location.organization_id, (locationCounts.get(location.organization_id) ?? 0) + 1);
@@ -123,18 +109,8 @@ export async function getOrganizationAdminData(): Promise<OrganizationAdminData>
 
   return {
     source: "live",
-    pendingAccounts: profiles
-      .filter((profile) => profile.account_status === "pending" && profile.platform_role === "member" && profile.email_verified_at !== null)
-      .map((profile) => ({
-        id: profile.id,
-        email: profile.email,
-        name: profile.full_name ?? "Account holder",
-        createdAt: profile.created_at,
-      })),
     channels,
     organizations: (organizationsResult.data ?? []).map((organization) => {
-      const ownerId = ownerByOrganization.get(organization.id);
-      const ownerProfile = ownerId ? profileById.get(ownerId) : undefined;
       const branding = brandingByOrganization.get(organization.id);
       const streamSettings = streamSettingsByOrganization.get(organization.id);
       const schedule = scheduleByOrganization.get(organization.id);
@@ -162,7 +138,6 @@ export async function getOrganizationAdminData(): Promise<OrganizationAdminData>
         operatingOpensAt: schedule?.operating_opens_at?.slice(0, 5) ?? "09:00",
         operatingClosesAt: schedule?.operating_closes_at?.slice(0, 5) ?? "18:00",
         operatingTimeZone: schedule?.operating_time_zone ?? "Africa/Casablanca",
-        owner: ownerProfile?.email ?? "Owner not assigned",
         locationCount: locationCounts.get(organization.id) ?? 0,
         createdAt: organization.created_at,
         updatedAt: organization.updated_at,

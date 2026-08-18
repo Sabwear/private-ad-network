@@ -48,9 +48,9 @@ Next.js App Router with TypeScript supports the business portal and admin consol
 
 No cameras, microphones, facial recognition, or demographic inference. The platform proves broadcasting behavior rather than attention or audience identity.
 
-## ADR-009 - Administrator-managed organizations
+## ADR-009 - Administrator-managed organizations (superseded by ADR-015)
 
-**Status:** Accepted
+**Status:** Superseded
 
 Accounts and business organizations have separate lifecycles. A user may create and verify an account, but only a protected platform administrator can create an organization and assign its first owner. Unassigned accounts cannot enter the business workspace. Organization provisioning, membership assignment, wallet initialization, and account activation execute atomically and are audited at the database boundary.
 
@@ -78,11 +78,17 @@ Business logos are public presentation assets with administrator-only mutation. 
 
 A browser viewer joins a shared, continuously advancing pre-recorded loop derived from a database epoch and authoritative media durations. Reloading or opening another viewer does not restart the channel. The player periodically corrects drift and recovers after background suspension. The administrator may place the broadcast on standby; re-enabling it starts a new epoch. No media bytes are emitted when there are no viewers because continuity is represented by time, not by a wasteful always-connected server encoder.
 
-## ADR-014 - External YouTube media remains a moderated reference
+## ADR-014 - External YouTube media remains a validated reference
 
 **Status:** Accepted
 
-The media library supports private MP4 uploads and constrained YouTube references. A YouTube submission stores its canonical video ID and declared exact duration; it does not copy or rehost third-party bytes. It follows the same business ownership, rights declaration, moderation, channel assignment, and synchronized-loop rules as uploaded media. Playback uses YouTube's privacy-enhanced embed domain and a dedicated player adapter. External availability, embedding permission, and duration accuracy must be checked during moderation because they remain outside platform control.
+The media library supports private MP4 uploads and constrained YouTube references. A YouTube submission stores its canonical video ID and declared duration; it does not copy or rehost third-party bytes. It follows the same business association, rights declaration, administrator validation, channel assignment, and synchronized-loop rules as uploaded media. Playback uses YouTube's privacy-enhanced embed domain and a dedicated player adapter. External availability and embedding permission remain outside platform control.
+
+## ADR-015 - The management plane is administrator-only
+
+**Status:** Accepted
+
+The product has one management authority: active platform administrators. Businesses are managed domain records and never user workspaces or account assignments. Organization memberships and business roles are disabled. Non-admin accounts are approved viewers used only when a stream viewer chooses registered identity; they receive no dashboard routes, reads, or mutations. Administrator media submissions approve directly after validation because there is no separate reviewer role. This rule applies consistently at the application layout, server action, repository, privileged function, RLS, navigation, and reporting boundaries.
 
 ## Open decisions
 

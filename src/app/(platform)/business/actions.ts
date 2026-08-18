@@ -9,7 +9,7 @@ import { BUSINESS_LOGO_BUCKET } from "@/lib/storage/business-logo";
 export type OrganizationActionState = {
   status: "idle" | "error" | "success";
   message: string;
-  fieldErrors?: Partial<Record<"displayName" | "legalName" | "category" | "ownerUserId" | "reason", string>>;
+  fieldErrors?: Partial<Record<"displayName" | "legalName" | "category" | "reason", string>>;
 };
 
 export type OrganizationUpdateActionState = {
@@ -24,7 +24,6 @@ const organizationSchema = z.object({
   displayName: z.string().trim().min(2, "Enter the business display name.").max(120),
   legalName: z.string().trim().max(160),
   category: z.string().trim().min(2, "Select a business category.").max(80),
-  ownerUserId: z.string().uuid("Select a valid owner account."),
   reason: z.string().trim().min(5, "Record why this business is being created.").max(300),
 });
 
@@ -81,7 +80,6 @@ export async function createOrganization(
     displayName: stringField(formData, "displayName"),
     legalName: stringField(formData, "legalName"),
     category: stringField(formData, "category"),
-    ownerUserId: stringField(formData, "ownerUserId"),
     reason: stringField(formData, "reason"),
   });
 
@@ -90,30 +88,26 @@ export async function createOrganization(
   }
 
   const supabase = await createClient();
-  const { error } = await supabase.rpc("admin_create_organization", {
+  const { error } = await supabase.rpc("admin_create_business", {
     p_display_name: parsed.data.displayName,
     p_legal_name: parsed.data.legalName,
     p_category: parsed.data.category,
-    p_owner_user_id: parsed.data.ownerUserId,
     p_reason: parsed.data.reason,
   });
 
   if (error) {
     const setupMissing = error.code === "PGRST202" || error.code === "PGRST205";
-    const ownerUnavailable = error.code === "23505" || error.code === "23514";
     return {
       status: "error",
       message: setupMissing
         ? "Business provisioning is not available until the database migration is deployed."
-        : ownerUnavailable
-          ? "That account is no longer available for assignment. Refresh and choose another account."
-          : "The business could not be created. Please review the details and try again.",
+        : "The business could not be created. Please review the details and try again.",
     };
   }
 
   revalidatePath("/business");
   revalidatePath("/campaigns");
-  return { status: "success", message: "Business created and owner access activated." };
+  return { status: "success", message: "Business created under central administrator management." };
 }
 
 export async function updateOrganization(
@@ -271,8 +265,7 @@ export async function updateBusinessStreamSettings(
     consumptionRate: stringField(formData, "consumptionRate"),
   });
   if (!parsed.success) return { status: "error", message: "Enter valid non-negative credit rates." };
-  const ownsOrganization = workspace.organization.id === parsed.data.organizationId && workspace.permissions.canManageFinance;
-  if (!workspace.permissions.canProvisionOrganizations && !ownsOrganization) return { status: "error", message: "Credit settings access is required." };
+  if (!workspace.permissions.canProvisionOrganizations) return { status: "error", message: "Platform administrator access is required." };
 
   const supabase = await createClient();
   const { error } = await supabase.rpc("update_stream_credit_settings", {
@@ -293,9 +286,8 @@ export async function regenerateBusinessStreamCode(
 ): Promise<StreamCreditActionState> {
   const workspace = await getWorkspaceContext();
   const organizationId = Number(stringField(formData, "organizationId"));
-  const ownsOrganization = workspace.organization.id === organizationId && workspace.permissions.canManageOrganization;
-  if (!Number.isInteger(organizationId) || organizationId <= 0 || (!workspace.permissions.canProvisionOrganizations && !ownsOrganization)) {
-    return { status: "error", message: "Business owner access is required." };
+  if (!Number.isInteger(organizationId) || organizationId <= 0 || !workspace.permissions.canProvisionOrganizations) {
+    return { status: "error", message: "Platform administrator access is required." };
   }
   const supabase = await createClient();
   const { error } = await supabase.rpc("regenerate_stream_access_code", { p_organization_id: organizationId });

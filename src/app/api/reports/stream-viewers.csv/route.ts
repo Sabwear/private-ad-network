@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { getBusinessStreamProfile } from "@/lib/repositories/business-profile";
+import { getStreamMonitorData } from "@/lib/repositories/stream-monitor";
 
 const filterSchema = z.object({
   mode: z.enum(["all", "anonymous", "registered"]).default("all"),
@@ -22,18 +22,23 @@ export async function GET(request: Request) {
   });
   if (!parsed.success) return NextResponse.json({ error: "Invalid report filters" }, { status: 400 });
 
-  const profile = await getBusinessStreamProfile({
-    mode: parsed.data.mode,
-    activity: parsed.data.activity,
-    channelId: parsed.data.channel === "" ? null : parsed.data.channel,
-  }, 5000);
-  if (!profile) return NextResponse.json({ error: "Business report access is required" }, { status: 403 });
+  const monitor = await getStreamMonitorData(168);
+  if (monitor.source !== "live") {
+    return NextResponse.json({ error: monitor.message ?? "Platform administrator report access is required" }, { status: 403 });
+  }
+
+  const viewers = monitor.viewers.filter((viewer) => {
+    if (parsed.data.mode !== "all" && viewer.mode !== parsed.data.mode) return false;
+    if (parsed.data.activity === "live" && !viewer.active) return false;
+    if (parsed.data.activity === "ended" && viewer.active) return false;
+    return parsed.data.channel === "" || viewer.channelId === parsed.data.channel;
+  });
 
   const headings = ["Viewer", "Email", "Identity mode", "Status", "Channel", "Session started", "Last active", "Verified seconds", "Earned credits", "Consumed credits", "Rejected events"];
-  const rows = profile.viewers.map((viewer) => [
-    viewer.name, viewer.email, viewer.mode, viewer.status, viewer.channel,
-    viewer.createdAt, viewer.lastActivityAt, viewer.verifiedSeconds,
-    viewer.earnedCredits, viewer.consumedCredits, viewer.rejectedEvents,
+  const rows = viewers.map((viewer) => [
+    viewer.name, viewer.email ?? "", viewer.mode, viewer.active ? "live" : "ended", viewer.channel,
+    viewer.startedAt, viewer.lastActivityAt, viewer.verifiedSeconds,
+    viewer.creditsEarned, viewer.creditsSpent, viewer.rejectedEvents,
   ]);
   const csv = [headings, ...rows].map((row) => row.map(csvCell).join(",")).join("\r\n");
   const date = new Date().toISOString().slice(0, 10);

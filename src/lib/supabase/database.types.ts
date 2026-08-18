@@ -293,6 +293,13 @@ export type Database = {
         created_by: string | null;
         created_at: string;
       }>;
+      campaign_target_locations: Table<{
+        id: number;
+        campaign_id: number;
+        location_id: number;
+        created_by: string | null;
+        created_at: string;
+      }>;
       playback_sessions: Table<{
         id: number;
         playback_id: string;
@@ -390,6 +397,30 @@ export type Database = {
         };
         Returns: string;
       };
+      create_and_publish_campaign: {
+        Args: {
+          p_organization_id: number;
+          p_name: string;
+          p_media_asset_id: number;
+          p_starts_at: string;
+          p_ends_at: string;
+          p_budget_credits: number;
+          p_target_location_ids: number[];
+        };
+        Returns: string;
+      };
+      update_and_publish_campaign: {
+        Args: {
+          p_campaign_public_id: string;
+          p_name: string;
+          p_media_asset_id: number;
+          p_starts_at: string;
+          p_ends_at: string;
+          p_budget_credits: number;
+          p_target_location_ids: number[];
+        };
+        Returns: string;
+      };
       update_campaign_draft: {
         Args: {
           p_campaign_public_id: string;
@@ -417,6 +448,23 @@ export type Database = {
           p_reason: string;
         };
         Returns: number;
+      };
+      admin_create_business: {
+        Args: {
+          p_display_name: string;
+          p_legal_name: string;
+          p_category: string;
+          p_reason: string;
+        };
+        Returns: number;
+      };
+      admin_finalize_platform_invite: {
+        Args: { p_user_id: string; p_full_name: string; p_platform_role: string; p_reason: string };
+        Returns: undefined;
+      };
+      admin_update_platform_user_access: {
+        Args: { p_user_id: string; p_account_status: string; p_reason: string };
+        Returns: undefined;
       };
       admin_finalize_user_invite: {
         Args: { p_user_id: string; p_full_name: string; p_reason: string };

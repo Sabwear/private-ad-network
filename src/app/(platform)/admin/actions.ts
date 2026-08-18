@@ -9,7 +9,7 @@ export type DemoCleanupState = { status: "idle" | "error" | "success"; message: 
 
 export async function clearDemoData(_state: DemoCleanupState, formData: FormData): Promise<DemoCleanupState> {
   const workspace = await getWorkspaceContext();
-  if (!workspace.permissions.canProvisionOrganizations || workspace.membership.role !== "admin") {
+  if (!workspace.permissions.canProvisionOrganizations || workspace.account.role !== "admin") {
     return { status: "error", message: "Platform administrator access is required." };
   }
   if (formData.get("acknowledged") !== "yes" || formData.get("confirmation") !== "DELETE DEMO DATA") {

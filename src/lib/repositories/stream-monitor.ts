@@ -129,7 +129,7 @@ function emptyMonitor(range: MonitorRange, source: "setup" | "error", message: s
 
 export async function getStreamMonitorData(range: MonitorRange): Promise<StreamMonitorData> {
   const workspace = await getWorkspaceContext();
-  if (workspace.membership.role !== "admin") return emptyMonitor(range, "error", "Platform administrator access is required.");
+  if (workspace.account.role !== "admin") return emptyMonitor(range, "error", "Platform administrator access is required.");
 
   const supabase = await createClient();
   const started = performance.now();
