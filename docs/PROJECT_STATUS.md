@@ -26,6 +26,7 @@ The portal is suitable for controlled administrator testing. It is not yet ready
 - Platform-wide locations, screens, channels, media, campaigns, wallets, user sessions, and monitoring
 - Locations and targeting rules embedded in campaign configuration
 - Channel link management, business targeting, playlist management, centralized Operations video controls, configurable overlays/progress/accent, and synchronized server-clock playback
+- Stable compatibility redirects from singular Operation and the explicit channel-settings path to the Operations channel controls
 - Dedicated Monitor workspace with viewers, geography, uptime, channels, credit movement, database/runtime status, alerts, handling controls, and accepted proof-of-play evidence
 
 ### Media and campaigns
@@ -58,7 +59,7 @@ The portal is suitable for controlled administrator testing. It is not yet ready
 - ESLint: passed
 - Next.js production build: passed
 - Media processor checks: 3 passed
-- Playwright end-to-end suite: 12 passed
+- Playwright end-to-end suite: 13 passed
 - Git diff whitespace validation: passed
 
 ## Known gaps before external beta

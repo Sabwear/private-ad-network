@@ -23,6 +23,7 @@ The browser suite currently verifies:
 - Viewer access validation rejects malformed requests without exposing credentials
 - Stream heartbeat and termination require a validated viewer cookie
 - Dedicated Monitor authentication and legacy Proof URL compatibility
+- Operation and channel-settings compatibility paths redirect through the protected Operations route
 
 The following authenticated smoke checks were completed manually for the current beta build and should be automated next:
 

@@ -24,6 +24,14 @@ test("stream monitor requires an authenticated administrator", async ({ page }) 
   await expect(page).toHaveURL(/\/login\?.*next=%2Fmonitor/);
 });
 
+test("operation compatibility paths never fall through to the 404 page", async ({ page }) => {
+  for (const path of ["/operation", "/operations/channel-settings"]) {
+    await page.goto(path);
+    await expect(page).toHaveURL(new RegExp(`/login\\?.*next=${encodeURIComponent(path)}`));
+    await expect(page.getByRole("heading", { name: "This part of the network is not connected yet." })).toHaveCount(0);
+  }
+});
+
 test("public signup is invitation-only", async ({ page }) => {
   await page.goto("/signup");
   await expect(page).toHaveURL(/\/login\?message=invitation-required/);
