@@ -73,9 +73,11 @@ tests                Playwright beta boundary tests
 
 - Identity owns administrator/viewer accounts, status, invitations, and sessions. It does not assign businesses to users.
 - Businesses owns centrally managed business records and their settings. A business relationship never grants dashboard authority.
+- Businesses owns recurring local-time busy periods; settlement reads the host venue's active multiplier without changing its earning rate.
 - Devices owns activation, credentials, capabilities, health, commands, and suspension.
 - Media owns technical validation, storage metadata, derivatives, administrator approval state, and rights declarations.
 - Channels owns named streams, ordered media, bearer viewing links, and business assignments.
+- Channel playlist reads isolate eligibility by advertiser, so an exhausted wallet removes only that advertiser's media from a fresh loop.
 - Campaigns owns budget intent, targeting, eligibility, frequency, and status.
 - Playlist owns deterministic selection and signed manifest versions.
 - Evidence owns device sessions/events, validation decisions, confidence, and fraud reasons.

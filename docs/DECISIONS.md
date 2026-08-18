@@ -90,6 +90,12 @@ The media library supports private MP4 uploads and constrained YouTube reference
 
 The product has one management authority: active platform administrators. Businesses are managed domain records and never user workspaces or account assignments. Organization memberships and business roles are disabled. Non-admin accounts are approved viewers used only when a stream viewer chooses registered identity; they receive no dashboard routes, reads, or mutations. Administrator media submissions approve directly after validation because there is no separate reviewer role. This rule applies consistently at the application layout, server action, repository, privileged function, RLS, navigation, and reporting boundaries.
 
+## ADR-016 - Busy-hour pricing belongs to the host venue
+
+**Status:** Accepted
+
+Recurring busy periods use the host business's operating timezone and multiply only advertiser credit consumption for accepted playback. Host earning remains at its configured rate. The multiplier is captured in immutable proof evidence. Eligibility is isolated by advertiser: insufficient credit removes that advertiser's media from newly built playlists without pausing the shared channel or changing unrelated campaign status.
+
 ## Open decisions
 
 - Final product/brand name

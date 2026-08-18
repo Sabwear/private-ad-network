@@ -34,7 +34,7 @@ Email/password sign-up, confirmation, sign-in, password recovery, and secure sig
 
 The dashboard is a single centrally administered platform. Only active platform administrators can enter it or mutate businesses, campaigns, media, locations, screens, channels, stream operations, users, wallets, and credit settings. Businesses are managed records and are never assigned to users. Non-admin accounts are approved viewers used only for optional registered stream identity; anonymous playback remains available from valid stream links.
 
-Administrators create and publish campaigns with approved media, business targets, locations, dates, budgets, delivery limits, and targeting rules. Finance settlement and verified physical-device proof remain gated until their backend services and acceptance tests are complete.
+Administrators create and publish campaigns with approved media, business targets, locations, dates, budgets, delivery limits, and targeting rules. A host business can define recurring busy periods that multiply advertiser consumption during valuable local-time windows. If one advertiser runs out of spendable credit, only its ads leave fresh playlists; the channel and other campaigns continue. Physical-device proof and financial settlement remain gated until their backend services and acceptance tests are complete.
 
 ## Database migrations
 
@@ -59,7 +59,7 @@ docker build -f workers/media-processor/Dockerfile -t loopline-media-processor .
 
 The worker requires `SUPABASE_URL` and the server-only `SUPABASE_SECRET_KEY`. FFmpeg and FFprobe are included in the container; the secret must be stored in the worker host's protected environment settings.
 
-Uploaded media jobs also generate adaptive 720p and 480p HLS renditions. The media library accepts either a private MP4 upload or a supported YouTube URL. Administrator submissions require a rights declaration and technical validation, then approve directly without a second review queue. Platform administrators manage continuous streams from `/operations`, target businesses, add approved media, and copy or change the protected viewer URL. Each browser channel maintains one server-clock timeline, so every viewer joins the current point in the loop instead of restarting media on page load; an administrator can place that timeline on standby from channel handling or in-player settings. The first seeded stream is `Primary Network Channel`; the schema and interface support additional channels without changing the player contract.
+Uploaded media jobs also generate adaptive 720p and 480p HLS renditions. The media library accepts either a private MP4 upload or a supported YouTube URL. Administrator submissions require a rights declaration and technical validation, then approve directly without a second review queue. Platform administrators manage continuous streams from `/operations`, target businesses, add approved media, and copy or change the protected viewer URL. Live telemetry and accepted proof-of-play evidence are consolidated under `/monitor`. Each browser channel maintains one server-clock timeline, so every viewer joins the current point in the loop instead of restarting media on page load; an administrator can place that timeline on standby from channel handling or in-player settings. The first seeded stream is `Primary Network Channel`; the schema and interface support additional channels without changing the player contract.
 
 ## Operations
 

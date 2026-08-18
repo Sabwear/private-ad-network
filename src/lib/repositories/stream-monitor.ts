@@ -1,9 +1,26 @@
 import "server-only";
 
 import { getWorkspaceContext } from "@/lib/auth/workspace";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
 export type MonitorRange = 1 | 6 | 24 | 168;
+
+export type ProofOfPlayEvent = {
+  id: number;
+  eventKey: string;
+  createdAt: string;
+  channel: string;
+  asset: string;
+  advertiser: string;
+  host: string;
+  verifiedSeconds: number;
+  consumedCredits: number;
+  earnedCredits: number;
+  busyMultiplier: number;
+};
+
+export type ProofOfPlayData = { source: "live" | "setup"; events: ProofOfPlayEvent[] };
 
 export type StreamMonitorSeriesPoint = {
   at: string;
@@ -186,4 +203,47 @@ export async function getStreamMonitorData(range: MonitorRange): Promise<StreamM
     runtime: { status: "online", environment: process.env.VERCEL_ENV ?? process.env.NODE_ENV ?? "local", version: process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) ?? "local", instanceUptimeSeconds: process.uptime(), memoryMegabytes: memory.rss / 1_048_576 },
     summary, series, channels, locations, viewers, failures, alerts, message: null,
   };
+}
+
+export async function getProofOfPlayData(range: MonitorRange): Promise<ProofOfPlayData> {
+  const workspace = await getWorkspaceContext();
+  if (workspace.account.role !== "admin") return { source: "setup", events: [] };
+  const supabase = createAdminClient();
+  const since = new Date(Date.now() - range * 3_600_000).toISOString();
+  const { data: events, error } = await supabase.from("stream_credit_events")
+    .select("id,event_key,viewer_session_id,media_asset_id,host_organization_id,advertiser_organization_id,verified_seconds,earned_credits,consumed_credits,evidence,created_at")
+    .eq("validation_result", "accepted").gte("created_at", since).order("created_at", { ascending: false }).limit(50);
+  if (error) return { source: "setup", events: [] };
+
+  const sessionIds = [...new Set((events ?? []).map((event) => event.viewer_session_id))];
+  const assetIds = [...new Set((events ?? []).map((event) => event.media_asset_id))];
+  const organizationIds = [...new Set((events ?? []).flatMap((event) => [event.advertiser_organization_id, event.host_organization_id].filter((id): id is number => id !== null)))];
+  const [{ data: sessions }, { data: assets }, { data: organizations }] = await Promise.all([
+    sessionIds.length ? supabase.from("stream_viewer_sessions").select("id,channel_id").in("id", sessionIds) : Promise.resolve({ data: [] }),
+    assetIds.length ? supabase.from("media_assets").select("id,name").in("id", assetIds) : Promise.resolve({ data: [] }),
+    organizationIds.length ? supabase.from("organizations").select("id,display_name").in("id", organizationIds) : Promise.resolve({ data: [] }),
+  ]);
+  const channelIds = [...new Set((sessions ?? []).map((session) => session.channel_id))];
+  const { data: channels } = channelIds.length ? await supabase.from("streaming_channels").select("id,name").in("id", channelIds) : { data: [] };
+  const sessionChannels = new Map((sessions ?? []).map((session) => [session.id, session.channel_id]));
+  const channelNames = new Map((channels ?? []).map((channel) => [channel.id, channel.name]));
+  const assetNames = new Map((assets ?? []).map((asset) => [asset.id, asset.name]));
+  const organizationNames = new Map((organizations ?? []).map((organization) => [organization.id, organization.display_name]));
+
+  return { source: "live", events: (events ?? []).map((event) => {
+    const evidence = record(event.evidence);
+    return {
+      id: event.id,
+      eventKey: event.event_key,
+      createdAt: event.created_at,
+      channel: channelNames.get(sessionChannels.get(event.viewer_session_id) ?? -1) ?? "Channel",
+      asset: assetNames.get(event.media_asset_id) ?? "Media",
+      advertiser: organizationNames.get(event.advertiser_organization_id) ?? "Advertiser",
+      host: event.host_organization_id ? organizationNames.get(event.host_organization_id) ?? "Host business" : "Anonymous stream",
+      verifiedSeconds: Number(event.verified_seconds),
+      consumedCredits: Number(event.consumed_credits),
+      earnedCredits: Number(event.earned_credits),
+      busyMultiplier: Math.max(1, numeric(evidence.busyMultiplier) || 1),
+    };
+  }) };
 }

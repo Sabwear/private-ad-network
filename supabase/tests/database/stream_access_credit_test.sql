@@ -2,11 +2,12 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(32);
+select plan(36);
 
 select has_table('public', 'stream_viewer_sessions', 'viewer sessions table exists');
 select has_table('public', 'stream_credit_events', 'credit evidence table exists');
 select has_table('public', 'stream_access_code_rotations', 'code rotation audit table exists');
+select has_table('public', 'organization_busy_periods', 'business busy periods table exists');
 
 select has_column('public', 'organizations', 'stream_access_code', 'business access code exists');
 select has_column('public', 'organizations', 'stream_access_code_expires_at', 'access code expiry exists');
@@ -45,6 +46,10 @@ select ok(
 select ok(
   to_regprocedure('public.admin_end_stream_viewer_session(uuid,text)') is not null,
   'audited viewer termination function exists'
+);
+select ok(
+  to_regprocedure('public.admin_replace_business_busy_periods(bigint,jsonb,text)') is not null,
+  'audited busy-period replacement function exists'
 );
 
 select is(
@@ -96,6 +101,16 @@ select is(
   has_function_privilege('authenticated', 'public.get_stream_monitor_snapshot(integer)', 'EXECUTE'),
   true,
   'authenticated administrators can request the guarded monitor snapshot'
+);
+select is(
+  has_function_privilege('anon', 'public.admin_replace_business_busy_periods(bigint,jsonb,text)', 'EXECUTE'),
+  false,
+  'anonymous users cannot change business busy periods'
+);
+select is(
+  has_function_privilege('authenticated', 'public.admin_replace_business_busy_periods(bigint,jsonb,text)', 'EXECUTE'),
+  true,
+  'authenticated administrators can request busy-period changes'
 );
 
 select * from finish();

@@ -21,12 +21,12 @@ The portal is suitable for controlled administrator testing. It is not yet ready
 
 ### Administration and business operations
 
-- Administrator-only business creation, profile editing, schedules, suspension, branding, stream codes, earning toggles, and per-business earn/spend rates
+- Administrator-only business creation, profile editing, schedules, recurring busy-hour spend multipliers, suspension, branding, stream codes, earning toggles, and per-business earn/spend rates
 - Administrator-created admin or viewer accounts; public registration remains approval-controlled
 - Platform-wide locations, screens, channels, media, campaigns, wallets, user sessions, and monitoring
 - Locations and targeting rules embedded in campaign configuration
 - Channel link management, business targeting, playlist management, overlay controls, and synchronized server-clock playback
-- Stream operations dashboard with viewers, geography, uptime, channels, credit movement, database/runtime status, alerts, and handling controls
+- Dedicated Monitor workspace with viewers, geography, uptime, channels, credit movement, database/runtime status, alerts, handling controls, and accepted proof-of-play evidence
 
 ### Media and campaigns
 
@@ -42,10 +42,11 @@ The portal is suitable for controlled administrator testing. It is not yet ready
 - Optional login control opens the registered-viewer modal; dismissing or ignoring it never blocks playback
 - Registered viewers use administrator-approved accounts
 - Viewer sessions, locations, verified seconds, rejected events, and credit movement feed administrator monitoring and CSV export
+- Host-venue busy periods multiply advertiser consumption in local time and are captured in evidence; exhausted advertisers are removed individually without pausing channels or other campaigns
 
 ## Database and deployment state
 
-- Hosted migrations are applied through `20260817231040_admin_only_platform_model.sql`.
+- Hosted migrations are applied through `20260817231040_admin_only_platform_model.sql`; the busy-hours and isolated-delivery migration is pending deployment.
 - Production verification on 2026-08-18: one admin, zero organization memberships, tenant helpers disabled, three new admin functions installed, and admin read policies present.
 - The local Supabase CLI is not linked; migrations were applied and verified through the authenticated hosted SQL editor.
 - Vercel remains the web host. The media worker requires a separate long-running worker host.

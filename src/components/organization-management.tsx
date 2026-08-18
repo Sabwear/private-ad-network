@@ -4,6 +4,7 @@ import { Building2, CheckCircle2, LoaderCircle, Plus, Settings2, ShieldCheck } f
 import { useActionState } from "react";
 import { createOrganization, type OrganizationActionState, type OrganizationUpdateActionState, updateOrganization } from "@/app/(platform)/business/actions";
 import { BusinessChannelAds } from "@/components/business-channel-ads";
+import { BusinessBusyHours } from "@/components/business-busy-hours";
 import { BusinessLogoUploader } from "@/components/business-logo-uploader";
 import { BusinessStreamAccess } from "@/components/business-stream-access";
 import { StatusPill } from "@/components/status-pill";
@@ -61,6 +62,7 @@ function OrganizationEditor({ organization, channels }: { organization: Organiza
         <label><span>Change reason</span><textarea name="reason" rows={2} maxLength={300} required placeholder="Document the business verification or suspension reason." aria-invalid={Boolean(state.fieldErrors?.reason)} /><FieldError message={state.fieldErrors?.reason} /></label>
         <button className="button button-primary" type="submit" disabled={pending}>{pending ? <LoaderCircle className="auth-spinner" size={16} /> : <ShieldCheck size={16} />}{pending ? "Saving…" : "Save business information"}</button>
       </form>
+      <BusinessBusyHours organizationId={organization.id} periods={organization.busyPeriods} timeZone={organization.operatingTimeZone} />
       <BusinessLogoUploader organizationId={organization.id} organizationPublicId={organization.publicId} logoUrl={organization.logoUrl} />
       <BusinessStreamAccess organizationId={organization.id} accessCode={organization.streamAccessCode} accessCodeExpiresAt={organization.streamAccessCodeExpiresAt} earningEnabled={organization.streamEarningEnabled} earningRate={organization.streamEarningRate} consumptionRate={organization.adConsumptionRate} channels={organization.streamChannels} rotations={organization.streamCodeRotations} />
       <BusinessChannelAds organization={organization} channels={channels} />

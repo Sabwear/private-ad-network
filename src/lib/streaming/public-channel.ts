@@ -16,6 +16,19 @@ export type PublicChannelStream = {
   items: Array<{ id: string; name: string; sourceType: "upload" | "youtube"; youtubeVideoId: string | null; durationMs: number; hlsUrl: string | null; fallbackUrl: string | null; advertiserName: string; logoUrl: string | null; logoPosition: string; logoSizePercent: number }>;
 };
 
+function currentBusyMultiplier(host: { operating_time_zone: string; operating_start_date: string | null; operating_end_date: string | null; operating_days: string[]; operating_opens_at: string; operating_closes_at: string } | null, periods: Array<{ day_of_week: string; starts_at: string; ends_at: string; consumption_multiplier: number }>) {
+  if (!host) return 1;
+  const parts = new Intl.DateTimeFormat("en-US", { timeZone: host.operating_time_zone, weekday: "short", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).formatToParts(new Date());
+  const value = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  const day = value.weekday?.toLowerCase();
+  const time = `${value.hour}:${value.minute}`;
+  const date = `${value.year}-${value.month}-${value.day}`;
+  const open = Boolean(day && host.operating_days.includes(day) && (!host.operating_start_date || date >= host.operating_start_date) && (!host.operating_end_date || date <= host.operating_end_date) && time >= host.operating_opens_at.slice(0, 5) && time < host.operating_closes_at.slice(0, 5));
+  if (!open) return 1;
+  return periods.filter((period) => period.day_of_week === day && period.starts_at.slice(0, 5) <= time && period.ends_at.slice(0, 5) > time)
+    .reduce((peak, period) => Math.max(peak, Number(period.consumption_multiplier)), 1);
+}
+
 export const getPublicChannelStream = cache(async (channelPublicId: string, accessKey: string, viewerToken: string): Promise<PublicChannelStream | null> => {
   const access = await authorizeChannel(channelPublicId, accessKey, viewerToken);
   if (!access) return null;
@@ -24,10 +37,14 @@ export const getPublicChannelStream = cache(async (channelPublicId: string, acce
   const { data: assets } = assetIds.length ? await access.admin.from("media_assets").select("id,public_id,organization_id,name,source_type,external_id,duration_ms,hls_master_storage_path").in("id", assetIds).eq("moderation_status", "approved").eq("processing_status", "ready") : { data: [] };
   const assetsById = new Map((assets ?? []).map((asset) => [asset.id, asset]));
   const organizationIds = [...new Set((assets ?? []).map((asset) => asset.organization_id))];
-  const [{ data: organizations }, { data: wallets }] = await Promise.all([
+  const hostOrganizationId = access.viewerSession.host_organization_id;
+  const [{ data: organizations }, { data: wallets }, hostResult, busyPeriodsResult] = await Promise.all([
     organizationIds.length ? access.admin.from("organizations").select("id,display_name,logo_storage_path,logo_position,logo_size_percent,ad_consumption_rate").in("id", organizationIds) : Promise.resolve({ data: [] }),
     organizationIds.length ? access.admin.from("wallets").select("organization_id,wallet_type,balance_projection").in("organization_id", organizationIds).in("wallet_type", ["promotional", "earned", "purchased"]) : Promise.resolve({ data: [] }),
+    hostOrganizationId ? access.admin.from("organizations").select("operating_time_zone,operating_start_date,operating_end_date,operating_days,operating_opens_at,operating_closes_at").eq("id", hostOrganizationId).maybeSingle() : Promise.resolve({ data: null }),
+    hostOrganizationId ? access.admin.from("organization_busy_periods").select("day_of_week,starts_at,ends_at,consumption_multiplier").eq("organization_id", hostOrganizationId) : Promise.resolve({ data: [] }),
   ]);
+  const busyMultiplier = currentBusyMultiplier(hostResult.data, busyPeriodsResult.data ?? []);
   const organizationsById = new Map((organizations ?? []).map((organization) => [organization.id, organization]));
   const spendableByOrganization = new Map<number, number>();
   for (const wallet of wallets ?? []) {
@@ -59,7 +76,7 @@ export const getPublicChannelStream = cache(async (channelPublicId: string, acce
       if (!asset) return [];
       const organization = organizationsById.get(asset.organization_id);
       const durationMs = Math.max(asset.duration_ms ?? 15_000, 1_000);
-      const requiredCredits = Number(organization?.ad_consumption_rate ?? 0) * durationMs / 60_000;
+      const requiredCredits = Number(organization?.ad_consumption_rate ?? 0) * busyMultiplier * durationMs / 60_000;
       if ((spendableByOrganization.get(asset.organization_id) ?? 0) + Number.EPSILON < requiredCredits) return [];
       const base = `/api/v1/channels/${channelPublicId}`;
       return [{

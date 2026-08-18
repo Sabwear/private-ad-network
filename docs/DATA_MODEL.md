@@ -76,7 +76,11 @@ Server-only viewer sessions created after a valid channel bearer link and assign
 
 ### stream_credit_events
 
-Idempotent web-stream heartbeats linked to a viewer session and active channel asset. Each event records capped verified seconds, playback position, validation evidence, rejection reasons, and the business-specific earning and consumption amounts posted to the balanced ledger. Advertiser wallets are locked in deterministic order and charged promotional, earned, then purchased credits; unfunded playback never creates earnings or a negative balance.
+Idempotent web-stream heartbeats linked to a viewer session and active channel asset. Each event records capped verified seconds, playback position, validation evidence, rejection reasons, applied busy-hour multiplier, and the business-specific earning and consumption amounts posted to the balanced ledger. Advertiser wallets are locked in deterministic order and charged promotional, earned, then purchased credits; unfunded playback never creates earnings or a negative balance.
+
+### organization_busy_periods
+
+Recurring host-venue local-time periods keyed by business, weekday, start/end time, and advertiser consumption multiplier. Periods cannot overlap within a day. Configuration is administrator-only, audited, protected by RLS, and evaluated using the business operating timezone.
 
 ### stream_access_attempts
 

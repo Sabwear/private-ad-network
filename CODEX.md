@@ -14,11 +14,14 @@ Do not reintroduce organization membership, business-owner, staff, finance, mode
 
 ## Current implementation
 
-- Admin-only control covers businesses, working schedules, credits, users, media, campaigns, locations, screens, channels, operations, monitoring, wallets, and CSV stream reports.
+- Admin-only control covers businesses, working schedules, busy-hour consumption multipliers, credits, users, media, campaigns, locations, screens, channels, operations, monitoring, wallets, and CSV stream reports.
 - Campaign creation includes advertiser business, approved media, locations, targeting rules, budgets, frequency, dates, and direct publishing.
 - Administrator media uploads auto-approve after browser/server validation. Upload progress, optional compression, automatic filenames, playback controls, fullscreen, and confirmed deletion are implemented.
 - Browser streams play anonymously without a code; registered viewers can optionally identify themselves. The sign-in modal is user-invoked and does not block playback.
-- Production Supabase has migrations applied through `20260817231040_admin_only_platform_model.sql`.
+- `/monitor` now owns live telemetry and accepted proof-of-play evidence; `/proof` redirects to its evidence section.
+- Host businesses can define recurring local-time busy periods. Accepted playback multiplies advertiser consumption, not host earning, and records the multiplier in evidence.
+- Advertiser exhaustion is isolated: fresh playlists omit only media owned by businesses that cannot fund a full play, while channels and other campaigns continue.
+- Production Supabase has migrations applied through `20260817231040_admin_only_platform_model.sql`; `20260818222023_business_busy_hours_and_isolated_credit_delivery.sql` is pending deployment.
 - The 2026-08-18 production verification found one admin profile, zero business memberships, three administrator functions, disabled tenant helpers, and all required administrator read policies.
 
 ## Required checks

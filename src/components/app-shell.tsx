@@ -11,7 +11,6 @@ import type { HeaderData } from "@/lib/repositories/header";
 const flowNav = [
   { href: "/media", label: "Media", description: "Upload and approve advertising media", icon: Clapperboard },
   { href: "/campaigns", label: "Campaigns", description: "Campaigns, locations, and targeting", icon: Gauge },
-  { href: "/proof", label: "Proof of play", description: "Review verified playback evidence", icon: ShieldCheck },
   { href: "/wallet", label: "Wallet", description: "Review credits and transactions", icon: WalletCards },
 ] as const;
 
@@ -33,6 +32,7 @@ export function AppShell({ children, workspace, header, signOutAction }: { child
       ...flowNav,
       { href: "/users", label: "Users", description: "Administrators, viewers, and sessions", icon: UsersRound },
       { href: "/operations", label: "Operations", description: "Channels, stream links, viewers, health, and incidents", icon: Activity },
+      { href: "/monitor", label: "Monitor", description: "Live telemetry and verified proof of play", icon: ShieldCheck },
       { href: "/admin", label: "Admin control", description: "Platform operations and audit controls", icon: Settings },
     ];
     const term = search.trim().toLowerCase();
@@ -70,6 +70,7 @@ export function AppShell({ children, workspace, header, signOutAction }: { child
           {flowNav.map(({ href, label, icon: Icon }) => <Link key={href} href={href} className={pathname === href ? "nav-link active" : "nav-link"} onClick={() => setOpen(false)}><Icon size={19} strokeWidth={1.9} /><span>{label}</span></Link>)}
           <span className="nav-label nav-label-spaced">Operations</span>
           <Link href="/operations" className={pathname === "/operations" ? "nav-link active" : "nav-link"} onClick={() => setOpen(false)}><Activity size={19} strokeWidth={1.9} /><span>Operations</span></Link>
+          <Link href="/monitor" className={pathname === "/monitor" ? "nav-link active" : "nav-link"} onClick={() => setOpen(false)}><ShieldCheck size={19} strokeWidth={1.9} /><span>Monitor</span></Link>
           <Link href="/users" className={pathname === "/users" ? "nav-link active" : "nav-link"} onClick={() => setOpen(false)}><UsersRound size={19} strokeWidth={1.9} /><span>Users</span></Link>
           <Link href="/admin" className={pathname === "/admin" ? "nav-link active" : "nav-link"} onClick={() => setOpen(false)}><Settings size={19} strokeWidth={1.9} /><span>Admin control</span></Link>
           <span className="nav-link nav-link-disabled" aria-disabled="true"><ReceiptText size={19} strokeWidth={1.9} /><span>Reports</span><span className="nav-badge">Later</span></span>
@@ -110,7 +111,7 @@ export function AppShell({ children, workspace, header, signOutAction }: { child
               {panel === "notifications" ? <div className="header-popover action-popover notification-popover" aria-label="Notifications">
                 <div className="header-popover-title"><strong>Notifications</strong><small>2 operational updates</small></div>
                 <Link href={liveHref} onClick={() => setPanel(null)}><RadioTower size={16} /><span><strong>{header.liveStream ? "Live Beta is broadcasting" : "Live channel needs attention"}</strong><small>{header.liveStream?.name ?? "Open Channels to configure a stream."}</small></span></Link>
-                <Link href="/proof" onClick={() => setPanel(null)}><ShieldCheck size={16} /><span><strong>Playback verification available</strong><small>Review recent proof-of-play activity.</small></span></Link>
+                <Link href="/monitor#proof" onClick={() => setPanel(null)}><ShieldCheck size={16} /><span><strong>Playback verification available</strong><small>Review recent proof-of-play activity.</small></span></Link>
               </div> : null}
             </div>
             <Link className="environment-pill environment-active live-beta-link" href={liveHref} aria-label={header.liveStream ? `Open ${header.liveStream.name} live stream` : "Configure live beta stream"}><span aria-hidden="true" /><RadioTower size={14} /><b>Live Beta</b></Link>

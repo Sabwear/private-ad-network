@@ -19,6 +19,7 @@ export type OrganizationUpdateActionState = {
 };
 export type BusinessAdActionState = { status: "idle" | "error" | "success"; message: string };
 export type StreamCreditActionState = { status: "idle" | "error" | "success"; message: string };
+export type BusyHoursActionState = { status: "idle" | "error" | "success"; message: string };
 
 const organizationSchema = z.object({
   displayName: z.string().trim().min(2, "Enter the business display name.").max(120),
@@ -278,6 +279,51 @@ export async function updateBusinessStreamSettings(
   revalidatePath("/business");
   revalidatePath("/profile");
   return { status: "success", message: "Stream credit settings updated." };
+}
+
+export async function updateBusinessBusyPeriods(
+  _state: BusyHoursActionState,
+  formData: FormData,
+): Promise<BusyHoursActionState> {
+  const workspace = await getWorkspaceContext();
+  if (!workspace.permissions.canProvisionOrganizations) return { status: "error", message: "Platform administrator access is required." };
+
+  const parsedBase = z.object({
+    organizationId: z.coerce.number().int().positive(),
+    periods: z.string().max(20_000),
+    reason: z.string().trim().min(5).max(300),
+  }).safeParse({
+    organizationId: stringField(formData, "organizationId"),
+    periods: stringField(formData, "periods"),
+    reason: stringField(formData, "reason"),
+  });
+  if (!parsedBase.success) return { status: "error", message: "Check the busy periods and change reason." };
+
+  const rawPeriods: unknown = (() => { try { return JSON.parse(parsedBase.data.periods); } catch { return null; } })();
+  const periodSchema = z.object({
+    day: z.enum(["mon", "tue", "wed", "thu", "fri", "sat", "sun"]),
+    start: z.string().regex(timePattern),
+    end: z.string().regex(timePattern),
+    multiplier: z.coerce.number().gt(1).max(10),
+  }).refine((period) => period.end > period.start, { message: "End time must follow start time." });
+  const periodsResult = z.array(periodSchema).max(50).safeParse(rawPeriods);
+  if (!periodsResult.success) return { status: "error", message: "Busy periods need valid days, times, and multipliers from 1.01× to 10×." };
+
+  const sorted = [...periodsResult.data].sort((a, b) => a.day.localeCompare(b.day) || a.start.localeCompare(b.start));
+  if (sorted.some((period, index) => index > 0 && sorted[index - 1].day === period.day && sorted[index - 1].end > period.start)) {
+    return { status: "error", message: "Busy periods on the same day cannot overlap." };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("admin_replace_business_busy_periods", {
+    p_organization_id: parsedBase.data.organizationId,
+    p_periods: periodsResult.data,
+    p_reason: parsedBase.data.reason,
+  });
+  if (error) return { status: "error", message: error.code === "PGRST202" ? "Deploy the busy-hours migration first." : error.message };
+  revalidatePath("/business");
+  revalidatePath("/monitor");
+  return { status: "success", message: "Busy-hour credit multipliers updated." };
 }
 
 export async function regenerateBusinessStreamCode(

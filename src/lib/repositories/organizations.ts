@@ -27,6 +27,7 @@ export type OrganizationAdminRow = {
   operatingOpensAt: string;
   operatingClosesAt: string;
   operatingTimeZone: string;
+  busyPeriods: Array<{ id: number; day: string; start: string; end: string; multiplier: number }>;
   locationCount: number;
   createdAt: string;
   updatedAt: string;
@@ -46,12 +47,13 @@ const setupErrorCodes = new Set(["PGRST204", "PGRST205", "42501", "42703", "42P0
 
 export async function getOrganizationAdminData(): Promise<OrganizationAdminData> {
   const supabase = await createClient();
-  const [organizationsResult, locationsResult, brandingResult, streamSettingsResult, scheduleResult, channelsResult, channelAssignmentsResult, channelItemsResult, mediaResult, rotationsResult] = await Promise.all([
+  const [organizationsResult, locationsResult, brandingResult, streamSettingsResult, scheduleResult, busyPeriodsResult, channelsResult, channelAssignmentsResult, channelItemsResult, mediaResult, rotationsResult] = await Promise.all([
     supabase.from("organizations").select("id,public_id,display_name,legal_name,category,status,created_at,updated_at").order("created_at", { ascending: false }),
     supabase.from("locations").select("id,organization_id"),
     supabase.from("organizations").select("id,website_url,contact_email,contact_phone,logo_storage_path,logo_position,logo_size_percent"),
     supabase.from("organizations").select("id,stream_access_code,stream_access_code_expires_at,stream_earning_enabled,stream_earning_rate,ad_consumption_rate"),
     supabase.from("organizations").select("id,operating_start_date,operating_end_date,operating_days,operating_opens_at,operating_closes_at,operating_time_zone"),
+    supabase.from("organization_busy_periods").select("id,organization_id,day_of_week,starts_at,ends_at,consumption_multiplier").order("starts_at"),
     supabase.from("streaming_channels").select("id,public_id,access_key,slug,custom_hostname,name,status").order("name"),
     supabase.from("streaming_channel_organizations").select("channel_id,organization_id"),
     supabase.from("streaming_channel_items").select("id,channel_id,media_asset_id,status").eq("status", "active"),
@@ -73,6 +75,12 @@ export async function getOrganizationAdminData(): Promise<OrganizationAdminData>
   const brandingByOrganization = new Map((brandingResult.error ? [] : brandingResult.data ?? []).map((item) => [item.id, item]));
   const streamSettingsByOrganization = new Map((streamSettingsResult.error ? [] : streamSettingsResult.data ?? []).map((item) => [item.id, item]));
   const scheduleByOrganization = new Map((scheduleResult.error ? [] : scheduleResult.data ?? []).map((item) => [item.id, item]));
+  const busyPeriodsByOrganization = new Map<number, OrganizationAdminRow["busyPeriods"]>();
+  for (const period of busyPeriodsResult.error ? [] : busyPeriodsResult.data ?? []) {
+    const current = busyPeriodsByOrganization.get(period.organization_id) ?? [];
+    current.push({ id: period.id, day: period.day_of_week, start: period.starts_at.slice(0, 5), end: period.ends_at.slice(0, 5), multiplier: Number(period.consumption_multiplier) });
+    busyPeriodsByOrganization.set(period.organization_id, current);
+  }
   const channels = channelRecords.map((channel) => ({ id: channel.id, name: channel.name, status: channel.status }));
   const channelNames = new Map(channels.map((channel) => [channel.id, channel.name]));
   const channelById = new Map(channelRecords.map((channel) => [channel.id, channel]));
@@ -138,6 +146,7 @@ export async function getOrganizationAdminData(): Promise<OrganizationAdminData>
         operatingOpensAt: schedule?.operating_opens_at?.slice(0, 5) ?? "09:00",
         operatingClosesAt: schedule?.operating_closes_at?.slice(0, 5) ?? "18:00",
         operatingTimeZone: schedule?.operating_time_zone ?? "Africa/Casablanca",
+        busyPeriods: busyPeriodsByOrganization.get(organization.id) ?? [],
         locationCount: locationCounts.get(organization.id) ?? 0,
         createdAt: organization.created_at,
         updatedAt: organization.updated_at,

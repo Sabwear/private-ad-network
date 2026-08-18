@@ -28,7 +28,7 @@ export default async function OverviewPage() {
   ]);
   const activeCampaigns = campaignResult.campaigns.filter((campaign) => campaign.status === "Active").length;
   const issues = [
-    ...(playbackResult.heldCount > 0 ? [{ title: `${playbackResult.heldCount} playback${playbackResult.heldCount === 1 ? "" : "s"} need review`, detail: "Evidence validation placed these sessions on hold.", tone: "warning" as const, href: "/proof" }] : []),
+    ...(playbackResult.heldCount > 0 ? [{ title: `${playbackResult.heldCount} playback${playbackResult.heldCount === 1 ? "" : "s"} need review`, detail: "Evidence validation placed these sessions on hold.", tone: "warning" as const, href: "/monitor#proof" }] : []),
     ...screensResult.screens.filter((screen) => screen.status !== "Online").slice(0, 2).map((screen) => ({ title: `${screen.name} is ${screen.status.toLowerCase()}`, detail: `${screen.location} · last heartbeat ${screen.heartbeat}`, tone: "danger" as const, href: "/screens" })),
     ...mediaResult.assets.filter((asset) => asset.processingStatus === "failed").slice(0, 2).map((asset) => ({ title: `${asset.name} failed processing`, detail: asset.processingError || "Open the media library for details.", tone: "warning" as const, href: "/media" })),
   ].slice(0, 3);

@@ -22,6 +22,7 @@ The browser suite currently verifies:
 - Anonymous stream access does not require a business code
 - Viewer access validation rejects malformed requests without exposing credentials
 - Stream heartbeat and termination require a validated viewer cookie
+- Dedicated Monitor authentication and legacy Proof URL compatibility
 
 The following authenticated smoke checks were completed manually for the current beta build and should be automated next:
 
@@ -48,7 +49,7 @@ Database migrations must be reviewed against the hosted project before deploymen
 ### Hosted integration
 
 - Administrator/viewer invitation, viewer suspension, and live-session revocation
-- Administrator-only business, location, campaign, media, channel, wallet, and monitoring mutations under row-level security
+- Administrator-only business, busy-period, location, campaign, media, channel, wallet, and monitoring mutations under row-level security
 - Pairing-code single use, expiry, credential suspension, and heartbeat idempotency
 - Private upload lifecycle, direct administrator approval, deletion, and worker retry/recovery
 - YouTube URL variants, duplicate prevention, rights enforcement, direct administrator approval, embed availability, duration drift, and removal/unavailability recovery
@@ -57,6 +58,7 @@ Database migrations must be reviewed against the hosted project before deploymen
 - Channel-overlay persistence and administrator-only in-player controls
 - Shared-timeline late join across independent viewers, authorized clock synchronization, repeated-loop rollover, background-tab recovery, drift correction, standby/resume, and unavailable-source retry
 - Header live-channel resolution for administrators and viewer-dashboard exclusion
+- Busy-period overlap rejection, local-time multiplier settlement, proof evidence, and per-advertiser exhaustion without channel interruption
 
 ### Device endurance
 

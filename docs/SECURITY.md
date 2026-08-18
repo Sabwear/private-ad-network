@@ -83,7 +83,8 @@ No single weak hardware signal should automatically accuse a venue of fraud. Sto
 - Automated reconciliation and alert on projection mismatch
 - Purchased, earned, promotional, held, and platform credits remain distinguishable
 - Stream consumption locks wallets in consistent ID order and debits promotional, then earned, then purchased credit without allowing a negative balance
-- Host earnings are not created when an advertiser lacks spendable credit; unfunded ads are excluded when building a fresh stream playlist and recorded as insufficient-credit evidence under settlement races
+- Busy-hour configuration is administrator-only, audited, RLS-protected, overlap-validated, and bounded to a 10× maximum; settlement records the applied multiplier as evidence
+- Host earnings are not created when an advertiser lacks spendable credit; only that advertiser's ads are excluded when building a fresh stream playlist and recorded as insufficient-credit evidence under settlement races, while the channel and other campaigns remain active
 
 ## Privacy
 

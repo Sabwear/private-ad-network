@@ -207,6 +207,17 @@ export type Database = {
         created_at: string;
         updated_at: string;
       }>;
+      organization_busy_periods: Table<{
+        id: number;
+        organization_id: number;
+        day_of_week: string;
+        starts_at: string;
+        ends_at: string;
+        consumption_multiplier: number;
+        created_by: string | null;
+        created_at: string;
+        updated_at: string;
+      }>;
       stream_viewer_sessions: Table<{
         id: string;
         channel_id: number;
@@ -568,6 +579,14 @@ export type Database = {
           p_earning_enabled: boolean;
           p_earning_rate: number;
           p_consumption_rate: number;
+        };
+        Returns: undefined;
+      };
+      admin_replace_business_busy_periods: {
+        Args: {
+          p_organization_id: number;
+          p_periods: Json;
+          p_reason: string;
         };
         Returns: undefined;
       };

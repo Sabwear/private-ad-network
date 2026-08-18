@@ -53,7 +53,7 @@ Public signup is disabled. Businesses do not receive accounts or dashboard owner
 2. Platform reserves campaign credits.
 3. Scheduler selects eligible campaigns using weighted round-robin.
 4. Device receives a versioned, signed manifest and downloads missing assets.
-5. Delivery stops when dates, approval, eligibility, or spendable credits no longer permit it.
+5. Delivery eligibility is evaluated per advertiser. When one business cannot fund its next full play, only that business's ads are omitted; the channel and other active campaigns continue.
 
 ### Playback settlement
 
@@ -69,10 +69,10 @@ Public signup is disabled. Businesses do not receive accounts or dashboard owner
 1. A viewer opens a valid private channel link and playback starts anonymously without a code or login wall.
 2. The viewer may open the login control and identify with an email-verified account approved by the current platform administrator. Registered validation may use the six-digit business code; public self-registration remains disabled.
 3. The viewer session continues normally whether or not the viewer signs in, and fullscreen remains user-controlled.
-4. Visible, active playback sends rate-limited verification heartbeats with position and timing evidence. The advertiser consumes its configured credits per verified minute whenever its eligible ad is playing.
+4. Visible, active playback sends rate-limited verification heartbeats with position and timing evidence. The advertiser consumes its configured credits per verified minute, multiplied by the host venue's active local-time busy-period rate when applicable.
 5. The host business earns its configured per-minute rate only when its earning toggle is enabled and the advertiser has enough spendable credit. Every movement is posted as an idempotent, balanced ledger transaction; wallets cannot be driven negative.
 6. Business profiles are managed only by platform administrators and are never assigned to registered viewers.
-7. Platform administrators monitor live audience, coarse viewer geography, channel uptime, playback validation, credit velocity, access failures, and application/database readiness from the Stream Monitor. Channel pause/resume/restart and viewer termination require a recorded reason and produce an audit event.
+7. Platform administrators monitor live audience, coarse viewer geography, channel uptime, playback validation, credit velocity, access failures, application/database readiness, and accepted proof-of-play evidence from `/monitor`. Channel pause/resume/restart and viewer termination require a recorded reason and produce an audit event.
 
 ## Pilot product policy
 
