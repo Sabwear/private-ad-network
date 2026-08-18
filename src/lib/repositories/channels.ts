@@ -30,7 +30,7 @@ const setupCodes = new Set(["PGRST204", "PGRST205", "42501"]);
 export async function getChannelManagementData(): Promise<ChannelManagementData> {
   const supabase = await createClient();
   const [channelsResult, assignmentsResult, itemsResult, organizationsResult, mediaResult] = await Promise.all([
-    supabase.from("streaming_channels").select("id,public_id,access_key,name,slug,custom_hostname,description,status,broadcast_enabled,broadcast_started_at,show_live_badge,show_channel_name,show_now_playing,show_audio_control,show_advertiser_logo,show_stripe_banner,show_video_time,stripe_banner_text,stripe_banner_position,video_fit").order("created_at"),
+    supabase.from("streaming_channels").select("id,public_id,access_key,name,slug,custom_hostname,description,status,broadcast_enabled,broadcast_started_at,show_live_badge,show_channel_name,show_now_playing,show_audio_control,show_advertiser_logo,show_stripe_banner,show_video_time,show_fullscreen_control,show_leave_control,show_viewer_login,show_channel_description,show_progress_bar,stripe_banner_text,stripe_banner_position,video_fit,overlay_position,overlay_style,accent_color").order("created_at"),
     supabase.from("streaming_channel_organizations").select("channel_id,organization_id"),
     supabase.from("streaming_channel_items").select("id,channel_id,media_asset_id,position,status").eq("status", "active").order("position"),
     supabase.from("organizations").select("id,display_name,status").order("display_name"),
@@ -77,9 +77,17 @@ export async function getChannelManagementData(): Promise<ChannelManagementData>
       showAdvertiserLogo: channel.show_advertiser_logo,
       showStripeBanner: channel.show_stripe_banner,
       showVideoTime: channel.show_video_time,
+      showFullscreenControl: channel.show_fullscreen_control,
+      showLeaveControl: channel.show_leave_control,
+      showViewerLogin: channel.show_viewer_login,
+      showChannelDescription: channel.show_channel_description,
+      showProgressBar: channel.show_progress_bar,
       stripeBannerText: channel.stripe_banner_text ?? "",
-      stripeBannerPosition: channel.stripe_banner_position,
-      videoFit: channel.video_fit,
+      stripeBannerPosition: channel.stripe_banner_position as "top" | "bottom",
+      videoFit: channel.video_fit as "contain" | "cover",
+      overlayPosition: channel.overlay_position as "top" | "bottom",
+      overlayStyle: channel.overlay_style as "gradient" | "glass" | "minimal",
+      accentColor: channel.accent_color,
     },
     organizations: (assignmentsResult.data ?? [])
       .filter((assignment) => assignment.channel_id === channel.id)

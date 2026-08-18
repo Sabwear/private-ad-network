@@ -6,7 +6,6 @@ import { AnonymousStreamBootstrap } from "@/components/stream-access-gate";
 import { getPublicChannelStream } from "@/lib/streaming/public-channel";
 import { getChannelAccessPreview } from "@/lib/streaming/channel-access";
 import { getApprovedStreamViewer, STREAM_VIEWER_COOKIE } from "@/lib/streaming/viewer-session";
-import { isCurrentUserPlatformAdmin } from "@/lib/auth/optional-admin";
 
 type Props = { params: Promise<{ channelId: string; accessKey: string }> };
 
@@ -25,6 +24,6 @@ export default async function StreamPage({ params }: Props) {
   if (!channel) {
     return <AnonymousStreamBootstrap channelId={channelId} accessKey={accessKey} />;
   }
-  const [canAdminister, approvedViewer] = await Promise.all([isCurrentUserPlatformAdmin(), getApprovedStreamViewer()]);
-  return <ChannelPlayer key={`${channel.broadcastStartedAt}:${JSON.stringify(channel.settings)}`} channel={channel} canAdminister={canAdminister} accessKey={accessKey} approvedViewer={approvedViewer} />;
+  const approvedViewer = await getApprovedStreamViewer();
+  return <ChannelPlayer key={`${channel.broadcastStartedAt}:${JSON.stringify(channel.settings)}`} channel={channel} accessKey={accessKey} approvedViewer={approvedViewer} />;
 }

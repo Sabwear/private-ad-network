@@ -2,31 +2,13 @@
 
 import Hls from "hls.js";
 import Image from "next/image";
-import { CheckCircle2, Clock3, LoaderCircle, LogIn, LogOut, Maximize2, Menu, RadioTower, Settings2, Volume2, VolumeX, X } from "lucide-react";
-import { useActionState, useCallback, useEffect, useRef, useState } from "react";
+import { Clock3, LogIn, LogOut, Maximize2, RadioTower, Volume2, VolumeX } from "lucide-react";
+import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
 import { useRouter } from "next/navigation";
-import { updateChannelDisplaySettings, type ChannelActionState } from "@/app/(platform)/channels/actions";
-import type { ChannelDisplaySettings } from "@/components/channel-display-settings-fields";
 import { StreamAccessGate } from "@/components/stream-access-gate";
 import { youtubeEmbedUrl } from "@/lib/media/youtube";
 import type { PublicChannelStream } from "@/lib/streaming/public-channel";
 import type { ApprovedStreamViewer } from "@/lib/streaming/viewer-session";
-
-const initialActionState: ChannelActionState = { status: "idle", message: "" };
-const toggleFields: Array<[keyof ChannelDisplaySettings, string]> = [
-  ["broadcastEnabled", "Continuous broadcast"],
-  ["showLiveBadge", "Live channel badge"],
-  ["showChannelName", "Channel name"],
-  ["showNowPlaying", "Now playing information"],
-  ["showAudioControl", "Audio control"],
-  ["showAdvertiserLogo", "Advertiser logos"],
-  ["showStripeBanner", "Stripe banner"],
-  ["showVideoTime", "Video time"],
-];
-
-function fieldName(key: keyof ChannelDisplaySettings) {
-  return key.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`);
-}
 
 function formatTime(seconds: number) {
   if (!Number.isFinite(seconds) || seconds < 0) return "0:00";
@@ -51,7 +33,7 @@ function resolveTimeline(items: PublicChannelStream["items"], startedAt: string,
   return { index: 0, offsetSeconds: 0 };
 }
 
-export function ChannelPlayer({ channel, canAdminister, accessKey, approvedViewer }: { channel: PublicChannelStream; canAdminister: boolean; accessKey: string; approvedViewer: ApprovedStreamViewer | null }) {
+export function ChannelPlayer({ channel, accessKey, approvedViewer }: { channel: PublicChannelStream; accessKey: string; approvedViewer: ApprovedStreamViewer | null }) {
   const router = useRouter();
   const videoRef = useRef<HTMLVideoElement>(null);
   const youtubeRef = useRef<HTMLIFrameElement>(null);
@@ -63,10 +45,7 @@ export function ChannelPlayer({ channel, canAdminister, accessKey, approvedViewe
   const [currentTime, setCurrentTime] = useState(0);
   const currentTimeRef = useRef(0);
   const [duration, setDuration] = useState(0);
-  const [settingsOpen, setSettingsOpen] = useState(false);
   const [viewerAccessOpen, setViewerAccessOpen] = useState(false);
-  const [settings, setSettings] = useState(channel.settings);
-  const [actionState, action, pending] = useActionState(updateChannelDisplaySettings, initialActionState);
   const serverClockOffsetRef = useRef(0);
   const currentIndexRef = useRef(initialPosition.index);
   const desiredOffsetRef = useRef(initialPosition.offsetSeconds);
@@ -144,10 +123,6 @@ export function ChannelPlayer({ channel, canAdminister, accessKey, approvedViewe
       window.clearInterval(interval);
     };
   }, [channel.clockUrl, synchronizePlayback]);
-
-  useEffect(() => {
-    if (actionState.status === "success") router.refresh();
-  }, [actionState, router]);
 
   useEffect(() => {
     if (!channel.settings.broadcastEnabled) return;
@@ -295,27 +270,21 @@ export function ChannelPlayer({ channel, canAdminister, accessKey, approvedViewe
     router.refresh();
   };
 
-  const hasInformation = settings.showLiveBadge || settings.showChannelName || settings.showNowPlaying;
-  return <main className="stream-page">
+  const settings = channel.settings;
+  const hasInformation = settings.showLiveBadge || settings.showChannelName || settings.showNowPlaying || (settings.showChannelDescription && Boolean(channel.description));
+  const progress = duration > 0 ? Math.min(100, Math.max(0, currentTime / duration * 100)) : 0;
+  const playerStyle = { "--stream-accent": settings.accentColor } as CSSProperties;
+  return <main className="stream-page" style={playerStyle}>
     {item && channel.settings.broadcastEnabled ? item.sourceType === "youtube" && item.youtubeVideoId ? <iframe key={item.id} ref={youtubeRef} className={`stream-youtube stream-youtube-${settings.videoFit}`} src={youtubeEmbedUrl(item.youtubeVideoId, { autoplay: true, controls: false })} title={item.name} allow="autoplay; encrypted-media; picture-in-picture" onLoad={handleYouTubeLoad} /> : <video ref={videoRef} autoPlay muted={muted} playsInline style={{ objectFit: settings.videoFit === "cover" ? "cover" : "contain" }} onEnded={synchronizePlayback} onTimeUpdate={(event) => { const next = Math.floor(event.currentTarget.currentTime); setCurrentTime((current) => current === next ? current : next); }} onLoadedMetadata={(event) => setDuration(event.currentTarget.duration)} /> : <div className="stream-empty"><RadioTower size={38} /><p className="eyebrow">{channel.name}</p><h1>{item ? "Broadcast on standby" : "Channel is ready"}</h1><span>{item ? "The viewer link is available, but continuous playback is paused by an administrator." : "Add approved media from the Channels or Business dashboard to begin streaming."}</span></div>}
     {item && channel.settings.broadcastEnabled && settings.showStripeBanner && settings.stripeBannerText ? <div className={`stream-stripe stream-stripe-${settings.stripeBannerPosition}`}><span>{settings.stripeBannerText}</span></div> : null}
-    {item && channel.settings.broadcastEnabled && settings.showAdvertiserLogo && item.logoUrl ? <div className={`stream-advertiser-logo stream-logo-${item.logoPosition}${canAdminister ? " stream-logo-admin" : ""}`} style={{ width: `${item.logoSizePercent}vw` }}><Image src={item.logoUrl} alt={`${item.advertiserName} logo`} width={420} height={210} unoptimized /></div> : null}
+    {item && channel.settings.broadcastEnabled && settings.showAdvertiserLogo && item.logoUrl ? <div className={`stream-advertiser-logo stream-logo-${item.logoPosition}`} style={{ width: `${item.logoSizePercent}vw` }}><Image src={item.logoUrl} alt={`${item.advertiserName} logo`} width={420} height={210} unoptimized /></div> : null}
     {unavailable ? <div className="stream-playback-error" role="alert">This media is temporarily unavailable. The player will recover when the source is restored.</div> : null}
-    {item && channel.settings.broadcastEnabled ? <div className="stream-overlay">
-      {hasInformation ? <div>{settings.showLiveBadge ? <span className="stream-live"><i /> Live channel</span> : null}{settings.showChannelName ? <h1>{channel.name}</h1> : null}{settings.showNowPlaying ? <p>Now playing: {item.name}</p> : null}</div> : <span />}
-      <div className="stream-overlay-controls">{settings.showVideoTime ? <span className="stream-video-time"><Clock3 size={16} /> {formatTime(currentTime)} / {formatTime(duration)}</span> : null}{settings.showAudioControl ? <button type="button" onClick={toggleAudio}>{muted ? <VolumeX size={18} /> : <Volume2 size={18} />}{muted ? "Enable sound" : "Mute"}</button> : null}<button type="button" onClick={() => document.documentElement.requestFullscreen?.()}><Maximize2 size={18} /> Fullscreen</button><button type="button" onClick={leaveStream}><LogOut size={18} /> Leave</button></div>
+    {item && channel.settings.broadcastEnabled ? <div className={`stream-overlay stream-overlay-${settings.overlayPosition} stream-overlay-style-${settings.overlayStyle}`}>
+      {hasInformation ? <div>{settings.showLiveBadge ? <span className="stream-live"><i /> Live channel</span> : null}{settings.showChannelName ? <h1>{channel.name}</h1> : null}{settings.showChannelDescription && channel.description ? <p className="stream-channel-description">{channel.description}</p> : null}{settings.showNowPlaying ? <p>Now playing: {item.name}</p> : null}</div> : <span />}
+      <div className="stream-overlay-controls">{settings.showVideoTime ? <span className="stream-video-time"><Clock3 size={16} /> {formatTime(currentTime)} / {formatTime(duration)}</span> : null}{settings.showAudioControl ? <button type="button" onClick={toggleAudio}>{muted ? <VolumeX size={18} /> : <Volume2 size={18} />}{muted ? "Enable sound" : "Mute"}</button> : null}{settings.showFullscreenControl ? <button type="button" onClick={() => document.documentElement.requestFullscreen?.()}><Maximize2 size={18} /> Fullscreen</button> : null}{settings.showLeaveControl ? <button type="button" onClick={leaveStream}><LogOut size={18} /> Leave</button> : null}</div>
+      {settings.showProgressBar ? <div className="stream-progress" role="progressbar" aria-label="Current advertisement progress" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(progress)}><span style={{ width: `${progress}%` }} /></div> : null}
     </div> : null}
-    <button className="stream-viewer-login-button" style={{ right: canAdminister ? 74 : 20 }} type="button" aria-label="Open optional viewer login" aria-expanded={viewerAccessOpen} onClick={() => setViewerAccessOpen(true)}><LogIn size={20} /></button>
+    {settings.showViewerLogin ? <button className="stream-viewer-login-button" type="button" aria-label="Open optional viewer login" aria-expanded={viewerAccessOpen} onClick={() => setViewerAccessOpen(true)}><LogIn size={20} /></button> : null}
     <StreamAccessGate channelId={channel.publicId} accessKey={accessKey} channelName={channel.name} approvedViewer={approvedViewer} open={viewerAccessOpen} onClose={() => setViewerAccessOpen(false)} />
-    {canAdminister ? <><button className="stream-settings-button" type="button" aria-label="Open stream settings" aria-expanded={settingsOpen} onClick={() => setSettingsOpen((open) => !open)}>{settingsOpen ? <X size={20} /> : <Menu size={20} />}</button>{settingsOpen ? <aside className="stream-settings-panel" aria-label="Stream settings"><header><div><Settings2 size={17} /><span><strong>Video settings</strong><small>Administrator controls</small></span></div><button type="button" aria-label="Close stream settings" onClick={() => setSettingsOpen(false)}><X size={17} /></button></header><form action={action}>
-      <input type="hidden" name="channelPublicId" value={channel.publicId} />
-      {actionState.message ? <div className={`auth-message auth-message-${actionState.status}`} role={actionState.status === "error" ? "alert" : "status"}>{actionState.status === "success" ? <CheckCircle2 size={14} /> : <Settings2 size={14} />}<span>{actionState.message}</span></div> : null}
-      <div className="stream-broadcast-summary"><RadioTower size={16} /><span><strong>{channel.settings.broadcastEnabled ? "Broadcast clock running" : "Broadcast on standby"}</strong><small>All viewers join the same point in the channel loop.</small></span></div>
-      <div className="stream-setting-toggles">{toggleFields.map(([key, label]) => <label key={key}><input type="checkbox" name={fieldName(key)} checked={Boolean(settings[key])} onChange={(event) => setSettings((current) => ({ ...current, [key]: event.target.checked }))} /><span>{label}</span></label>)}</div>
-      <label><span>Stripe banner text</span><input name="stripe-banner-text" maxLength={240} value={settings.stripeBannerText} onChange={(event) => setSettings((current) => ({ ...current, stripeBannerText: event.target.value }))} /></label>
-      <label><span>Stripe position</span><select name="stripe-banner-position" value={settings.stripeBannerPosition} onChange={(event) => setSettings((current) => ({ ...current, stripeBannerPosition: event.target.value }))}><option value="top">Top</option><option value="bottom">Bottom</option></select></label>
-      <label><span>Video scaling</span><select name="video-fit" value={settings.videoFit} onChange={(event) => setSettings((current) => ({ ...current, videoFit: event.target.value }))}><option value="contain">Fit full video</option><option value="cover">Fill screen and crop</option></select></label>
-      <button className="stream-settings-save" type="submit" disabled={pending}>{pending ? <LoaderCircle className="auth-spinner" size={15} /> : <Settings2 size={15} />}{pending ? "Saving…" : "Save stream settings"}</button>
-    </form></aside> : null}</> : null}
   </main>;
 }

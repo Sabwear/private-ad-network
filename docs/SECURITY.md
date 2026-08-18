@@ -60,7 +60,7 @@ No single weak hardware signal should automatically accuse a venue of fraud. Sto
 - Malware and media validation before direct administrator approval
 - Private media objects are scoped to an existing business asset and served to administrators or authorized players through short-lived URLs
 - Business logos are intentionally public presentation assets, but upload, replacement, deletion, and organization association require platform-administrator authorization
-- Public stream viewers receive only the resolved logo URL and display settings; the in-player settings mutation control is rendered only after a separate administrator session check
+- Public stream viewers receive only the resolved logo URL and display settings; channel-setting mutations exist only in the administrator-protected Operations workflow and the player exposes no mutation control
 - Anonymous web streams require only the valid channel bearer URL. Registered identity may additionally validate the non-expired, rate-limited six-digit business code; rotating the code terminates affected identified sessions
 - Network identifiers used for stream rate limiting are HMAC-peppered with a server-only secret; raw IP addresses are never stored
 - Anonymous viewers never provide identity. Identified viewers must use an active, email-verified account created or approved by the current platform administrator

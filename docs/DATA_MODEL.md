@@ -58,7 +58,7 @@ Owner, asset, status, dates, total/daily credit budget, targeting JSON, frequenc
 
 ### streaming_channels
 
-Public ID, independent bearer access key, name, description, availability status, `broadcast_enabled`, `broadcast_started_at`, and presentation settings for the live badge, channel title, now-playing text, audio control, advertiser logos, stripe banner/text/position, video time, and contain/cover scaling. The broadcast timestamp anchors the shared loop; enabling broadcast or changing the ordered playlist resets it.
+Public ID, independent bearer access key, name, description, availability status, `broadcast_enabled`, `broadcast_started_at`, and presentation settings for the live badge, channel title/description, now-playing text, audio/fullscreen/leave/login controls, advertiser logos, stripe banner/text/position, video time, progress bar, contain/cover scaling, overlay position/style, and accent color. The broadcast timestamp anchors the shared loop; enabling broadcast or changing the ordered playlist resets it.
 
 ### streaming_channel_organizations
 

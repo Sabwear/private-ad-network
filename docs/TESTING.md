@@ -28,10 +28,10 @@ The following authenticated smoke checks were completed manually for the current
 
 - Business information persists through the audited administrator action
 - Reassigning the same business ad to the same channel is idempotent
-- Channel display settings persist from Channels and the in-player settings drawer
+- Channel video settings persist from the dedicated Operations panel and are reflected by the read-only player
 - A refreshed or newly opened viewer seeks to the shared channel position instead of restarting at the first frame
-- Continuous broadcast can enter standby and resume from the administrator-only player controls; resume creates a new broadcast epoch
-- Public stream viewers do not receive the administrator settings control
+- Continuous broadcast can enter standby and resume from Operations; resume creates a new broadcast epoch
+- Public stream viewers never receive an administrator settings mutation control
 - Dashboard search filters routes and supports Enter navigation
 - Guide and notification panels open exclusively and their links navigate correctly
 - Live Beta resolves the active channel dynamically and opens its player
@@ -55,7 +55,7 @@ Database migrations must be reviewed against the hosted project before deploymen
 - YouTube URL variants, duplicate prevention, rights enforcement, direct administrator approval, embed availability, duration drift, and removal/unavailability recovery
 - Channel assignment isolation and access-key rotation
 - Business-logo upload/delete authorization, file limits, and overlay placement
-- Channel-overlay persistence and administrator-only in-player controls
+- Channel-video-setting persistence, Operations-only mutation, overlay variants, progress, accent color, and conditional player controls
 - Shared-timeline late join across independent viewers, authorized clock synchronization, repeated-loop rollover, background-tab recovery, drift correction, standby/resume, and unavailable-source retry
 - Header live-channel resolution for administrators and viewer-dashboard exclusion
 - Busy-period overlap rejection, local-time multiplier settlement, proof evidence, and per-advertiser exhaustion without channel interruption

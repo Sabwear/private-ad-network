@@ -1,6 +1,6 @@
 # Codex Project Handoff
 
-Last updated: 2026-08-18
+Last updated: 2026-08-19
 
 ## Product authority model
 
@@ -21,7 +21,8 @@ Do not reintroduce organization membership, business-owner, staff, finance, mode
 - `/monitor` now owns live telemetry and accepted proof-of-play evidence; `/proof` redirects to its evidence section.
 - Host businesses can define recurring local-time busy periods. Accepted playback multiplies advertiser consumption, not host earning, and records the multiplier in evidence.
 - Advertiser exhaustion is isolated: fresh playlists omit only media owned by businesses that cannot fund a full play, while channels and other campaigns continue.
-- Production Supabase has migrations applied through `20260817231040_admin_only_platform_model.sql`; `20260818222023_business_busy_hours_and_isolated_credit_delivery.sql` is pending deployment.
+- Operations is the only channel-video-settings control surface. The live player is read-only and supports saved visibility controls, overlay position/style, progress, accent color, scaling, and banner presentation.
+- Production Supabase has migrations applied through `20260817231040_admin_only_platform_model.sql`; `20260818222023_business_busy_hours_and_isolated_credit_delivery.sql` and `20260818233144_advanced_channel_video_settings.sql` are pending deployment.
 - The 2026-08-18 production verification found one admin profile, zero business memberships, three administrator functions, disabled tenant helpers, and all required administrator read policies.
 
 ## Required checks

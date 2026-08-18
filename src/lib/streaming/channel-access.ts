@@ -5,7 +5,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { hashViewerToken } from "@/lib/streaming/viewer-session";
 
 const credentialSchema = z.object({ channelPublicId: z.string().uuid(), accessKey: z.string().uuid() });
-const channelSelection = "id,public_id,access_key,name,description,status,broadcast_enabled,broadcast_started_at,show_live_badge,show_channel_name,show_now_playing,show_audio_control,show_advertiser_logo,show_stripe_banner,show_video_time,stripe_banner_text,stripe_banner_position,video_fit";
+const channelSelection = "id,public_id,access_key,name,description,status,broadcast_enabled,broadcast_started_at,show_live_badge,show_channel_name,show_now_playing,show_audio_control,show_advertiser_logo,show_stripe_banner,show_video_time,show_fullscreen_control,show_leave_control,show_viewer_login,show_channel_description,show_progress_bar,stripe_banner_text,stripe_banner_position,video_fit,overlay_position,overlay_style,accent_color";
 
 export async function getChannelAccessPreview(channelPublicId: string, accessKey: string) {
   const credentials = credentialSchema.safeParse({ channelPublicId, accessKey });

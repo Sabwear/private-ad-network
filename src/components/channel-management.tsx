@@ -1,8 +1,8 @@
 "use client";
 
-import { CheckCircle2, Copy, ExternalLink, LoaderCircle, Pencil, Plus, RadioTower, ShieldCheck, Trash2, UsersRound, Video } from "lucide-react";
+import { CheckCircle2, Copy, ExternalLink, LoaderCircle, Pencil, Plus, RadioTower, Settings2, ShieldCheck, Trash2, UsersRound, Video } from "lucide-react";
 import { useActionState, useState } from "react";
-import { addChannelMedia, createChannel, deleteChannel, rotateChannelAccessKey, type ChannelActionState, removeChannelMedia, setBusinessAssignment, updateChannel } from "@/app/(platform)/channels/actions";
+import { addChannelMedia, createChannel, deleteChannel, rotateChannelAccessKey, type ChannelActionState, removeChannelMedia, setBusinessAssignment, updateChannel, updateChannelDisplaySettings } from "@/app/(platform)/channels/actions";
 import { StatusPill } from "@/components/status-pill";
 import { ChannelDisplaySettingsFields } from "@/components/channel-display-settings-fields";
 import type { ChannelManagementData } from "@/lib/repositories/channels";
@@ -21,7 +21,21 @@ function CopyStreamLink({ path, hostname }: { path: string; hostname: string }) 
 
 function ChannelEditor({ channel }: { channel: ChannelManagementData["channels"][number] }) {
   const [state, action, pending] = useActionState(updateChannel, initialState);
-  return <details className="management-editor management-editor-wide channel-editor"><summary><Pencil size={13} /> Edit channel</summary><form action={action} className="management-inline-form"><header><strong>Edit channel</strong><small>Control delivery, public stream addresses, the broadcast clock, and information shown over the video.</small></header><input type="hidden" name="channelPublicId" value={channel.publicId} />{state.message ? <div className={`auth-message auth-message-${state.status}`}><ShieldCheck size={15} /><span>{state.message}</span></div> : null}<label><span>Channel availability</span><select name="status" defaultValue={channel.status}><option value="active">Viewer link available</option><option value="paused">Viewer link unavailable</option></select></label><label><span>Channel name</span><input name="name" minLength={2} maxLength={120} defaultValue={channel.name} required /></label><div className="management-field-grid"><label><span>Public stream path</span><div className="stream-address-field"><code>/watch/</code><input name="slug" minLength={3} maxLength={80} pattern="[a-z0-9]+(?:-[a-z0-9]+)*" defaultValue={channel.slug} required /></div><small>Changing this replaces the previous clean link.</small></label><label><span>Custom hostname <small>Optional</small></span><input name="customHostname" maxLength={253} defaultValue={channel.customHostname} placeholder="live.example.com" /><small>Point this hostname to the deployed app in DNS and hosting settings.</small></label></div><label><span>Description</span><textarea name="description" maxLength={300} rows={3} defaultValue={channel.description} /></label><ChannelDisplaySettingsFields settings={channel.settings} /><button className="button button-primary" type="submit" disabled={pending}>{pending ? <LoaderCircle className="auth-spinner" size={15} /> : <Pencil size={15} />}{pending ? "Saving..." : "Save channel and display"}</button></form></details>;
+  return <details className="management-editor management-editor-wide channel-editor"><summary><Pencil size={13} /> Edit channel</summary><form action={action} className="management-inline-form"><header><strong>Edit channel</strong><small>Control channel availability, identity, and public stream addresses.</small></header><input type="hidden" name="channelPublicId" value={channel.publicId} />{state.message ? <div className={`auth-message auth-message-${state.status}`}><ShieldCheck size={15} /><span>{state.message}</span></div> : null}<label><span>Channel availability</span><select name="status" defaultValue={channel.status}><option value="active">Viewer link available</option><option value="paused">Viewer link unavailable</option></select></label><label><span>Channel name</span><input name="name" minLength={2} maxLength={120} defaultValue={channel.name} required /></label><div className="management-field-grid"><label><span>Public stream path</span><div className="stream-address-field"><code>/watch/</code><input name="slug" minLength={3} maxLength={80} pattern="[a-z0-9]+(?:-[a-z0-9]+)*" defaultValue={channel.slug} required /></div><small>Changing this replaces the previous clean link.</small></label><label><span>Custom hostname <small>Optional</small></span><input name="customHostname" maxLength={253} defaultValue={channel.customHostname} placeholder="live.example.com" /><small>Point this hostname to the deployed app in DNS and hosting settings.</small></label></div><label><span>Description</span><textarea name="description" maxLength={300} rows={3} defaultValue={channel.description} /></label><button className="button button-primary" type="submit" disabled={pending}>{pending ? <LoaderCircle className="auth-spinner" size={15} /> : <Pencil size={15} />}{pending ? "Saving..." : "Save channel details"}</button></form></details>;
+}
+
+function ChannelVideoSettings({ channel }: { channel: ChannelManagementData["channels"][number] }) {
+  const [state, action, pending] = useActionState(updateChannelDisplaySettings, initialState);
+  return <details className="channel-video-settings">
+    <summary><span><Settings2 size={17} /><span><strong>Channel settings</strong><small>Video presentation and viewer controls</small></span></span><span className={`channel-broadcast-state ${channel.settings.broadcastEnabled ? "is-running" : ""}`}><RadioTower size={14} />{channel.settings.broadcastEnabled ? "Broadcast clock running" : "Broadcast on standby"}</span></summary>
+    <form action={action} className="management-inline-form">
+      <input type="hidden" name="channelPublicId" value={channel.publicId} />
+      {state.message ? <div className={`auth-message auth-message-${state.status}`} role={state.status === "error" ? "alert" : "status"}><ShieldCheck size={15} /><span>{state.message}</span></div> : null}
+      <div className="channel-broadcast-summary"><RadioTower size={18} /><span><strong>{channel.settings.broadcastEnabled ? "Broadcast clock running" : "Broadcast on standby"}</strong><small>All viewers join the same point in the channel loop.</small></span></div>
+      <ChannelDisplaySettingsFields settings={channel.settings} />
+      <button className="button button-primary" type="submit" disabled={pending}>{pending ? <LoaderCircle className="auth-spinner" size={15} /> : <Settings2 size={15} />}{pending ? "Saving..." : "Save video settings"}</button>
+    </form>
+  </details>;
 }
 
 export function ChannelManagement({ data }: { data: ChannelManagementData }) {
@@ -54,6 +68,7 @@ export function ChannelManagement({ data }: { data: ChannelManagementData }) {
               <ol className="channel-playlist">{channel.items.length ? channel.items.map((item) => <li key={item.id}><span>{item.position}</span><div><strong>{item.name}</strong><small>{item.owner} · {item.sourceType === "youtube" ? "YouTube" : item.hasHls ? "Adaptive HLS" : "MP4 fallback"}</small></div><form action={removeChannelMedia}><input type="hidden" name="itemId" value={item.id} /><button aria-label={`Remove ${item.name}`}><Trash2 size={14} /></button></form></li>) : <li className="channel-empty">Add approved media to start this stream.</li>}</ol>
             </section>
           </div>
+          <ChannelVideoSettings channel={channel} />
           <footer><span>Channel ID: {channel.publicId}</span><div className="channel-footer-actions"><ChannelEditor channel={channel} /><form action={deleteChannel} onSubmit={(event) => { if (!window.confirm(`Delete ${channel.name}? This cannot be undone.`)) event.preventDefault(); }}><input type="hidden" name="channelPublicId" value={channel.publicId} /><button className="text-button danger-text" type="submit"><Trash2 size={13} /> Delete channel</button></form></div></footer>
         </article>;
       })}

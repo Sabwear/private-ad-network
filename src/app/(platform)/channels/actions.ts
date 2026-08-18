@@ -24,9 +24,17 @@ const channelDisplaySchema = z.object({
   showAdvertiserLogo: z.boolean(),
   showStripeBanner: z.boolean(),
   showVideoTime: z.boolean(),
+  showFullscreenControl: z.boolean(),
+  showLeaveControl: z.boolean(),
+  showViewerLogin: z.boolean(),
+  showChannelDescription: z.boolean(),
+  showProgressBar: z.boolean(),
   stripeBannerText: z.string().trim().max(240),
   stripeBannerPosition: z.enum(["top", "bottom"]),
   videoFit: z.enum(["contain", "cover"]),
+  overlayPosition: z.enum(["top", "bottom"]),
+  overlayStyle: z.enum(["gradient", "glass", "minimal"]),
+  accentColor: z.string().regex(/^#[0-9a-fA-F]{6}$/),
 });
 
 async function requireAdmin() {
@@ -49,9 +57,17 @@ function displayValues(formData: FormData) {
     showAdvertiserLogo: formData.has("show-advertiser-logo"),
     showStripeBanner: formData.has("show-stripe-banner"),
     showVideoTime: formData.has("show-video-time"),
+    showFullscreenControl: formData.has("show-fullscreen-control"),
+    showLeaveControl: formData.has("show-leave-control"),
+    showViewerLogin: formData.has("show-viewer-login"),
+    showChannelDescription: formData.has("show-channel-description"),
+    showProgressBar: formData.has("show-progress-bar"),
     stripeBannerText: value(formData, "stripe-banner-text"),
     stripeBannerPosition: value(formData, "stripe-banner-position"),
     videoFit: value(formData, "video-fit"),
+    overlayPosition: value(formData, "overlay-position"),
+    overlayStyle: value(formData, "overlay-style"),
+    accentColor: value(formData, "accent-color"),
   });
 }
 
@@ -65,9 +81,17 @@ function displayUpdate(settings: z.infer<typeof channelDisplaySchema>) {
     show_advertiser_logo: settings.showAdvertiserLogo,
     show_stripe_banner: settings.showStripeBanner,
     show_video_time: settings.showVideoTime,
+    show_fullscreen_control: settings.showFullscreenControl,
+    show_leave_control: settings.showLeaveControl,
+    show_viewer_login: settings.showViewerLogin,
+    show_channel_description: settings.showChannelDescription,
+    show_progress_bar: settings.showProgressBar,
     stripe_banner_text: settings.stripeBannerText || null,
     stripe_banner_position: settings.stripeBannerPosition,
     video_fit: settings.videoFit,
+    overlay_position: settings.overlayPosition,
+    overlay_style: settings.overlayStyle,
+    accent_color: settings.accentColor.toLowerCase(),
   };
 }
 
@@ -98,11 +122,10 @@ export async function updateChannel(_state: ChannelActionState, formData: FormDa
   const status = z.enum(["active", "paused"]).safeParse(value(formData, "status"));
   const parsed = channelSchema.safeParse({ name: value(formData, "name"), description: value(formData, "description") });
   const address = streamAddressSchema.safeParse({ slug: value(formData, "slug"), customHostname: value(formData, "customHostname") });
-  const display = displayValues(formData);
-  if (!publicId.success || !status.success || !parsed.success || !address.success || !display.success) return { status: "error", message: "Review the channel details, stream address, and display settings." };
+  if (!publicId.success || !status.success || !parsed.success || !address.success) return { status: "error", message: "Review the channel details and stream address." };
 
   const supabase = await createClient();
-  const { error } = await supabase.from("streaming_channels").update({ name: parsed.data.name, slug: address.data.slug, custom_hostname: address.data.customHostname || null, description: parsed.data.description || null, status: status.data, ...displayUpdate(display.data) }).eq("public_id", publicId.data);
+  const { error } = await supabase.from("streaming_channels").update({ name: parsed.data.name, slug: address.data.slug, custom_hostname: address.data.customHostname || null, description: parsed.data.description || null, status: status.data }).eq("public_id", publicId.data);
   if (error) return { status: "error", message: error.code === "23505" ? "That stream path or hostname is already assigned to another channel." : "The channel could not be updated." };
   revalidatePath("/operations");
   return { status: "success", message: "Channel updated." };
@@ -117,8 +140,9 @@ export async function updateChannelDisplaySettings(_state: ChannelActionState, f
   const { error } = await supabase.from("streaming_channels").update(displayUpdate(display.data)).eq("public_id", publicId.data);
   if (error) return { status: "error", message: "The stream display settings could not be saved." };
   revalidatePath("/operations");
+  revalidatePath("/watch/[slug]", "page");
   revalidatePath("/stream/[channelId]/[accessKey]", "page");
-  return { status: "success", message: "Stream display settings updated." };
+  return { status: "success", message: "Video settings updated." };
 }
 
 export async function deleteChannel(formData: FormData) {

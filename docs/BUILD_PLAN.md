@@ -62,7 +62,7 @@ Outcome: one approved file is delivered and played locally on a reference device
 - [x] Add per-business approved-ad assignment to channels
 - [x] Add advertiser-logo overlays with configurable position and size
 - [x] Add channel display controls for live state, channel/now-playing text, audio, banner, time, logos, and video scaling
-- [x] Add an administrator-only in-player settings menu
+- [x] Centralize all channel video settings in the administrator-only Operations page and keep the player read-only
 - [x] Synchronize browser viewers to one persistent server-clock channel loop with standby/resume controls and drift recovery
 - [x] Accept business-scoped YouTube URLs alongside private MP4 uploads and play both through the synchronized channel timeline
 - [ ] Create Android TV project using Kotlin, Compose for TV, Media3, Room, and OkHttp

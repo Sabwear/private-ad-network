@@ -10,7 +10,7 @@ The limited beta validates the central platform's operational path:
 4. Media is uploaded privately with progress and optional compression, approves directly after administrator validation, and is converted to adaptive HLS.
 5. An administrator creates a channel, assigns businesses, adds approved media, and opens the protected viewer link.
 6. An administrator can responsively create, target, and publish a campaign with approved media, locations, dates, budget, and frequency limits.
-7. An administrator edits business details, uploads its logo, assigns its approved ads to channels, and controls stream overlays from either Channels or the in-player menu.
+7. An administrator edits business details, uploads its logo, assigns its approved ads to channels, and controls every channel's video presentation from Operations.
 8. Dashboard search, Guide, notifications, and Live Beta shortcut provide working navigation rather than decorative controls.
 
 The Overview page reports live repository data. Empty states are genuine and no finance or proof values are simulated in a deployed environment.
@@ -29,7 +29,7 @@ The Overview page reports live repository data. Empty states are genuine and no 
 - [ ] `pnpm test:beta` passes and the GitHub Application validation workflow is green.
 - [ ] Complete the supported flow with the marked demo dataset, then clear it from Admin control and confirm real client records remain untouched.
 - [ ] Upload at least one real transparent business logo and verify all four positions and representative sizes on desktop and display hardware.
-- [ ] Verify every channel overlay toggle and confirm the settings menu is absent for a logged-out viewer.
+- [ ] Verify every channel video setting from Operations and confirm the public player contains no settings mutation menu for any viewer.
 
 ## Explicitly outside this beta
 

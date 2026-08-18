@@ -184,9 +184,17 @@ export type Database = {
         show_advertiser_logo: boolean;
         show_stripe_banner: boolean;
         show_video_time: boolean;
+        show_fullscreen_control: boolean;
+        show_leave_control: boolean;
+        show_viewer_login: boolean;
+        show_channel_description: boolean;
+        show_progress_bar: boolean;
         stripe_banner_text: string | null;
         stripe_banner_position: string;
         video_fit: string;
+        overlay_position: string;
+        overlay_style: string;
+        accent_color: string;
         created_by: string | null;
         created_at: string;
         updated_at: string;
