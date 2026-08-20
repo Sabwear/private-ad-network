@@ -17,7 +17,7 @@ The Overview page reports live repository data. Empty states are genuine and no 
 
 ## Required launch checklist
 
-- [ ] Production `/api/health` returns `200` and `/api/ready` returns `200`.
+- [x] Production `/api/health` returns `200` and schema-aware `/api/ready` returns `200` (verified 2026-08-20).
 - [ ] A media-processor container is running continuously with protected server credentials.
 - [ ] At least one approved test business, location, administrator, and screen are configured.
 - [ ] At least one test video reaches `ready`, is added to a channel, and plays in both adaptive and fallback modes.

@@ -63,7 +63,7 @@ Uploaded media jobs also generate adaptive 720p and 480p HLS renditions. The med
 
 ## Operations
 
-`/api/health` confirms that the web service is running. `/api/ready` additionally checks the server-side database connection and returns `503` when the application is not ready to serve production work. Both endpoints are public, disclose no credentials, and disable caching.
+`/api/health` confirms that the web service is running. `/api/ready` additionally checks the server-side database connection and the required operating-schedule, busy-period, and advanced streaming-settings schema; it returns `503` when the application is not ready to serve production work. Both endpoints are public, disclose no credentials, and disable caching.
 
 The media processor is a separate long-running service and is not started by a normal Vercel web deployment. Run its container on a worker-capable host before uploading beta media.
 

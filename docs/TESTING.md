@@ -13,7 +13,8 @@ This gate performs linting, media-worker type checks, a production Next.js build
 The browser suite currently verifies:
 
 - Service health and no-cache behavior
-- Protected-route redirect to sign-in
+- Exhaustive dashboard-route resolution through the sign-in boundary
+- Public login, password recovery, and device setup reachability
 - Invitation-only signup boundary
 - Non-disclosure for malformed private stream credentials
 - Browser security headers
@@ -24,6 +25,8 @@ The browser suite currently verifies:
 - Stream heartbeat and termination require a validated viewer cookie
 - Dedicated Monitor authentication and legacy Proof URL compatibility
 - Operation and channel-settings compatibility paths redirect through the protected Operations route
+
+The 2026-08-20 hosted route audit also verified the canonical `https://loopline-gray.vercel.app` deployment. Every dashboard path redirected to sign-in without a 404/500, public utility pages returned `200`, `/watch/primary-network` completed anonymous access and rendered the player, and `/api/health` plus the schema-aware `/api/ready` returned `200`.
 
 The following authenticated smoke checks were completed manually for the current beta build and should be automated next:
 

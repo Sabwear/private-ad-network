@@ -7,9 +7,20 @@ test("health endpoint reports the running service without caching", async ({ req
   await expect(response.json()).resolves.toMatchObject({ status: "ok", service: "loopline-central" });
 });
 
-test("protected pages require a successful session", async ({ page }) => {
-  await page.goto("/overview");
-  await expect(page).toHaveURL(/\/login\?.*next=%2Foverview/);
+test("every dashboard page is reachable through the authentication boundary", async ({ page }) => {
+  const protectedRoutes = [
+    "/", "/admin", "/business", "/campaigns", "/channels", "/locations", "/media", "/monitor",
+    "/operation", "/operations", "/operations/channel-settings", "/overview", "/profile", "/proof",
+    "/screens", "/users", "/wallet",
+  ];
+
+  for (const path of protectedRoutes) {
+    const response = await page.goto(path);
+    expect(response?.status(), `${path} should resolve through sign-in`).toBe(200);
+    await expect(page).toHaveURL(new RegExp(`/login\\?.*next=${encodeURIComponent(path)}`));
+    await expect(page.getByRole("heading", { name: "This part of the network is not connected yet." })).toHaveCount(0);
+  }
+
   await expect(page.getByRole("heading", { name: "Sign in to the platform" })).toBeVisible();
 });
 
@@ -36,6 +47,14 @@ test("public signup is invitation-only", async ({ page }) => {
   await page.goto("/signup");
   await expect(page).toHaveURL(/\/login\?message=invitation-required/);
   await expect(page.getByText("Access is invitation-only", { exact: false }).first()).toBeVisible();
+});
+
+test("public utility pages are reachable", async ({ page }) => {
+  for (const path of ["/login", "/forgot-password", "/device/setup"]) {
+    const response = await page.goto(path);
+    expect(response?.status(), `${path} should load`).toBe(200);
+    await expect(page.getByRole("heading", { name: "This part of the network is not connected yet." })).toHaveCount(0);
+  }
 });
 
 test("malformed private stream credentials are not disclosed", async ({ page }) => {

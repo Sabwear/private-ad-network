@@ -1,6 +1,6 @@
 # Project Status and Next-Phase Handoff
 
-Last reviewed: 2026-08-19
+Last reviewed: 2026-08-20
 
 ## Current product state
 
@@ -48,10 +48,10 @@ The portal is suitable for controlled administrator testing. It is not yet ready
 
 ## Database and deployment state
 
-- Hosted migrations are applied through `20260817231040_admin_only_platform_model.sql`; the busy-hours/isolated-delivery and advanced channel-video-settings migrations are pending deployment.
+- Hosted schema is applied and verified through `20260818233144_advanced_channel_video_settings.sql`, including the operating-schedule dependency, recurring busy periods, isolated advertiser exhaustion, and advanced channel video settings.
 - Production verification on 2026-08-18: one admin, zero organization memberships, tenant helpers disabled, three new admin functions installed, and admin read policies present.
 - The local Supabase CLI is not linked; migrations were applied and verified through the authenticated hosted SQL editor.
-- Vercel remains the web host. The media worker requires a separate long-running worker host.
+- Vercel remains the web host at `https://loopline-gray.vercel.app`. The similarly named `loopline.vercel.app` domain is not attached to this project. The media worker requires a separate long-running worker host.
 - The repository remote is `origin` on GitHub; completed work must be committed and pushed after verification.
 
 ## Validation state
@@ -59,7 +59,8 @@ The portal is suitable for controlled administrator testing. It is not yet ready
 - ESLint: passed
 - Next.js production build: passed
 - Media processor checks: 3 passed
-- Playwright end-to-end suite: 13 passed
+- Playwright end-to-end suite: 14 passed
+- Production route audit: all dashboard routes reached sign-in, public utility pages returned `200`, `primary-network` completed anonymous access into the player, and health/readiness returned `200`
 - Git diff whitespace validation: passed
 
 ## Known gaps before external beta
