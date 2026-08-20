@@ -88,6 +88,11 @@ export function ChannelPlayer({ channel, accessKey, approvedViewer }: { channel:
     }
   }, [channel.broadcastStartedAt, channel.items, channel.settings.broadcastEnabled, estimatedServerTime, sendYouTubeCommand]);
 
+  const refreshPlaylistAtMediaEnd = useCallback(() => {
+    router.refresh();
+    synchronizePlayback();
+  }, [router, synchronizePlayback]);
+
   useEffect(() => {
     serverClockOffsetRef.current = channel.serverTimeMs - Date.now();
   }, [channel.serverTimeMs]);
@@ -220,7 +225,10 @@ export function ChannelPlayer({ channel, accessKey, approvedViewer }: { channel:
       try {
         const payload = typeof event.data === "string" ? JSON.parse(event.data) as { event?: string; info?: number } : event.data as { event?: string; info?: number };
         if (payload.event === "onReady") handleYouTubeLoad();
-        if (payload.event === "onStateChange") youtubePlayingRef.current = payload.info === 1;
+        if (payload.event === "onStateChange") {
+          youtubePlayingRef.current = payload.info === 1;
+          if (payload.info === 0) refreshPlaylistAtMediaEnd();
+        }
         if (payload.event === "onError") setUnavailable(true);
       } catch {
         // Ignore unrelated or malformed postMessage traffic.
@@ -228,7 +236,7 @@ export function ChannelPlayer({ channel, accessKey, approvedViewer }: { channel:
     };
     window.addEventListener("message", handleYouTubeMessage);
     return () => window.removeEventListener("message", handleYouTubeMessage);
-  }, [handleYouTubeLoad, item]);
+  }, [handleYouTubeLoad, item, refreshPlaylistAtMediaEnd]);
 
   useEffect(() => {
     if (!item || !channel.settings.broadcastEnabled || unavailable) return;
@@ -275,7 +283,7 @@ export function ChannelPlayer({ channel, accessKey, approvedViewer }: { channel:
   const progress = duration > 0 ? Math.min(100, Math.max(0, currentTime / duration * 100)) : 0;
   const playerStyle = { "--stream-accent": settings.accentColor } as CSSProperties;
   return <main className="stream-page" style={playerStyle}>
-    {item && channel.settings.broadcastEnabled ? item.sourceType === "youtube" && item.youtubeVideoId ? <iframe key={item.id} ref={youtubeRef} className={`stream-youtube stream-youtube-${settings.videoFit}`} src={youtubeEmbedUrl(item.youtubeVideoId, { autoplay: true, controls: false })} title={item.name} allow="autoplay; encrypted-media; picture-in-picture" onLoad={handleYouTubeLoad} /> : <video ref={videoRef} autoPlay muted={muted} playsInline style={{ objectFit: settings.videoFit === "cover" ? "cover" : "contain" }} onEnded={synchronizePlayback} onTimeUpdate={(event) => { const next = Math.floor(event.currentTarget.currentTime); setCurrentTime((current) => current === next ? current : next); }} onLoadedMetadata={(event) => setDuration(event.currentTarget.duration)} /> : <div className="stream-empty"><RadioTower size={38} /><p className="eyebrow">{channel.name}</p><h1>{item ? "Broadcast on standby" : "Channel is ready"}</h1><span>{item ? "The viewer link is available, but continuous playback is paused by an administrator." : "Add approved media from the Channels or Business dashboard to begin streaming."}</span></div>}
+    {item && channel.settings.broadcastEnabled ? item.sourceType === "youtube" && item.youtubeVideoId ? <iframe key={item.id} ref={youtubeRef} className={`stream-youtube stream-youtube-${settings.videoFit}`} src={youtubeEmbedUrl(item.youtubeVideoId, { autoplay: true, controls: false })} title={item.name} allow="autoplay; encrypted-media; picture-in-picture" onLoad={handleYouTubeLoad} /> : <video ref={videoRef} autoPlay muted={muted} playsInline style={{ objectFit: settings.videoFit === "cover" ? "cover" : "contain" }} onEnded={refreshPlaylistAtMediaEnd} onTimeUpdate={(event) => { const next = Math.floor(event.currentTarget.currentTime); setCurrentTime((current) => current === next ? current : next); }} onLoadedMetadata={(event) => setDuration(event.currentTarget.duration)} /> : <div className="stream-empty"><RadioTower size={38} /><p className="eyebrow">{channel.name}</p><h1>{item ? "Broadcast on standby" : "Channel is ready"}</h1><span>{item ? "The viewer link is available, but continuous playback is paused by an administrator." : "Add approved media from the Channels or Business dashboard to begin streaming."}</span></div>}
     {item && channel.settings.broadcastEnabled && settings.showStripeBanner && settings.stripeBannerText ? <div className={`stream-stripe stream-stripe-${settings.stripeBannerPosition}`}><span>{settings.stripeBannerText}</span></div> : null}
     {item && channel.settings.broadcastEnabled && settings.showAdvertiserLogo && item.logoUrl ? <div className={`stream-advertiser-logo stream-logo-${item.logoPosition}`} style={{ width: `${item.logoSizePercent}vw` }}><Image src={item.logoUrl} alt={`${item.advertiserName} logo`} width={420} height={210} unoptimized /></div> : null}
     {unavailable ? <div className="stream-playback-error" role="alert">This media is temporarily unavailable. The player will recover when the source is restored.</div> : null}

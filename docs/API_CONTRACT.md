@@ -88,6 +88,7 @@ Required event fields:
 - The `/operations` workspace creates and handles streams, targets businesses, manages viewer links, controls ordered approved media, and configures stream presentation.
 - The `/monitor` workspace reports live telemetry and accepted proof-of-play evidence; `/proof` redirects to `/monitor#proof`.
 - The `/business` workspace edits centrally managed business identity, schedule, contacts, branding, stream access, and per-business credit rules.
+- The `/wallet` workspace invokes `admin_grant_business_credits` to issue reasoned promotional credits through a balanced, audited ledger transaction. Operations reports whether each assigned item can fund a full base-rate play.
 - Busy-period edits replace an audited business schedule through `admin_replace_business_busy_periods`, and heartbeat evidence stores the active consumption multiplier.
 
 - `POST /v1/admin/media/{id}/decision`

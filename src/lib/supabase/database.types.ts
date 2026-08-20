@@ -385,6 +385,10 @@ export type Database = {
     };
     Views: Record<string, never>;
     Functions: {
+      admin_grant_business_credits: {
+        Args: { p_organization_id: number; p_amount: number; p_reason: string };
+        Returns: number;
+      };
       admin_clear_demo_data: {
         Args: { p_confirmation: string };
         Returns: number;

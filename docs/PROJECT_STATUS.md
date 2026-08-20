@@ -26,6 +26,7 @@ The portal is suitable for controlled administrator testing. It is not yet ready
 - Platform-wide locations, screens, channels, media, campaigns, wallets, user sessions, and monitoring
 - Locations and targeting rules embedded in campaign configuration
 - Channel link management, business targeting, playlist management, centralized Operations video controls, configurable overlays/progress/accent, and synchronized server-clock playback
+- Operations funding eligibility for every channel item, plus administrator promotional-credit grants backed by balanced ledger entries and audit records
 - Stable compatibility redirects from singular Operation and the explicit channel-settings path to the Operations channel controls
 - Dedicated Monitor workspace with viewers, geography, uptime, channels, credit movement, database/runtime status, alerts, handling controls, and accepted proof-of-play evidence
 
@@ -40,6 +41,7 @@ The portal is suitable for controlled administrator testing. It is not yet ready
 ### Viewer streaming
 
 - Anonymous playback starts normally from a valid channel link
+- Existing viewers refresh funding eligibility whenever an uploaded or YouTube item ends, allowing newly funded assigned media into the next resolved loop
 - Optional login control opens the registered-viewer modal; dismissing or ignoring it never blocks playback
 - The public player is read-only; administrators configure viewer controls and presentation only from each channel's Operations panel
 - Registered viewers use administrator-approved accounts
@@ -48,9 +50,9 @@ The portal is suitable for controlled administrator testing. It is not yet ready
 
 ## Database and deployment state
 
-- Hosted schema is applied and verified through `20260818233144_advanced_channel_video_settings.sql`, including the operating-schedule dependency, recurring busy periods, isolated advertiser exhaustion, and advanced channel video settings.
+- Hosted schema is applied and verified through `20260820173946_fund_demo_channel_advertisers.sql`, including operating schedules, busy periods, isolated advertiser exhaustion, advanced channel video settings, and audited credit grants.
 - Production verification on 2026-08-18: one admin, zero organization memberships, tenant helpers disabled, three new admin functions installed, and admin read policies present.
-- Production database access is configured through an ignored password-based session-pooler URL. Hosted migration history is reconciled with all 29 local files, and direct CLI query/list/dry-run/push helpers are available.
+- Production database access is configured through an ignored password-based session-pooler URL. Hosted migration history matches all 31 local files, and direct CLI query/list/advisor/dry-run/push helpers are available.
 - Vercel remains the web host at `https://loopline-gray.vercel.app`. The similarly named `loopline.vercel.app` domain is not attached to this project. The media worker requires a separate long-running worker host.
 - The repository remote is `origin` on GitHub; completed work must be committed and pushed after verification.
 

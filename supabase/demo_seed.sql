@@ -40,7 +40,12 @@ begin
   select id into retail_id from public.organizations where public_id = '33333333-3333-4333-8333-333333333333';
 
   insert into public.wallets (organization_id, wallet_type, balance_projection)
-  values (advertiser_id, 'promotional', 5000), (fitness_id, 'earned', 0), (retail_id, 'earned', 0)
+  values
+    (advertiser_id, 'promotional', 5000),
+    (fitness_id, 'promotional', 5000),
+    (retail_id, 'promotional', 5000),
+    (fitness_id, 'earned', 0),
+    (retail_id, 'earned', 0)
   on conflict (organization_id, wallet_type) do update set balance_projection = excluded.balance_projection;
 
   insert into public.locations (public_id, organization_id, name, address, zone, category, operating_hours, traffic_band, quality_score, status)

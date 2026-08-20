@@ -28,6 +28,8 @@ The browser suite currently verifies:
 
 The 2026-08-20 hosted route audit also verified the canonical `https://loopline-gray.vercel.app` deployment. Every dashboard path redirected to sign-in without a 404/500, public utility pages returned `200`, `/watch/primary-network` completed anonymous access and rendered the player, and `/api/health` plus the schema-aware `/api/ready` returned `200`.
 
+The 2026-08-20 playlist funding verification confirmed three serialized items in `primary-network`, 5,000 promotional credits for each newly funded demo advertiser, two posted two-entry grant transactions with a zero balance, aligned migration history, and no Supabase security-advisor findings. The existing unrelated duplicate permissive profile-read policy remains a performance warning.
+
 The following authenticated smoke checks were completed manually for the current beta build and should be automated next:
 
 - Business information persists through the audited administrator action

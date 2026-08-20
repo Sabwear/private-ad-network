@@ -60,7 +60,7 @@ pnpm db:push:direct
 
 Always review the dry run before pushing. The wrapper never stores the password in a tracked command or source file. The transaction-mode pooler on port `6543` is not the preferred migration endpoint because it does not support prepared statements.
 
-Production history was reconciled on 2026-08-20. All 29 repository migrations match their remote versions, and `pnpm db:push:direct:check` reports that the hosted database is up to date.
+Production history was verified on 2026-08-20. All 31 repository migrations match their remote versions, and `pnpm db:push:direct:check` reports that the hosted database is up to date. Run `pnpm db:advisors:direct -- --type security --level warn --fail-on error` after schema changes.
 
 Do not include the seed file when pushing to production. It intentionally contains no business or user data.
 

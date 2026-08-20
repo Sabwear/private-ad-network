@@ -66,7 +66,7 @@ Channel-to-business targeting. Administrators control which managed businesses a
 
 ### streaming_channel_items
 
-Channel, approved/ready media asset, deterministic position, status, and creator. The database requires uploads to have a normalized object and YouTube sources to have constrained provider metadata before either source can be assigned.
+Channel, approved/ready media asset, deterministic position, status, and creator. The database requires uploads to have a normalized object and YouTube sources to have constrained provider metadata before either source can be assigned. Playlist composition requires the advertiser to fund one full play at the current host busy-hour multiplier; unfunded items remain assigned and visible to administrators but are excluded from the viewer payload.
 
 Business ad selection reuses this ordered channel-item model; business association is validated before an administrator can add or remove the asset.
 
@@ -120,7 +120,7 @@ Session/device, score, reason codes, evidence snapshot, reviewer, outcome, resol
 
 ### wallets
 
-Organization/system owner, wallet type (`PURCHASED`, `EARNED`, `PROMOTIONAL`, `HELD`, `PLATFORM`), balance projection
+Organization/system owner, wallet type (`PURCHASED`, `EARNED`, `PROMOTIONAL`, `HELD`, `PLATFORM`), balance projection. Administrator promotional grants create paired business/platform entries, a posted transaction, and an audit record rather than editing projections directly.
 
 ### ledger_transactions
 

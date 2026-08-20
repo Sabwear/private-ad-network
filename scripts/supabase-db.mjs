@@ -13,13 +13,14 @@ const commands = {
   query: ["db", "query", ...extraArguments],
   list: ["migration", "list", ...extraArguments],
   repair: ["migration", "repair", ...extraArguments],
+  advisors: ["db", "advisors", ...extraArguments],
   check: ["db", "push", "--dry-run", ...extraArguments],
   push: ["db", "push", ...extraArguments],
 };
 
 const commandArguments = commands[mode];
 if (!commandArguments) {
-  console.error("Expected one of: query, list, repair, check, push.");
+  console.error("Expected one of: query, list, repair, advisors, check, push.");
   process.exit(1);
 }
 

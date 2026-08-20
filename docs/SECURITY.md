@@ -82,6 +82,7 @@ No single weak hardware signal should automatically accuse a venue of fraud. Sto
 - Adjustment reason, evidence, actor, and approval path
 - Automated reconciliation and alert on projection mismatch
 - Purchased, earned, promotional, held, and platform credits remain distinguishable
+- Administrator promotional grants require an active administrator, a bounded positive amount, and a reason; each grant posts balanced business/platform entries and an audit record
 - Stream consumption locks wallets in consistent ID order and debits promotional, then earned, then purchased credit without allowing a negative balance
 - Busy-hour configuration is administrator-only, audited, RLS-protected, overlap-validated, and bounded to a 10× maximum; settlement records the applied multiplier as evidence
 - Host earnings are not created when an advertiser lacks spendable credit; only that advertiser's ads are excluded when building a fresh stream playlist and recorded as insufficient-credit evidence under settlement races, while the channel and other campaigns remain active

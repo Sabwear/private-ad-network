@@ -16,6 +16,7 @@
     "db:query:direct": "node --env-file-if-exists=.env.database.local scripts/supabase-db.mjs query",
     "db:migrations:direct": "node --env-file-if-exists=.env.database.local scripts/supabase-db.mjs list",
     "db:repair:direct": "node --env-file-if-exists=.env.database.local scripts/supabase-db.mjs repair",
+    "db:advisors:direct": "node --env-file-if-exists=.env.database.local scripts/supabase-db.mjs advisors",
     "db:push:direct:check": "node --env-file-if-exists=.env.database.local scripts/supabase-db.mjs check",
     "db:push:direct": "node --env-file-if-exists=.env.database.local scripts/supabase-db.mjs push",
     "db:types": "supabase --workdir . gen types typescript --linked",
