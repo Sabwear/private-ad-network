@@ -47,6 +47,17 @@ pnpm db:push:check
 pnpm exec supabase --workdir . db push
 ```
 
+For direct production access, keep `SUPABASE_DB_URL` only in the ignored `.env.database.local` file. The repository wrapper loads it without printing the credential:
+
+```powershell
+pnpm db:query:direct -- "select current_database(), current_user;"
+pnpm db:migrations:direct
+pnpm db:push:direct:check
+pnpm db:push:direct
+```
+
+Use the shared pooler's session-mode port `5432` for migration commands. Port `6543` is transaction mode and is intended for short-lived serverless application traffic.
+
 After deploying, bootstrap the first platform administrator using the controlled procedure in `docs/SUPABASE_SETUP.md`.
 
 ## Media processor

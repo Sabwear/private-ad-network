@@ -50,7 +50,7 @@ The portal is suitable for controlled administrator testing. It is not yet ready
 
 - Hosted schema is applied and verified through `20260818233144_advanced_channel_video_settings.sql`, including the operating-schedule dependency, recurring busy periods, isolated advertiser exhaustion, and advanced channel video settings.
 - Production verification on 2026-08-18: one admin, zero organization memberships, tenant helpers disabled, three new admin functions installed, and admin read policies present.
-- The local Supabase CLI is not linked; migrations were applied and verified through the authenticated hosted SQL editor.
+- Production database access is configured through an ignored password-based session-pooler URL. Hosted migration history is reconciled with all 29 local files, and direct CLI query/list/dry-run/push helpers are available.
 - Vercel remains the web host at `https://loopline-gray.vercel.app`. The similarly named `loopline.vercel.app` domain is not attached to this project. The media worker requires a separate long-running worker host.
 - The repository remote is `origin` on GitHub; completed work must be committed and pushed after verification.
 
@@ -67,10 +67,9 @@ The portal is suitable for controlled administrator testing. It is not yet ready
 
 1. Deploy and continuously monitor the media processor.
 2. Configure production hostname/callbacks, custom SMTP, leaked-password protection, and administrator MFA.
-3. Link the Supabase CLI and reconcile migration history.
-4. Add hosted integration coverage for admin authorization, invitations, device pairing, media processing, channel rotation, and database restore.
-5. Publish the viewer/session telemetry privacy notice and retention policy.
-6. Replace or clear demo data before onboarding real businesses.
+3. Add hosted integration coverage for admin authorization, invitations, device pairing, media processing, channel rotation, and database restore.
+4. Publish the viewer/session telemetry privacy notice and retention policy.
+5. Replace or clear demo data before onboarding real businesses.
 
 ## Recommended next phase
 

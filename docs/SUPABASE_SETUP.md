@@ -47,6 +47,21 @@ pnpm exec supabase --workdir . db push
 pnpm exec supabase --workdir . migration list
 ```
 
+### Password-based production connection
+
+Set `SUPABASE_DB_URL` in the ignored `.env.database.local` file when Management API linking is unavailable. Use the Supavisor session-mode endpoint on port `5432` for migrations, then run:
+
+```powershell
+pnpm db:query:direct -- "select current_database(), current_user;"
+pnpm db:migrations:direct
+pnpm db:push:direct:check
+pnpm db:push:direct
+```
+
+Always review the dry run before pushing. The wrapper never stores the password in a tracked command or source file. The transaction-mode pooler on port `6543` is not the preferred migration endpoint because it does not support prepared statements.
+
+Production history was reconciled on 2026-08-20. All 29 repository migrations match their remote versions, and `pnpm db:push:direct:check` reports that the hosted database is up to date.
+
 Do not include the seed file when pushing to production. It intentionally contains no business or user data.
 
 ## Bootstrap the first platform administrator

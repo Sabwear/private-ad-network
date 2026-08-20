@@ -24,6 +24,8 @@ Do not reintroduce organization membership, business-owner, staff, finance, mode
 - Operations is the only channel-video-settings control surface. The live player is read-only and supports saved visibility controls, overlay position/style, progress, accent color, scaling, and banner presentation.
 - `/operation` and `/operations/channel-settings` are compatibility routes that redirect to the channel controls at `/operations#channels` instead of falling through to the custom 404 page.
 - Production Supabase has the operating-schedule dependency, busy-hours/isolated-delivery, and advanced channel-video-settings migrations applied and schema-verified through `20260818233144_advanced_channel_video_settings.sql`.
+- Password-based production database access is available through the ignored `.env.database.local` `SUPABASE_DB_URL`; use `db:query:direct`, `db:migrations:direct`, `db:push:direct:check`, and `db:push:direct`. Never copy the credential into tracked files or output.
+- Hosted migration history was reconciled on 2026-08-20: all 29 local and remote versions match, and the direct push dry run reports the database is up to date.
 - Production is served from `https://loopline-gray.vercel.app`; `loopline.vercel.app` is not an alias of this project and must not be used for verification or customer links.
 - `/api/ready` verifies the required schedule, busy-period, and advanced streaming-settings schema as well as database connectivity, so future schema drift fails visibly with `503` instead of presenting valid pages as missing.
 - The 2026-08-18 production verification found one admin profile, zero business memberships, three administrator functions, disabled tenant helpers, and all required administrator read policies.
