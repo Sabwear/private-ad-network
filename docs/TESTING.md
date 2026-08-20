@@ -25,6 +25,7 @@ The browser suite currently verifies:
 - Stream heartbeat and termination require a validated viewer cookie
 - Dedicated Monitor authentication and legacy Proof URL compatibility
 - Operation and channel-settings compatibility paths redirect through the protected Operations route
+- The Wallet route remains administrator-only; authenticated wallet verification should additionally cover business selection, exact ledger totals, funder attribution, and detailed playback-spend evidence from `get_admin_wallet_report`
 
 The 2026-08-20 hosted route audit also verified the canonical `https://loopline-gray.vercel.app` deployment. Every dashboard path redirected to sign-in without a 404/500, public utility pages returned `200`, `/watch/primary-network` completed anonymous access and rendered the player, and `/api/health` plus the schema-aware `/api/ready` returned `200`.
 
@@ -65,6 +66,7 @@ Database migrations must be reviewed against the hosted project before deploymen
 - Shared-timeline late join across independent viewers, authorized clock synchronization, repeated-loop rollover, background-tab recovery, drift correction, standby/resume, and unavailable-source retry
 - Header live-channel resolution for administrators and viewer-dashboard exclusion
 - Busy-period overlap rejection, local-time multiplier settlement, proof evidence, and per-advertiser exhaustion without channel interruption
+- Wallet-report lifetime aggregation, history limits, administrator identity attribution, multi-wallet spend splits, and viewer-account denial
 
 ### Device endurance
 

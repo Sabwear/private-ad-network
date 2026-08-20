@@ -130,6 +130,10 @@ Type, reference, policy version, unique idempotency key, status, actor, reversal
 
 Transaction, wallet, signed amount, description, expiry metadata
 
+### administrator wallet report
+
+`get_admin_wallet_report` is a read-only, security-invoker function restricted to active platform administrators. It calculates complete lifetime funding, earning, and spend totals in PostgreSQL, returns current balances by wallet source, and bounds detailed funding and spend histories to 250 rows. Funding rows include the authenticated administrator identity and reason; stream-spend rows include the asset, host business, verified seconds, wallet source, validation result, and applied busy-hour multiplier. It grants no business ownership or workspace authority.
+
 ### payments
 
 Organization, provider reference, cash amount/currency, purchased credits, invoice, status

@@ -347,6 +347,28 @@ export type Database = {
         created_at: string;
         updated_at: string;
       }>;
+      ledger_transactions: Table<{
+        id: number;
+        public_id: string;
+        transaction_type: string;
+        reference_type: string;
+        reference_id: string;
+        policy_version_id: number | null;
+        idempotency_key: string;
+        status: string;
+        reversal_of_id: number | null;
+        created_by: string | null;
+        reason: string | null;
+        created_at: string;
+      }>;
+      ledger_entries: Table<{
+        id: number;
+        transaction_id: number;
+        wallet_id: number;
+        amount: number;
+        description: string;
+        created_at: string;
+      }>;
       policy_versions: Table<{
         id: number;
         code: string;
@@ -388,6 +410,10 @@ export type Database = {
       admin_grant_business_credits: {
         Args: { p_organization_id: number; p_amount: number; p_reason: string };
         Returns: number;
+      };
+      get_admin_wallet_report: {
+        Args: { p_organization_id?: number | null; p_history_limit?: number };
+        Returns: Json;
       };
       admin_clear_demo_data: {
         Args: { p_confirmation: string };
