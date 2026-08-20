@@ -5,6 +5,7 @@ import { useActionState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { invitePlatformAccount, updateUserAccess, type UserActionState } from "@/app/(platform)/users/actions";
 import { StatusPill } from "@/components/status-pill";
+import { DismissibleDetails } from "@/components/dismissible-details";
 import type { UserAdminData, UserAdminRow } from "@/lib/repositories/users";
 
 const initialState: UserActionState = { status: "idle", message: "" };
@@ -36,8 +37,7 @@ function UserAccessEditor({ user }: { user: UserAdminRow }) {
   const [state, action, pending] = useActionState(updateUserAccess, initialState);
   if (user.platformRole === "admin") return <span className="user-admin-lock"><LockKeyhole size={13} /> Protected</span>;
 
-  return <details className="management-editor user-access-editor">
-    <summary><Settings2 size={14} /> Manage</summary>
+  return <DismissibleDetails className="management-editor user-access-editor" summary={<><Settings2 size={14} /> Manage</>} closeLabel={`Close ${user.name} access editor`}>
     <form action={action} className="management-inline-form" noValidate>
       <input type="hidden" name="userId" value={user.id} />
       <header><strong>{user.name}</strong><small>{user.email}</small></header>
@@ -46,7 +46,7 @@ function UserAccessEditor({ user }: { user: UserAdminRow }) {
       <label><span>Administrative reason</span><textarea name="reason" rows={2} maxLength={300} required placeholder="Document the approval, role change, or suspension reason." aria-invalid={Boolean(state.fieldErrors?.reason)} /><FieldError message={state.fieldErrors?.reason} /></label>
       <button className="button button-primary" type="submit" disabled={pending}>{pending ? <LoaderCircle className="auth-spinner" size={16} /> : <ShieldCheck size={16} />}{pending ? "Saving..." : "Save access"}</button>
     </form>
-  </details>;
+  </DismissibleDetails>;
 }
 
 export function UserManagement({ data }: { data: UserAdminData }) {

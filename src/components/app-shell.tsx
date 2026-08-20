@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Activity, Bell, Building2, ChevronDown, CircleHelp, Clapperboard, Gauge, LayoutDashboard, LogOut, Mail, Menu, Orbit, RadioTower, ReceiptText, Search, Settings, ShieldCheck, UsersRound, WalletCards, X } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Brand } from "@/components/brand";
 import type { WorkspaceContext } from "@/lib/auth/workspace";
 import type { HeaderData } from "@/lib/repositories/header";
@@ -24,6 +24,29 @@ export function AppShell({ children, workspace, header, signOutAction }: { child
   const [panel, setPanel] = useState<HeaderPanel>(null);
   const [search, setSearch] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
+
+  useEffect(() => {
+    function closeTransientUi(event: PointerEvent) {
+      if (!(event.target instanceof Element)) return;
+      if (event.target.closest(".header-search-wrap,.header-action-wrap,.account-wrap,.sidebar")) return;
+      setAccountOpen(false);
+      setPanel(null);
+      setSearchOpen(false);
+    }
+    function closeOnEscape(event: KeyboardEvent) {
+      if (event.key !== "Escape") return;
+      setOpen(false);
+      setAccountOpen(false);
+      setPanel(null);
+      setSearchOpen(false);
+    }
+    document.addEventListener("pointerdown", closeTransientUi);
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.removeEventListener("pointerdown", closeTransientUi);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, []);
 
   const searchItems = useMemo(() => {
     const items = [
@@ -60,7 +83,7 @@ export function AppShell({ children, workspace, header, signOutAction }: { child
   const liveHref = header.liveStream?.href ?? "/operations#channels";
 
   return (
-    <div className="app-shell" onKeyDown={(event) => { if (event.key === "Escape") { setPanel(null); setSearchOpen(false); } }}>
+    <div className="app-shell">
       <aside className={`sidebar ${open ? "sidebar-open" : ""}`}>
         <div className="sidebar-top"><Brand /><button className="icon-button sidebar-close" onClick={() => setOpen(false)} aria-label="Close navigation"><X size={20} /></button></div>
         <nav className="primary-nav" aria-label="Primary navigation">
@@ -91,7 +114,7 @@ export function AppShell({ children, workspace, header, signOutAction }: { child
               <input aria-label="Search platform" placeholder="Search businesses, locations, screens..." value={search} onChange={(event) => { setSearch(event.target.value); setSearchOpen(true); setPanel(null); }} onFocus={() => { setSearchOpen(true); setPanel(null); }} onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); openFirstSearchResult(); } }} />
             </form>
             {searchOpen ? <div className="header-popover search-results" aria-label="Search results">
-              <div className="header-popover-title"><strong>{search.trim() ? "Search results" : "Quick navigation"}</strong><small>Press Enter to open the first result</small></div>
+              <div className="header-popover-title"><strong>{search.trim() ? "Search results" : "Quick navigation"}</strong><button className="header-popover-close" type="button" aria-label="Close search results" onClick={() => setSearchOpen(false)}><X size={14} /></button></div>
               {searchItems.length ? searchItems.map(({ href, label, description, icon: Icon }) => <Link key={href} href={href} onClick={() => { setSearchOpen(false); setSearch(""); }}><Icon size={16} /><span><strong>{label}</strong><small>{description}</small></span></Link>) : <p className="header-empty">No matching platform section.</p>}
             </div> : null}
           </div>
@@ -99,7 +122,7 @@ export function AppShell({ children, workspace, header, signOutAction }: { child
             <div className="header-action-wrap">
               <button className="header-guide-button" type="button" aria-label="Open platform guide" aria-expanded={panel === "guide"} onClick={() => togglePanel("guide")}><CircleHelp size={18} /><span>Guide</span></button>
               {panel === "guide" ? <div className="header-popover action-popover" aria-label="Platform guide">
-                <div className="header-popover-title"><strong>Platform guide</strong><small>Recommended operating flow</small></div>
+                <div className="header-popover-title"><strong>Platform guide</strong><button className="header-popover-close" type="button" aria-label="Close platform guide" onClick={() => setPanel(null)}><X size={14} /></button></div>
                 <Link href="/business" onClick={() => setPanel(null)}><span className="header-step">1</span><span><strong>Create the business</strong><small>Add its profile, schedule, credit rules, and logo.</small></span></Link>
                 <Link href="/business#screens" onClick={() => setPanel(null)}><span className="header-step">2</span><span><strong>Pair the screens</strong><small>Connect devices inside the business network.</small></span></Link>
                 <Link href="/media" onClick={() => setPanel(null)}><span className="header-step">3</span><span><strong>Approve the media</strong><small>Prepare ads for channel playback.</small></span></Link>
@@ -109,7 +132,7 @@ export function AppShell({ children, workspace, header, signOutAction }: { child
             <div className="header-action-wrap">
               <button className="icon-button notification-button" type="button" aria-label="Open notifications" aria-expanded={panel === "notifications"} onClick={() => togglePanel("notifications")}><Bell size={19} /><span aria-hidden="true" /></button>
               {panel === "notifications" ? <div className="header-popover action-popover notification-popover" aria-label="Notifications">
-                <div className="header-popover-title"><strong>Notifications</strong><small>2 operational updates</small></div>
+                <div className="header-popover-title"><strong>Notifications</strong><button className="header-popover-close" type="button" aria-label="Close notifications" onClick={() => setPanel(null)}><X size={14} /></button></div>
                 <Link href={liveHref} onClick={() => setPanel(null)}><RadioTower size={16} /><span><strong>{header.liveStream ? "Live Beta is broadcasting" : "Live channel needs attention"}</strong><small>{header.liveStream?.name ?? "Open Channels to configure a stream."}</small></span></Link>
                 <Link href="/monitor#proof" onClick={() => setPanel(null)}><ShieldCheck size={16} /><span><strong>Playback verification available</strong><small>Review recent proof-of-play activity.</small></span></Link>
               </div> : null}

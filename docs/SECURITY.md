@@ -67,6 +67,7 @@ No single weak hardware signal should automatically accuse a venue of fraud. Sto
 - Stream cookies are HTTP-only, SameSite strict, time-limited, stored only as token hashes, and independently terminable from the player
 - Playback heartbeats are idempotent and validate server timing, client clock, foreground visibility, playing state, asset membership, and playback position before credit movement
 - Stream operations telemetry and handling controls are restricted to the active platform administrator role; operational mutations require a reason and write an audit record
+- Detailed playback evidence is selectable by authenticated users only through an active platform-administrator RLS policy; viewer accounts cannot query wallet spend evidence or execute the administrator wallet report
 - Pilot uploads accept MP4 only, enforce a 100 MB bucket limit, compute a browser SHA-256 checksum, and require valid playable media; fixed 15/30/60-second duration limits are removed
 - External media accepts only recognized HTTPS YouTube URL shapes, stores the canonical video ID, uses the privacy-enhanced embed domain, and never permits arbitrary iframe origins
 - Both uploaded and YouTube media require a business selection, rights declaration, and administrator validation before channel assignment

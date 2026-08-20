@@ -4,6 +4,7 @@ import { CheckCircle2, ExternalLink, KeyRound, LoaderCircle, MonitorOff, Monitor
 import Link from "next/link";
 import { useActionState } from "react";
 import { claimScreen, suspendScreen, type ScreenActionState } from "@/app/(platform)/screens/actions";
+import { DismissibleDetails } from "@/components/dismissible-details";
 import type { ScreenInventoryItem, ScreenLocationOption } from "@/lib/repositories/screens";
 
 const initialState: ScreenActionState = { status: "idle", message: "" };
@@ -43,8 +44,7 @@ export function DeviceInspector({ screen }: { screen: ScreenInventoryItem }) {
   const canSuspend = !["Suspended", "Revoked"].includes(screen.status);
 
   return (
-    <details className="device-inspector">
-      <summary>Inspect</summary>
+    <DismissibleDetails className="device-inspector" summary="Inspect" closeLabel={`Close ${screen.name} device details`}>
       <div className="device-inspector-panel">
         <header><div><p className="eyebrow">Device identity</p><h2>{screen.name}</h2><small>{screen.location}</small></div><ShieldCheck size={22} /></header>
         <dl className="device-facts">
@@ -66,6 +66,6 @@ export function DeviceInspector({ screen }: { screen: ScreenInventoryItem }) {
         {state.message ? <div className={`auth-message auth-message-${state.status}`} role={state.status === "error" ? "alert" : "status"}><ShieldCheck size={16} /><span>{state.message}</span></div> : null}
         {canSuspend ? <form action={formAction} className="device-suspension-form"><input type="hidden" name="devicePublicId" value={screen.id} /><label><span>Suspension reason</span><textarea name="reason" rows={2} maxLength={300} required placeholder="Device removed from the approved location." /></label><button className="button button-danger" type="submit" disabled={pending}>{pending ? <LoaderCircle className="auth-spinner" size={16} /> : <MonitorOff size={16} />}{pending ? "Suspending..." : "Suspend and revoke credential"}</button></form> : null}
       </div>
-    </details>
+    </DismissibleDetails>
   );
 }

@@ -26,6 +26,7 @@ The browser suite currently verifies:
 - Dedicated Monitor authentication and legacy Proof URL compatibility
 - Operation and channel-settings compatibility paths redirect through the protected Operations route
 - The Wallet route remains administrator-only; authenticated wallet verification should additionally cover business selection, exact ledger totals, funder attribution, and detailed playback-spend evidence from `get_admin_wallet_report`
+- Optional viewer login closes through its explicit Close control, Escape, and backdrop selection; administrator floating editors additionally share outside-click and one-popup-at-a-time behavior
 
 The 2026-08-20 hosted route audit also verified the canonical `https://loopline-gray.vercel.app` deployment. Every dashboard path redirected to sign-in without a 404/500, public utility pages returned `200`, `/watch/primary-network` completed anonymous access and rendered the player, and `/api/health` plus the schema-aware `/api/ready` returned `200`.
 

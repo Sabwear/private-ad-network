@@ -48,6 +48,16 @@ export function StreamAccessGate({ channelId, accessKey, channelName, approvedVi
   const [mode, setMode] = useState<ViewerMode>("registered");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (!open) return;
+    function closeOnEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") onClose();
+    }
+    document.addEventListener("keydown", closeOnEscape);
+    return () => document.removeEventListener("keydown", closeOnEscape);
+  }, [onClose, open]);
+
   if (!open) return null;
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {

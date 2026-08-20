@@ -3,13 +3,13 @@
 import { CircleDollarSign, LoaderCircle } from "lucide-react";
 import { useActionState } from "react";
 import { grantBusinessCredits, type CreditGrantState } from "@/app/(platform)/wallet/actions";
+import { DismissibleDetails } from "@/components/dismissible-details";
 
 const initialState: CreditGrantState = { status: "idle", message: "" };
 
 export function CreditGrantForm({ businesses }: { businesses: Array<{ id: number; name: string }> }) {
   const [state, action, pending] = useActionState(grantBusinessCredits, initialState);
-  return <article className="panel management-editor management-editor-wide">
-    <div className="panel-header"><div><h2>Grant advertising credits</h2><p>Fund a business so its approved channel media can enter the live loop. Every grant creates a balanced ledger transaction and audit record.</p></div><CircleDollarSign size={21} /></div>
+  return <DismissibleDetails className="panel management-editor management-editor-wide wallet-grant-editor" summary={<><CircleDollarSign size={15} /> Grant advertising credits</>} closeLabel="Close credit grant form">
     <form action={action} className="management-inline-form">
       {state.message ? <div className={`auth-message auth-message-${state.status}`} role={state.status === "error" ? "alert" : "status"}>{state.message}</div> : null}
       <div className="management-field-grid">
@@ -19,5 +19,5 @@ export function CreditGrantForm({ businesses }: { businesses: Array<{ id: number
       <label><span>Administrative reason</span><input name="reason" minLength={5} maxLength={300} placeholder="Fund approved advertising campaign" required /></label>
       <button className="button button-primary" type="submit" disabled={pending}>{pending ? <LoaderCircle className="auth-spinner" size={16} /> : <CircleDollarSign size={16} />}{pending ? "Granting…" : "Grant credits"}</button>
     </form>
-  </article>;
+  </DismissibleDetails>;
 }

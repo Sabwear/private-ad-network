@@ -23,11 +23,12 @@ Do not reintroduce organization membership, business-owner, staff, finance, mode
 - Host businesses can define recurring local-time busy periods. Accepted playback multiplies advertiser consumption, not host earning, and records the multiplier in evidence.
 - Advertiser exhaustion is isolated: fresh playlists omit only media owned by businesses that cannot fund a full play, while channels and other campaigns continue.
 - The Wallet page can grant administrator-audited promotional credits through balanced ledger entries and now provides a per-business credit registry with lifetime funding/spend totals, wallet-source balances, funder identity and reason, campaign position, and playback-level spend evidence. Operations labels unfunded channel items with the exact base credits required instead of silently implying they are live.
+- Floating editors and popups share dismiss behavior: a visible Close control, Escape, outside click, and opening another popup all close the current surface. Header search/guide/notification/account menus and the optional viewer-login dialog also dismiss outside or by Escape.
 - Operations is the only channel-video-settings control surface. The live player is read-only and supports saved visibility controls, overlay position/style, progress, accent color, scaling, and banner presentation.
 - `/operation` and `/operations/channel-settings` are compatibility routes that redirect to the channel controls at `/operations#channels` instead of falling through to the custom 404 page.
-- Production Supabase is applied and schema-verified through `20260820182633_fix_admin_wallet_report_media_name.sql`, including the security-invoker administrator wallet report, audited credit grants, and demo advertiser funding.
+- Production Supabase is applied and schema-verified through `20260820183230_allow_admin_wallet_spend_evidence.sql`, including the authenticated administrator policy required by the security-invoker wallet report, audited credit grants, and demo advertiser funding.
 - Password-based production database access is available through the ignored `.env.database.local` `SUPABASE_DB_URL`; use `db:query:direct`, `db:migrations:direct`, `db:push:direct:check`, and `db:push:direct`. Never copy the credential into tracked files or output.
-- Hosted migration history was verified on 2026-08-20: all 33 local and remote versions match, and the direct push dry run reports the database is up to date.
+- Hosted migration history was verified on 2026-08-20: all 34 local and remote versions match, and the direct push dry run reports the database is up to date.
 - Production is served from `https://loopline-gray.vercel.app`; `loopline.vercel.app` is not an alias of this project and must not be used for verification or customer links.
 - `/api/ready` verifies the required schedule, busy-period, and advanced streaming-settings schema as well as database connectivity, so future schema drift fails visibly with `503` instead of presenting valid pages as missing.
 - The 2026-08-18 production verification found one admin profile, zero business memberships, three administrator functions, disabled tenant helpers, and all required administrator read policies.
@@ -40,7 +41,7 @@ Before publishing a change, run checks proportionate to the scope. The full beta
 pnpm test:beta
 ```
 
-The last completed validation passed ESLint, the production build, media-worker checks, and all 14 Playwright tests. The production route audit also verified every dashboard route through its authentication boundary, all public utility pages, the `primary-network` stream handshake/player, and both health endpoints without a 404 or 500 response.
+The last completed validation passed ESLint, the production build, media-worker checks, and all 15 Playwright tests, including viewer-login dismissal by Escape, Close, and backdrop. The production route audit also verified every dashboard route through its authentication boundary, all public utility pages, the `primary-network` stream handshake/player, and both health endpoints without a 404 or 500 response.
 
 ## Documentation and publishing discipline
 

@@ -77,6 +77,26 @@ test("anonymous stream access does not require a business code", async ({ reques
   await expect(response.json()).resolves.toMatchObject({ error: "The stream code is invalid or the channel is unavailable." });
 });
 
+test("viewer login popup closes by Escape, close button, and backdrop", async ({ page }) => {
+  await page.goto("/watch/primary-network");
+  const login = page.getByRole("button", { name: "Open optional viewer login" });
+  await expect(login).toBeVisible();
+
+  await login.click();
+  const dialog = page.getByRole("dialog", { name: "Primary Network" });
+  await expect(dialog).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(dialog).toBeHidden();
+
+  await login.click();
+  await page.getByRole("button", { name: "Close viewer login" }).click();
+  await expect(dialog).toBeHidden();
+
+  await login.click();
+  await page.locator(".stream-access-modal").click({ position: { x: 5, y: 5 } });
+  await expect(dialog).toBeHidden();
+});
+
 test("stream heartbeat and session ending require a validated viewer cookie", async ({ request }) => {
   const heartbeat = await request.post("/api/v1/streams/heartbeat", { data: { mediaId: crypto.randomUUID(), eventKey: crypto.randomUUID(), positionSeconds: 1, clientEventAt: new Date().toISOString(), pageVisible: true, isPlaying: true } });
   expect(heartbeat.status()).toBe(401);

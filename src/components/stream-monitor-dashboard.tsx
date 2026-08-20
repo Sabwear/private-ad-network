@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useActionState, useEffect, useMemo, useState, useTransition } from "react";
 import { endMonitorViewerSession, handleMonitorChannel, type MonitorActionState } from "@/app/(platform)/monitor/actions";
+import { DismissibleDetails } from "@/components/dismissible-details";
 import type { StreamMonitorChannel, StreamMonitorData, StreamMonitorSeriesPoint, StreamMonitorViewer } from "@/lib/repositories/stream-monitor";
 
 const initialActionState: MonitorActionState = { status: "idle", message: "" };
@@ -62,13 +63,13 @@ function CreditChart({ points }: { points: StreamMonitorSeriesPoint[] }) {
 function ChannelOperations({ channel }: { channel: StreamMonitorChannel }) {
   const [state, action, pending] = useActionState(handleMonitorChannel, initialActionState);
   const nextAction = channel.status === "active" && channel.broadcastEnabled ? "pause" : "resume";
-  return <details className="monitor-handle"><summary>Handle</summary><form action={action}><input type="hidden" name="channelId" value={channel.id} /><label><span>Operation</span><select name="action" defaultValue={nextAction}><option value="pause">Pause channel</option><option value="resume">Resume channel</option><option value="restart">Restart broadcast clock</option></select></label><label><span>Reason</span><input name="reason" minLength={5} maxLength={300} required placeholder="Operational reason" /></label><button type="submit" disabled={pending}>{pending ? <LoaderCircle className="auth-spinner" size={14} /> : nextAction === "pause" ? <Pause size={14} /> : <RotateCw size={14} />}Apply and audit</button>{state.message ? <small className={`form-status-${state.status}`}>{state.message}</small> : null}</form></details>;
+  return <DismissibleDetails className="monitor-handle" summary="Handle" closeLabel={`Close ${channel.name} channel actions`}><form action={action}><input type="hidden" name="channelId" value={channel.id} /><label><span>Operation</span><select name="action" defaultValue={nextAction}><option value="pause">Pause channel</option><option value="resume">Resume channel</option><option value="restart">Restart broadcast clock</option></select></label><label><span>Reason</span><input name="reason" minLength={5} maxLength={300} required placeholder="Operational reason" /></label><button type="submit" disabled={pending}>{pending ? <LoaderCircle className="auth-spinner" size={14} /> : nextAction === "pause" ? <Pause size={14} /> : <RotateCw size={14} />}Apply and audit</button>{state.message ? <small className={`form-status-${state.status}`}>{state.message}</small> : null}</form></DismissibleDetails>;
 }
 
 function ViewerOperations({ viewer }: { viewer: StreamMonitorViewer }) {
   const [state, action, pending] = useActionState(endMonitorViewerSession, initialActionState);
   if (!viewer.active) return null;
-  return <details className="monitor-handle monitor-viewer-handle"><summary>End</summary><form action={action}><input type="hidden" name="sessionId" value={viewer.id} /><label><span>Reason</span><input name="reason" minLength={5} maxLength={300} required placeholder="Why end this session?" /></label><button type="submit" disabled={pending}>{pending ? <LoaderCircle className="auth-spinner" size={14} /> : <Square size={13} />}End and audit</button>{state.message ? <small className={`form-status-${state.status}`}>{state.message}</small> : null}</form></details>;
+  return <DismissibleDetails className="monitor-handle monitor-viewer-handle" summary="End" closeLabel={`Close ${viewer.name} viewer actions`}><form action={action}><input type="hidden" name="sessionId" value={viewer.id} /><label><span>Reason</span><input name="reason" minLength={5} maxLength={300} required placeholder="Why end this session?" /></label><button type="submit" disabled={pending}>{pending ? <LoaderCircle className="auth-spinner" size={14} /> : <Square size={13} />}End and audit</button>{state.message ? <small className={`form-status-${state.status}`}>{state.message}</small> : null}</form></DismissibleDetails>;
 }
 
 export function StreamMonitorDashboard({ data }: { data: StreamMonitorData }) {

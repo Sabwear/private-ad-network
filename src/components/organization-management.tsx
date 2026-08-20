@@ -7,6 +7,7 @@ import { BusinessChannelAds } from "@/components/business-channel-ads";
 import { BusinessBusyHours } from "@/components/business-busy-hours";
 import { BusinessLogoUploader } from "@/components/business-logo-uploader";
 import { BusinessStreamAccess } from "@/components/business-stream-access";
+import { DismissibleDetails } from "@/components/dismissible-details";
 import { StatusPill } from "@/components/status-pill";
 import { businessCategories, operatingDays } from "@/lib/domain-options";
 import type { OrganizationAdminData, OrganizationAdminRow } from "@/lib/repositories/organizations";
@@ -26,8 +27,7 @@ function organizationTone(status: string) {
 
 function OrganizationEditor({ organization, channels }: { organization: OrganizationAdminRow; channels: OrganizationAdminData["channels"] }) {
   const [state, formAction, pending] = useActionState(updateOrganization, initialUpdateState);
-  return <details className="management-editor management-editor-wide">
-    <summary><Settings2 size={14} /> Edit business</summary>
+  return <DismissibleDetails className="management-editor management-editor-wide" summary={<><Settings2 size={14} /> Edit business</>} closeLabel={`Close ${organization.name} business editor`}>
     <div className="management-inline-form business-management-panel">
       <form action={formAction} className="business-profile-form" noValidate>
         <header><strong>Business information</strong><small>Identity, contact details, access, and advertiser logo placement.</small></header>
@@ -67,7 +67,7 @@ function OrganizationEditor({ organization, channels }: { organization: Organiza
       <BusinessStreamAccess organizationId={organization.id} accessCode={organization.streamAccessCode} accessCodeExpiresAt={organization.streamAccessCodeExpiresAt} earningEnabled={organization.streamEarningEnabled} earningRate={organization.streamEarningRate} consumptionRate={organization.adConsumptionRate} channels={organization.streamChannels} rotations={organization.streamCodeRotations} />
       <BusinessChannelAds organization={organization} channels={channels} />
     </div>
-  </details>;
+  </DismissibleDetails>;
 }
 
 export function OrganizationManagement({ data }: { data: OrganizationAdminData }) {

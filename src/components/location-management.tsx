@@ -9,6 +9,7 @@ import {
   updateLocation,
 } from "@/app/(platform)/locations/actions";
 import { StatusPill } from "@/components/status-pill";
+import { DismissibleDetails } from "@/components/dismissible-details";
 import { adCategoryExclusions, businessCategories, operatingDays } from "@/lib/domain-options";
 import type { LocationManagementData, LocationRow } from "@/lib/repositories/locations";
 
@@ -23,8 +24,7 @@ function LocationEditor({ location }: { location: LocationRow }) {
   const [state, formAction, pending] = useActionState(updateLocation, initialUpdateState);
 
   return (
-    <details className="management-editor management-editor-wide">
-      <summary><Settings2 size={14} /> Manage</summary>
+    <DismissibleDetails className="management-editor management-editor-wide" summary={<><Settings2 size={14} /> Manage</>} closeLabel={`Close ${location.name} location editor`}>
       <form action={formAction} className="management-inline-form" noValidate>
         <input type="hidden" name="locationId" value={location.id} />
         <input type="hidden" name="organizationId" value={location.organizationId} />
@@ -45,7 +45,7 @@ function LocationEditor({ location }: { location: LocationRow }) {
         <label><span>Change reason</span><textarea name="reason" rows={2} maxLength={300} required placeholder="Document the venue verification or suspension reason." aria-invalid={Boolean(state.fieldErrors?.reason)} /><FieldError message={state.fieldErrors?.reason} /></label>
         <button className="button button-primary" type="submit" disabled={pending}>{pending ? <LoaderCircle className="auth-spinner" size={16} /> : <ShieldCheck size={16} />}{pending ? "Saving…" : "Save location"}</button>
       </form>
-    </details>
+    </DismissibleDetails>
   );
 }
 
