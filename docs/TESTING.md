@@ -19,6 +19,7 @@ The browser suite currently verifies:
 - Non-disclosure for malformed private stream credentials
 - Browser security headers
 - Login usability on a phone-sized viewport
+- Horizontal containment for public and authentication views at 320 px, 390 px, and 768 px widths; authenticated routes additionally receive a manual full-route audit at 320/390/768/1440 px
 - Administrator authentication required for business creation, media upload, monitoring, and viewer CSV reporting
 - Anonymous stream access does not require a business code
 - Viewer access validation rejects malformed requests without exposing credentials
@@ -33,7 +34,7 @@ The 2026-08-20 hosted route audit also verified the canonical `https://loopline-
 
 The 2026-08-20 playlist funding verification confirmed three serialized items in `primary-network`, 5,000 promotional credits for each newly funded demo advertiser, two posted two-entry grant transactions with a zero balance, aligned migration history, and no Supabase security-advisor findings. The existing unrelated duplicate permissive profile-read policy remains a performance warning.
 
-The 2026-08-22 observability migration verification confirmed `stream_quality_events` and `get_stream_quality_snapshot(integer)` on the hosted database, aligned all 35 migration versions, returned no security-advisor findings, and left the direct push dry run clean.
+The 2026-08-22 observability migration verification confirmed `stream_quality_events` and `get_stream_quality_snapshot(integer)` on the hosted database, aligned all 35 migration versions, returned no security-advisor findings, and left the direct push dry run clean. The authenticated responsive audit covered every dashboard route at 320, 390, 768, and 1440 px and identified and corrected table-driven page overflow in Monitor and the Operations health view.
 
 The following authenticated smoke checks were completed manually for the current beta build and should be automated next:
 

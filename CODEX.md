@@ -26,6 +26,7 @@ Do not reintroduce organization membership, business-owner, staff, finance, mode
 - Floating editors and popups share dismiss behavior: a visible Close control, Escape, outside click, and opening another popup all close the current surface. Header search/guide/notification/account menus and the optional viewer-login dialog also dismiss outside or by Escape.
 - Operations is the only channel-video-settings control surface. The live player is read-only and supports saved visibility controls, overlay position/style, progress, accent color, scaling, and banner presentation.
 - Operations now starts with a live server and stream-health dashboard. It separates application-instance and PostgreSQL readiness/query delay from player-observed API round-trip, startup time, buffering, dropped frames, affected viewers, and per-channel quality, with 15-second refresh and explicit degraded/critical thresholds.
+- Responsive layout verification covers every authenticated and public route at 320 px phone, 390 px phone, 768 px tablet, and 1440 px desktop widths. Wide monitoring tables remain contained in local scrollers, metric grids collapse for compact phones, and primary mobile actions meet practical touch sizing.
 - `/operation` and `/operations/channel-settings` are compatibility routes that redirect to the channel controls at `/operations#channels` instead of falling through to the custom 404 page.
 - Production Supabase is applied and schema-verified through `20260822142432_stream_playback_quality_observability.sql`, including the private service-ingested quality-event table and administrator-only aggregate diagnostics function.
 - Password-based production database access is available through the ignored `.env.database.local` `SUPABASE_DB_URL`; use `db:query:direct`, `db:migrations:direct`, `db:push:direct:check`, and `db:push:direct`. Never copy the credential into tracked files or output.
@@ -42,7 +43,7 @@ Before publishing a change, run checks proportionate to the scope. The full beta
 pnpm test:beta
 ```
 
-The last completed validation passed ESLint, the production build, media-worker checks, and all 15 Playwright tests, including viewer-login dismissal by Escape, Close, and backdrop. The production route audit also verified every dashboard route through its authentication boundary, all public utility pages, the `primary-network` stream handshake/player, and both health endpoints without a 404 or 500 response.
+The last completed validation passed ESLint, the production build, media-worker checks, and all 16 Playwright tests, including responsive phone/tablet containment and viewer-login dismissal by Escape, Close, and backdrop. The production route audit also verified every dashboard route through its authentication boundary, all public utility pages, the `primary-network` stream handshake/player, and both health endpoints without a 404 or 500 response.
 
 ## Documentation and publishing discipline
 

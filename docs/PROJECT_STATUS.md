@@ -32,6 +32,7 @@ The portal is suitable for controlled administrator testing. It is not yet ready
 - Stable compatibility redirects from singular Operation and the explicit channel-settings path to the Operations channel controls
 - Dedicated Monitor workspace with viewers, geography, uptime, channels, credit movement, database/runtime status, alerts, handling controls, and accepted proof-of-play evidence
 - Operations-level server and stream diagnostics with runtime uptime/memory, database readiness and round-trip, stream-heartbeat API round-trip, measured startup time, buffering ratio and stalls, dropped frames, affected viewers, per-channel health, threshold labels, and 15-second refresh
+- Responsive portal and player layouts verified across compact phone, standard phone, tablet, and desktop widths, including contained data-table scrolling and touch-sized mobile operations
 
 ### Media and campaigns
 
@@ -65,7 +66,7 @@ The portal is suitable for controlled administrator testing. It is not yet ready
 - ESLint: passed
 - Next.js production build: passed
 - Media processor checks: 3 passed
-- Playwright end-to-end suite: 15 passed
+- Playwright end-to-end suite: 16 passed
 - Production route audit: all dashboard routes reached sign-in, public utility pages returned `200`, `primary-network` completed anonymous access into the player, and health/readiness returned `200`
 - Git diff whitespace validation: passed
 

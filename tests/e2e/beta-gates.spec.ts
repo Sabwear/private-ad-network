@@ -132,3 +132,15 @@ test("login remains usable on a phone-sized display", async ({ page }) => {
   await expect(page.locator("input[name='password']")).toBeVisible();
   await expect(page.getByRole("button", { name: "Sign in" })).toBeVisible();
 });
+
+test("public and authentication views stay inside phone and tablet viewports", async ({ page }) => {
+  for (const viewport of [{ width: 320, height: 568 }, { width: 390, height: 844 }, { width: 768, height: 1024 }]) {
+    await page.setViewportSize(viewport);
+    for (const path of ["/login", "/forgot-password", "/device/setup"]) {
+      await page.goto(path);
+      await expect(page.locator("body")).toBeVisible();
+      const layout = await page.evaluate(() => ({ viewport: document.documentElement.clientWidth, page: document.documentElement.scrollWidth }));
+      expect(layout.page, `${path} should not overflow at ${viewport.width}px`).toBeLessThanOrEqual(layout.viewport + 1);
+    }
+  }
+});
