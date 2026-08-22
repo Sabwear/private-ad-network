@@ -67,6 +67,7 @@ No single weak hardware signal should automatically accuse a venue of fraud. Sto
 - Stream cookies are HTTP-only, SameSite strict, time-limited, stored only as token hashes, and independently terminable from the player
 - Playback heartbeats are idempotent and validate server timing, client clock, foreground visibility, playing state, asset membership, and playback position before credit movement
 - Stream operations telemetry and handling controls are restricted to the active platform administrator role; operational mutations require a reason and write an audit record
+- Web-player quality samples contain bounded timing, buffering, connection-estimate, and frame-count signals only. They are ingested with the service role, expose no direct table grants to viewers, and are returned only through an administrator-guarded aggregate function.
 - Detailed playback evidence is selectable by authenticated users only through an active platform-administrator RLS policy; viewer accounts cannot query wallet spend evidence or execute the administrator wallet report
 - Pilot uploads accept MP4 only, enforce a 100 MB bucket limit, compute a browser SHA-256 checksum, and require valid playable media; fixed 15/30/60-second duration limits are removed
 - External media accepts only recognized HTTPS YouTube URL shapes, stores the canonical video ID, uses the privacy-enhanced embed domain, and never permits arbitrary iframe origins
@@ -93,6 +94,7 @@ No single weak hardware signal should automatically accuse a venue of fraud. Sto
 - Anonymous viewing collects operational session evidence without audience identity
 - Registered viewing stores the administrator-approved account ID plus a name/email snapshot for business reporting after explicit viewer choice
 - Operational telemetry currently includes server-observed IP, device/browser/OS type, locale, timezone, screen capabilities, connection hints, app version, and heartbeat time
+- Stream-quality telemetry adds startup delay, buffering count/duration, API round-trip, estimated network RTT/downlink/type, and interval frame counts; it adds no identity, precise location, raw IP, media content, camera, or microphone data
 - Portal security telemetry includes user session ID, server-observed IP, user agent, coarse edge location, last route, and activity timestamps
 - Exact IP observations are visible only to platform administrators under RLS
 - No cameras, microphones, facial recognition, or demographic inference in MVP

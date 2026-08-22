@@ -97,8 +97,12 @@ test("viewer login popup closes by Escape, close button, and backdrop", async ({
   await expect(dialog).toBeHidden();
 });
 
-test("stream heartbeat and session ending require a validated viewer cookie", async ({ request }) => {
-  const heartbeat = await request.post("/api/v1/streams/heartbeat", { data: { mediaId: crypto.randomUUID(), eventKey: crypto.randomUUID(), positionSeconds: 1, clientEventAt: new Date().toISOString(), pageVisible: true, isPlaying: true } });
+test("stream heartbeat quality telemetry and session ending require a validated viewer cookie", async ({ request }) => {
+  const heartbeat = await request.post("/api/v1/streams/heartbeat", { data: {
+    mediaId: crypto.randomUUID(), eventKey: crypto.randomUUID(), positionSeconds: 1,
+    clientEventAt: new Date().toISOString(), pageVisible: true, isPlaying: true,
+    quality: { playbackType: "upload", observedIntervalMs: 15_000, startupMs: 420, bufferCount: 1, bufferDurationMs: 240, heartbeatRttMs: 85, connectionRttMs: 40, downlinkMbps: 12.5, effectiveConnectionType: "4g", droppedFrames: 1, totalFrames: 450 },
+  } });
   expect(heartbeat.status()).toBe(401);
   const end = await request.post("/api/v1/streams/end");
   expect(end.status()).toBe(401);

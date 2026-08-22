@@ -15,6 +15,7 @@ export async function GET() {
       admin.from("streaming_channels").select("id,show_progress_bar,show_fullscreen_control,overlay_position,overlay_style,accent_color", { head: true }),
       admin.from("organizations").select("id,operating_start_date,operating_end_date,operating_days,operating_opens_at,operating_closes_at,operating_time_zone", { head: true }),
       admin.from("organization_busy_periods").select("id,consumption_multiplier", { head: true }),
+      admin.from("stream_quality_events").select("id,channel_id,buffer_duration_ms,heartbeat_rtt_ms", { head: true }),
     ]);
     if (checks.some(({ error }) => error)) throw new Error("Required database schema is unavailable.");
     return NextResponse.json({ status: "ready" }, { headers: { "Cache-Control": "no-store" } });

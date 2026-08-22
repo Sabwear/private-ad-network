@@ -38,6 +38,7 @@ Authenticates with the per-device bearer credential and reports app, runtime, di
 - YouTube channel items do not use the private media routes. The server exposes only the validated canonical video ID to the player, which builds an allowlisted privacy-enhanced embed and synchronizes it to the same channel clock.
 - Every asset request verifies that the channel is active and the approved asset is currently in that channel.
 - The viewer response composes saved channel presentation settings and the current advertiser's public logo metadata. The player is read-only for every viewer; settings are mutated only through the administrator-protected Operations action.
+- `POST /api/v1/streams/heartbeat` validates the server-managed viewer session and idempotent playback evidence. Its optional `quality` object carries bounded technical measurements: playback source, observation interval, startup delay, buffering count/time, prior API round-trip, browser connection estimates, and interval frame-drop counts. Credit settlement remains authoritative even if non-financial quality ingestion fails.
 
 ### `POST /v1/playback/sessions`
 
@@ -85,7 +86,7 @@ Required event fields:
 
 ## Administration
 
-- The `/operations` workspace creates and handles streams, targets businesses, manages viewer links, controls ordered approved media, and configures stream presentation.
+- The `/operations` workspace displays server/database and viewer playback health, then creates and handles streams, targets businesses, manages viewer links, controls ordered approved media, and configures stream presentation.
 - The `/monitor` workspace reports live telemetry and accepted proof-of-play evidence; `/proof` redirects to `/monitor#proof`.
 - The `/business` workspace edits centrally managed business identity, schedule, contacts, branding, stream access, and per-business credit rules.
 - The `/wallet` workspace invokes `admin_grant_business_credits` to issue reasoned promotional credits through a balanced, audited ledger transaction. Operations reports whether each assigned item can fund a full base-rate play.

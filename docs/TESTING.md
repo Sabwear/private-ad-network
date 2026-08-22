@@ -23,6 +23,7 @@ The browser suite currently verifies:
 - Anonymous stream access does not require a business code
 - Viewer access validation rejects malformed requests without exposing credentials
 - Stream heartbeat and termination require a validated viewer cookie
+- Heartbeat payload validation accepts the bounded playback-quality envelope while preserving the validated-viewer-cookie boundary
 - Dedicated Monitor authentication and legacy Proof URL compatibility
 - Operation and channel-settings compatibility paths redirect through the protected Operations route
 - The Wallet route remains administrator-only; authenticated wallet verification should additionally cover business selection, exact ledger totals, funder attribution, and detailed playback-spend evidence from `get_admin_wallet_report`
@@ -31,6 +32,8 @@ The browser suite currently verifies:
 The 2026-08-20 hosted route audit also verified the canonical `https://loopline-gray.vercel.app` deployment. Every dashboard path redirected to sign-in without a 404/500, public utility pages returned `200`, `/watch/primary-network` completed anonymous access and rendered the player, and `/api/health` plus the schema-aware `/api/ready` returned `200`.
 
 The 2026-08-20 playlist funding verification confirmed three serialized items in `primary-network`, 5,000 promotional credits for each newly funded demo advertiser, two posted two-entry grant transactions with a zero balance, aligned migration history, and no Supabase security-advisor findings. The existing unrelated duplicate permissive profile-read policy remains a performance warning.
+
+The 2026-08-22 observability migration verification confirmed `stream_quality_events` and `get_stream_quality_snapshot(integer)` on the hosted database, aligned all 35 migration versions, returned no security-advisor findings, and left the direct push dry run clean.
 
 The following authenticated smoke checks were completed manually for the current beta build and should be automated next:
 
@@ -68,6 +71,7 @@ Database migrations must be reviewed against the hosted project before deploymen
 - Header live-channel resolution for administrators and viewer-dashboard exclusion
 - Busy-period overlap rejection, local-time multiplier settlement, proof evidence, and per-advertiser exhaustion without channel interruption
 - Wallet-report lifetime aggregation, history limits, administrator identity attribution, multi-wallet spend splits, and viewer-account denial
+- Quality-event idempotency and bounds, administrator-only aggregation, per-channel threshold classification, buffering/startup capture for uploaded and YouTube playback, and graceful operation when browser Network Information or frame-quality APIs are unavailable
 
 ### Device endurance
 

@@ -1,6 +1,6 @@
 # Project Status and Next-Phase Handoff
 
-Last reviewed: 2026-08-20
+Last reviewed: 2026-08-22
 
 ## Current product state
 
@@ -31,6 +31,7 @@ The portal is suitable for controlled administrator testing. It is not yet ready
 - Consistent close behavior across floating editors, header popovers, account/search menus, and viewer login: visible Close controls where applicable, Escape, outside click, and one-open-popup exclusivity
 - Stable compatibility redirects from singular Operation and the explicit channel-settings path to the Operations channel controls
 - Dedicated Monitor workspace with viewers, geography, uptime, channels, credit movement, database/runtime status, alerts, handling controls, and accepted proof-of-play evidence
+- Operations-level server and stream diagnostics with runtime uptime/memory, database readiness and round-trip, stream-heartbeat API round-trip, measured startup time, buffering ratio and stalls, dropped frames, affected viewers, per-channel health, threshold labels, and 15-second refresh
 
 ### Media and campaigns
 
@@ -48,11 +49,12 @@ The portal is suitable for controlled administrator testing. It is not yet ready
 - The public player is read-only; administrators configure viewer controls and presentation only from each channel's Operations panel
 - Registered viewers use administrator-approved accounts
 - Viewer sessions, locations, verified seconds, rejected events, and credit movement feed administrator monitoring and CSV export
+- Browser players submit bounded technical quality observations with each validated heartbeat; the service stores no new identity or raw IP fields and aggregates the signals for administrator operations triage
 - Host-venue busy periods multiply advertiser consumption in local time and are captured in evidence; exhausted advertisers are removed individually without pausing channels or other campaigns
 
 ## Database and deployment state
 
-- Hosted schema is applied and verified through `20260820183230_allow_admin_wallet_spend_evidence.sql`, including the read-only, security-invoker administrator wallet RPC and its administrator-only playback-evidence policy. All 34 local and hosted migration versions match and the direct push dry run reports no pending migrations.
+- Hosted schema is applied and verified through `20260822142432_stream_playback_quality_observability.sql`, including the private quality-event table and administrator-only aggregate function. All 35 local and hosted migration versions match, the security advisor reports no findings, and the direct push dry run reports no pending migrations.
 - Production verification on 2026-08-18: one admin, zero organization memberships, tenant helpers disabled, three new admin functions installed, and admin read policies present.
 - Production database access is configured through an ignored password-based session-pooler URL. Hosted migration history matches all 34 local files, and direct CLI query/list/advisor/dry-run/push helpers are available.
 - Vercel remains the web host at `https://loopline-gray.vercel.app`. The similarly named `loopline.vercel.app` domain is not attached to this project. The media worker requires a separate long-running worker host.

@@ -76,6 +76,27 @@ export type StreamMonitorViewer = {
   rejectedEvents: number;
 };
 
+export type StreamQualityChannel = {
+  channelId: number;
+  channel: string;
+  samples: number;
+  averageStartupMs: number;
+  averageHeartbeatRttMs: number;
+  bufferEvents: number;
+  bufferDurationMs: number;
+  observedDurationMs: number;
+  affectedSessions: number;
+  droppedFrames: number;
+  totalFrames: number;
+  lastObservedAt: string;
+};
+
+export type StreamQualitySummary = Omit<StreamQualityChannel, "channelId" | "channel" | "lastObservedAt"> & {
+  available: boolean;
+  slowStarts: number;
+  channels: StreamQualityChannel[];
+};
+
 export type StreamMonitorData = {
   source: "live" | "setup" | "error";
   generatedAt: string;
@@ -83,6 +104,7 @@ export type StreamMonitorData = {
   databaseLatencyMs: number;
   database: { status: string; serverVersion: string; startedAt: string; databaseBytes: number; connections: number };
   runtime: { status: string; environment: string; version: string; instanceUptimeSeconds: number; memoryMegabytes: number };
+  quality: StreamQualitySummary;
   summary: {
     activeViewers: number;
     registeredViewers: number;
@@ -115,6 +137,12 @@ const emptySummary: StreamMonitorData["summary"] = {
   countries: 0, averageSessionSeconds: 0,
 };
 
+const emptyQuality: StreamQualitySummary = {
+  available: false, samples: 0, averageStartupMs: 0, averageHeartbeatRttMs: 0,
+  bufferEvents: 0, bufferDurationMs: 0, observedDurationMs: 0, affectedSessions: 0,
+  slowStarts: 0, droppedFrames: 0, totalFrames: 0, channels: [],
+};
+
 function record(value: unknown): Record<string, unknown> {
   return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {};
 }
@@ -138,7 +166,7 @@ function emptyMonitor(range: MonitorRange, source: "setup" | "error", message: s
   return {
     source, generatedAt: new Date().toISOString(), windowHours: range, databaseLatencyMs: 0,
     database: { status: "unavailable", serverVersion: "—", startedAt: "", databaseBytes: 0, connections: 0 },
-    runtime: { status: "online", environment: process.env.VERCEL_ENV ?? process.env.NODE_ENV ?? "local", version: process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) ?? "local", instanceUptimeSeconds: process.uptime(), memoryMegabytes: memory.rss / 1_048_576 },
+    runtime: { status: "online", environment: process.env.VERCEL_ENV ?? process.env.NODE_ENV ?? "local", version: process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) ?? "local", instanceUptimeSeconds: process.uptime(), memoryMegabytes: memory.rss / 1_048_576 }, quality: emptyQuality,
     summary: emptySummary, series: [], channels: [], locations: [], viewers: [], failures: [],
     alerts: [{ tone: "danger", title: "Monitoring data unavailable", detail: message }], message,
   };
@@ -158,6 +186,23 @@ export async function getStreamMonitorData(range: MonitorRange): Promise<StreamM
   }
 
   const root = record(data);
+  const { data: qualityData, error: qualityError } = await supabase.rpc("get_stream_quality_snapshot", { p_window_hours: range });
+  const qualityRoot = record(qualityData);
+  const qualitySummary = record(qualityRoot.summary);
+  const qualityChannels: StreamQualityChannel[] = list(qualityRoot.channels).map((channel) => ({
+    channelId: numeric(channel.channelId), channel: text(channel.channel, "Channel"), samples: numeric(channel.samples),
+    averageStartupMs: numeric(channel.averageStartupMs), averageHeartbeatRttMs: numeric(channel.averageHeartbeatRttMs),
+    bufferEvents: numeric(channel.bufferEvents), bufferDurationMs: numeric(channel.bufferDurationMs), observedDurationMs: numeric(channel.observedDurationMs),
+    affectedSessions: numeric(channel.affectedSessions), droppedFrames: numeric(channel.droppedFrames), totalFrames: numeric(channel.totalFrames),
+    lastObservedAt: text(channel.lastObservedAt),
+  }));
+  const quality: StreamQualitySummary = qualityError ? emptyQuality : {
+    available: true, samples: numeric(qualitySummary.samples), averageStartupMs: numeric(qualitySummary.averageStartupMs),
+    averageHeartbeatRttMs: numeric(qualitySummary.averageHeartbeatRttMs), bufferEvents: numeric(qualitySummary.bufferEvents),
+    bufferDurationMs: numeric(qualitySummary.bufferDurationMs), observedDurationMs: numeric(qualitySummary.observedDurationMs),
+    affectedSessions: numeric(qualitySummary.affectedSessions), slowStarts: numeric(qualitySummary.slowStarts),
+    droppedFrames: numeric(qualitySummary.droppedFrames), totalFrames: numeric(qualitySummary.totalFrames), channels: qualityChannels,
+  };
   const summarySource = record(root.summary);
   const databaseSource = record(root.database);
   const summary = Object.fromEntries(Object.keys(emptySummary).map((key) => [key, numeric(summarySource[key])])) as StreamMonitorData["summary"];
@@ -200,7 +245,7 @@ export async function getStreamMonitorData(range: MonitorRange): Promise<StreamM
   return {
     source: "live", generatedAt: text(root.generatedAt, new Date().toISOString()), windowHours: range, databaseLatencyMs: latency,
     database: { status: text(databaseSource.status, "ready"), serverVersion: text(databaseSource.serverVersion), startedAt: text(databaseSource.startedAt), databaseBytes: numeric(databaseSource.databaseBytes), connections: numeric(databaseSource.connections) },
-    runtime: { status: "online", environment: process.env.VERCEL_ENV ?? process.env.NODE_ENV ?? "local", version: process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) ?? "local", instanceUptimeSeconds: process.uptime(), memoryMegabytes: memory.rss / 1_048_576 },
+    runtime: { status: "online", environment: process.env.VERCEL_ENV ?? process.env.NODE_ENV ?? "local", version: process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) ?? "local", instanceUptimeSeconds: process.uptime(), memoryMegabytes: memory.rss / 1_048_576 }, quality,
     summary, series, channels, locations, viewers, failures, alerts, message: null,
   };
 }

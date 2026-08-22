@@ -278,6 +278,25 @@ export type Database = {
         evidence: Json;
         created_at: string;
       }>;
+      stream_quality_events: Table<{
+        id: number;
+        event_key: string;
+        viewer_session_id: string;
+        channel_id: number;
+        media_public_id: string;
+        playback_type: string;
+        observed_interval_ms: number;
+        startup_ms: number | null;
+        buffer_count: number;
+        buffer_duration_ms: number;
+        heartbeat_rtt_ms: number | null;
+        connection_rtt_ms: number | null;
+        downlink_mbps: number | null;
+        effective_connection_type: string | null;
+        dropped_frames: number | null;
+        total_frames: number | null;
+        created_at: string;
+      }>;
       stream_access_code_rotations: Table<{
         id: number;
         organization_id: number;
@@ -658,6 +677,10 @@ export type Database = {
       };
       get_stream_monitor_snapshot: {
         Args: { p_window_hours: number };
+        Returns: Json;
+      };
+      get_stream_quality_snapshot: {
+        Args: { p_window_hours?: number };
         Returns: Json;
       };
       admin_handle_stream_channel: {

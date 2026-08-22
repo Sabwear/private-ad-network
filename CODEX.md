@@ -1,6 +1,6 @@
 # Codex Project Handoff
 
-Last updated: 2026-08-20
+Last updated: 2026-08-22
 
 ## Product authority model
 
@@ -25,12 +25,13 @@ Do not reintroduce organization membership, business-owner, staff, finance, mode
 - The Wallet page can grant administrator-audited promotional credits through balanced ledger entries and now provides a per-business credit registry with lifetime funding/spend totals, wallet-source balances, funder identity and reason, campaign position, and playback-level spend evidence. Operations labels unfunded channel items with the exact base credits required instead of silently implying they are live.
 - Floating editors and popups share dismiss behavior: a visible Close control, Escape, outside click, and opening another popup all close the current surface. Header search/guide/notification/account menus and the optional viewer-login dialog also dismiss outside or by Escape.
 - Operations is the only channel-video-settings control surface. The live player is read-only and supports saved visibility controls, overlay position/style, progress, accent color, scaling, and banner presentation.
+- Operations now starts with a live server and stream-health dashboard. It separates application-instance and PostgreSQL readiness/query delay from player-observed API round-trip, startup time, buffering, dropped frames, affected viewers, and per-channel quality, with 15-second refresh and explicit degraded/critical thresholds.
 - `/operation` and `/operations/channel-settings` are compatibility routes that redirect to the channel controls at `/operations#channels` instead of falling through to the custom 404 page.
-- Production Supabase is applied and schema-verified through `20260820183230_allow_admin_wallet_spend_evidence.sql`, including the authenticated administrator policy required by the security-invoker wallet report, audited credit grants, and demo advertiser funding.
+- Production Supabase is applied and schema-verified through `20260822142432_stream_playback_quality_observability.sql`, including the private service-ingested quality-event table and administrator-only aggregate diagnostics function.
 - Password-based production database access is available through the ignored `.env.database.local` `SUPABASE_DB_URL`; use `db:query:direct`, `db:migrations:direct`, `db:push:direct:check`, and `db:push:direct`. Never copy the credential into tracked files or output.
-- Hosted migration history was verified on 2026-08-20: all 34 local and remote versions match, and the direct push dry run reports the database is up to date.
+- Hosted migration history was verified on 2026-08-22: all 35 local and remote versions match, the security advisor reports no findings, and the direct push dry run reports the database is up to date.
 - Production is served from `https://loopline-gray.vercel.app`; `loopline.vercel.app` is not an alias of this project and must not be used for verification or customer links.
-- `/api/ready` verifies the required schedule, busy-period, and advanced streaming-settings schema as well as database connectivity, so future schema drift fails visibly with `503` instead of presenting valid pages as missing.
+- `/api/ready` verifies the required schedule, busy-period, advanced streaming-settings, and stream-quality schema as well as database connectivity, so future schema drift fails visibly with `503` instead of presenting valid pages as missing.
 - The 2026-08-18 production verification found one admin profile, zero business memberships, three administrator functions, disabled tenant helpers, and all required administrator read policies.
 
 ## Required checks

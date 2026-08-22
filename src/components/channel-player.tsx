@@ -51,7 +51,31 @@ export function ChannelPlayer({ channel, accessKey, approvedViewer }: { channel:
   const desiredOffsetRef = useRef(initialPosition.offsetSeconds);
   const lastYoutubeSeekAtRef = useRef(0);
   const youtubePlayingRef = useRef(false);
+  const qualityIntervalStartedAtRef = useRef(0);
+  const startupStartedAtRef = useRef(0);
+  const startupMsRef = useRef<number | null>(null);
+  const bufferStartedAtRef = useRef<number | null>(null);
+  const bufferCountRef = useRef(0);
+  const bufferDurationMsRef = useRef(0);
+  const lastHeartbeatRttMsRef = useRef<number | null>(null);
+  const lastDroppedFramesRef = useRef(0);
+  const lastTotalFramesRef = useRef(0);
   const item = channel.items[index];
+
+  const markPlaybackBuffering = useCallback(() => {
+    if (bufferStartedAtRef.current !== null) return;
+    bufferStartedAtRef.current = performance.now();
+    bufferCountRef.current += 1;
+  }, []);
+
+  const markPlaybackPlaying = useCallback(() => {
+    const now = performance.now();
+    if (startupMsRef.current === null && startupStartedAtRef.current > 0) startupMsRef.current = Math.round(now - startupStartedAtRef.current);
+    if (bufferStartedAtRef.current !== null) {
+      bufferDurationMsRef.current += now - bufferStartedAtRef.current;
+      bufferStartedAtRef.current = null;
+    }
+  }, []);
 
   const estimatedServerTime = useCallback(() => {
     return Date.now() + serverClockOffsetRef.current;
@@ -104,6 +128,18 @@ export function ChannelPlayer({ channel, accessKey, approvedViewer }: { channel:
   useEffect(() => {
     currentTimeRef.current = currentTime;
   }, [currentTime]);
+
+  useEffect(() => {
+    const now = performance.now();
+    qualityIntervalStartedAtRef.current = now;
+    startupStartedAtRef.current = now;
+    startupMsRef.current = null;
+    bufferStartedAtRef.current = null;
+    bufferCountRef.current = 0;
+    bufferDurationMsRef.current = 0;
+    lastDroppedFramesRef.current = 0;
+    lastTotalFramesRef.current = 0;
+  }, [item?.id]);
 
   useEffect(() => {
     let cancelled = false;
@@ -175,6 +211,9 @@ export function ChannelPlayer({ channel, accessKey, approvedViewer }: { channel:
 
     video.onerror = activateFallback;
     video.addEventListener("loadedmetadata", seekToBroadcastPoint);
+    video.addEventListener("waiting", markPlaybackBuffering);
+    video.addEventListener("stalled", markPlaybackBuffering);
+    video.addEventListener("playing", markPlaybackPlaying);
     if (item.hlsUrl && Hls.isSupported()) {
       hls = new Hls({ enableWorker: true, lowLatencyMode: false });
       hls.on(Hls.Events.ERROR, (_event, data) => { if (data.fatal) activateFallback(); });
@@ -188,12 +227,15 @@ export function ChannelPlayer({ channel, accessKey, approvedViewer }: { channel:
     return () => {
       video.onerror = null;
       video.removeEventListener("loadedmetadata", seekToBroadcastPoint);
+      video.removeEventListener("waiting", markPlaybackBuffering);
+      video.removeEventListener("stalled", markPlaybackBuffering);
+      video.removeEventListener("playing", markPlaybackPlaying);
       if (retryTimer) clearTimeout(retryTimer);
       hls?.destroy();
       video.removeAttribute("src");
       video.load();
     };
-  }, [channel.broadcastStartedAt, channel.items, channel.settings.broadcastEnabled, estimatedServerTime, item, sourceRevision]);
+  }, [channel.broadcastStartedAt, channel.items, channel.settings.broadcastEnabled, estimatedServerTime, item, markPlaybackBuffering, markPlaybackPlaying, sourceRevision]);
 
   useEffect(() => {
     if (!item || item.sourceType !== "youtube" || !channel.settings.broadcastEnabled) return;
@@ -227,6 +269,8 @@ export function ChannelPlayer({ channel, accessKey, approvedViewer }: { channel:
         if (payload.event === "onReady") handleYouTubeLoad();
         if (payload.event === "onStateChange") {
           youtubePlayingRef.current = payload.info === 1;
+          if (payload.info === 3) markPlaybackBuffering();
+          if (payload.info === 1) markPlaybackPlaying();
           if (payload.info === 0) refreshPlaylistAtMediaEnd();
         }
         if (payload.event === "onError") setUnavailable(true);
@@ -236,12 +280,21 @@ export function ChannelPlayer({ channel, accessKey, approvedViewer }: { channel:
     };
     window.addEventListener("message", handleYouTubeMessage);
     return () => window.removeEventListener("message", handleYouTubeMessage);
-  }, [handleYouTubeLoad, item, refreshPlaylistAtMediaEnd]);
+  }, [handleYouTubeLoad, item, markPlaybackBuffering, markPlaybackPlaying, refreshPlaylistAtMediaEnd]);
 
   useEffect(() => {
     if (!item || !channel.settings.broadcastEnabled || unavailable) return;
     const recordHeartbeat = async () => {
       if (document.visibilityState !== "visible") return;
+      const requestStartedAt = performance.now();
+      const activeBufferDuration = bufferStartedAtRef.current === null ? 0 : requestStartedAt - bufferStartedAtRef.current;
+      const sampledBufferCount = bufferCountRef.current;
+      const sampledBufferDuration = Math.round(bufferDurationMsRef.current + activeBufferDuration);
+      const sampledStartupMs = startupMsRef.current;
+      const videoQuality = item.sourceType === "upload" ? videoRef.current?.getVideoPlaybackQuality?.() : null;
+      const sampledDroppedFrames = videoQuality ? Math.max(0, videoQuality.droppedVideoFrames - lastDroppedFramesRef.current) : null;
+      const sampledTotalFrames = videoQuality ? Math.max(0, videoQuality.totalVideoFrames - lastTotalFramesRef.current) : null;
+      const connection = (navigator as Navigator & { connection?: { rtt?: number; downlink?: number; effectiveType?: "slow-2g" | "2g" | "3g" | "4g" } }).connection;
       const response = await fetch("/api/v1/streams/heartbeat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -252,10 +305,37 @@ export function ChannelPlayer({ channel, accessKey, approvedViewer }: { channel:
           clientEventAt: new Date().toISOString(),
           pageVisible: document.visibilityState === "visible",
           isPlaying: item.sourceType === "youtube" ? youtubePlayingRef.current : !videoRef.current?.paused,
+          quality: {
+            playbackType: item.sourceType,
+            observedIntervalMs: Math.min(60_000, Math.max(0, Math.round(requestStartedAt - qualityIntervalStartedAtRef.current))),
+            startupMs: sampledStartupMs,
+            bufferCount: sampledBufferCount,
+            bufferDurationMs: Math.min(60_000, sampledBufferDuration),
+            heartbeatRttMs: lastHeartbeatRttMsRef.current,
+            connectionRttMs: Number.isFinite(connection?.rtt) ? Math.round(connection!.rtt!) : null,
+            downlinkMbps: Number.isFinite(connection?.downlink) ? connection!.downlink! : null,
+            effectiveConnectionType: connection?.effectiveType ?? null,
+            droppedFrames: sampledDroppedFrames,
+            totalFrames: sampledTotalFrames,
+          },
         }),
         keepalive: true,
       }).catch(() => null);
       if (response?.ok) {
+        const completedAt = performance.now();
+        lastHeartbeatRttMsRef.current = Math.round(completedAt - requestStartedAt);
+        qualityIntervalStartedAtRef.current = completedAt;
+        bufferCountRef.current = Math.max(0, bufferCountRef.current - sampledBufferCount);
+        bufferDurationMsRef.current = Math.max(0, bufferDurationMsRef.current - Math.round(sampledBufferDuration - activeBufferDuration));
+        if (bufferStartedAtRef.current !== null) bufferStartedAtRef.current = completedAt;
+        if (sampledStartupMs !== null) {
+          startupMsRef.current = null;
+          startupStartedAtRef.current = 0;
+        }
+        if (videoQuality) {
+          lastDroppedFramesRef.current = videoQuality.droppedVideoFrames;
+          lastTotalFramesRef.current = videoQuality.totalVideoFrames;
+        }
         const payload = await response.json().catch(() => null) as { credit?: { validation_result?: string } } | null;
         if (payload?.credit?.validation_result === "insufficient_credit") router.refresh();
       }
